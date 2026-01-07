@@ -7,20 +7,22 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
+  Image,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { authStyles as styles } from '../../styles/auth.styles';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function SignupScreen() {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    studentId: '',
-    department: '',
-    password: '',
-    confirmPassword: '',
-  });
+  const [step, setStep] = useState(1);
+  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
 
   const validateEmail = (emailValue) => {
@@ -28,52 +30,49 @@ export default function SignupScreen() {
     return iitEmailRegex.test(emailValue);
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: null }));
+  const handleContinueStep1 = () => {
+    const newErrors = {};
+
+    if (!email) {
+      newErrors.email = 'Email is required';
+    } else if (!validateEmail(email)) {
+      newErrors.email = 'Please use your IIT email (@iit.ac.lk)';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      setStep(2);
     }
   };
 
   const handleSignup = () => {
     const newErrors = {};
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
+    if (!firstName.trim()) {
+      newErrors.firstName = 'First name is required';
     }
 
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please use your IIT email (@iit.ac.lk)';
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
     }
 
-    if (!formData.studentId.trim()) {
-      newErrors.studentId = 'Student ID is required';
-    }
-
-    if (!formData.department.trim()) {
-      newErrors.department = 'Department is required';
-    }
-
-    if (!formData.password) {
+    if (!password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
+    } else if (password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
     }
 
-    if (!formData.confirmPassword) {
+    if (!confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
+    } else if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      // TODO: Implement actual signup logic
-      console.log('Signup successful', formData);
+      console.log('Signup successful');
       router.replace('/(tabs)');
     }
   };
@@ -83,141 +82,155 @@ export default function SignupScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <ScrollView
-        contentContainerStyle={styles.scrollContentSignup}
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Logo and Header */}
-        <View style={styles.headerContainerSignup}>
-          <View style={styles.logoContainerSignup}>
-            <Text style={styles.logoTextSignup}>IIT</Text>
-            <Text style={styles.logoSubTextSignup}>Connect</Text>
-          </View>
-          <Text style={styles.welcomeTextSignup}>Create Account</Text>
-          <Text style={styles.subtitleTextSignup}>
-            Join the IIT community today
-          </Text>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('@/assets/images/Gemini_Generated_Image_x13xnbx13xnbx13x.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.logoText}>CoNNect</Text>
         </View>
 
-        {/* Signup Form */}
-        <View style={styles.formContainer}>
-          <View style={styles.inputContainerSignup}>
-            <Text style={styles.label}>Full Name</Text>
-            <TextInput
-              style={[styles.input, errors.fullName && styles.inputError]}
-              placeholder="Enter your full name"
-              placeholderTextColor="#999"
-              value={formData.fullName}
-              onChangeText={(value) => handleInputChange('fullName', value)}
-              autoCapitalize="words"
-            />
-            {errors.fullName && (
-              <Text style={styles.errorText}>{errors.fullName}</Text>
-            )}
-          </View>
+        {/* Title */}
+        <Text style={styles.title}>Create Your Account</Text>
 
-          <View style={styles.inputContainerSignup}>
-            <Text style={styles.label}>IIT Email</Text>
-            <TextInput
-              style={[styles.input, errors.email && styles.inputError]}
-              placeholder="your.email@iit.ac.lk"
-              placeholderTextColor="#999"
-              value={formData.email}
-              onChangeText={(value) => handleInputChange('email', value)}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {errors.email && (
-              <Text style={styles.errorText}>{errors.email}</Text>
-            )}
-          </View>
+        {step === 1 ? (
+          <>
+            {/* Illustration */}
+            <View style={styles.illustrationContainer}>
+              <View style={styles.illustration}>
+                <Ionicons name="person-add" size={80} color="#D32F2F" />
+              </View>
+            </View>
 
-          <View style={styles.inputContainerSignup}>
-            <Text style={styles.label}>Student ID</Text>
-            <TextInput
-              style={[styles.input, errors.studentId && styles.inputError]}
-              placeholder="e.g., 20210001"
-              placeholderTextColor="#999"
-              value={formData.studentId}
-              onChangeText={(value) => handleInputChange('studentId', value)}
-              keyboardType="number-pad"
-            />
-            {errors.studentId && (
-              <Text style={styles.errorText}>{errors.studentId}</Text>
-            )}
-          </View>
+            {/* Email Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <View style={[styles.inputWrapper, errors.email && styles.inputError]}>
+                <Ionicons name="mail-outline" size={20} color="#999" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your IIT email"
+                  placeholderTextColor="#999"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            </View>
 
-          <View style={styles.inputContainerSignup}>
-            <Text style={styles.label}>Department</Text>
-            <TextInput
-              style={[styles.input, errors.department && styles.inputError]}
-              placeholder="e.g., Computer Science"
-              placeholderTextColor="#999"
-              value={formData.department}
-              onChangeText={(value) => handleInputChange('department', value)}
-            />
-            {errors.department && (
-              <Text style={styles.errorText}>{errors.department}</Text>
-            )}
-          </View>
+            {/* Continue Button */}
+            <TouchableOpacity style={styles.continueButton} onPress={handleContinueStep1}>
+              <Text style={styles.continueButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            {/* First Name Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>First Name</Text>
+              <View style={[styles.inputWrapper, errors.firstName && styles.inputError]}>
+                <Ionicons name="person-outline" size={20} color="#999" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="First Name"
+                  placeholderTextColor="#999"
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  autoCapitalize="words"
+                />
+              </View>
+              {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
+            </View>
 
-          <View style={styles.inputContainerSignup}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={[styles.input, errors.password && styles.inputError]}
-              placeholder="Create a strong password"
-              placeholderTextColor="#999"
-              value={formData.password}
-              onChangeText={(value) => handleInputChange('password', value)}
-              secureTextEntry
-            />
-            {errors.password && (
-              <Text style={styles.errorText}>{errors.password}</Text>
-            )}
-          </View>
+            {/* Last Name Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Last Name</Text>
+              <View style={[styles.inputWrapper, errors.lastName && styles.inputError]}>
+                <Ionicons name="person-outline" size={20} color="#999" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Last Name"
+                  placeholderTextColor="#999"
+                  value={lastName}
+                  onChangeText={setLastName}
+                  autoCapitalize="words"
+                />
+              </View>
+              {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
+            </View>
 
-          <View style={styles.inputContainerSignup}>
-            <Text style={styles.label}>Confirm Password</Text>
-            <TextInput
-              style={[
-                styles.input,
-                errors.confirmPassword && styles.inputError,
-              ]}
-              placeholder="Confirm your password"
-              placeholderTextColor="#999"
-              value={formData.confirmPassword}
-              onChangeText={(value) =>
-                handleInputChange('confirmPassword', value)
-              }
-              secureTextEntry
-            />
-            {errors.confirmPassword && (
-              <Text style={styles.errorText}>{errors.confirmPassword}</Text>
-            )}
-          </View>
+            {/* Password Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={[styles.inputWrapper, errors.password && styles.inputError]}>
+                <Ionicons name="lock-closed-outline" size={20} color="#999" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#999"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color="#999"
+                  />
+                </TouchableOpacity>
+              </View>
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            </View>
 
-          <View style={styles.termsContainer}>
-            <Text style={styles.termsText}>
-              By signing up, you agree to our{' '}
-              <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-              <Text style={styles.termsLink}>Privacy Policy</Text>
-            </Text>
-          </View>
+            {/* Confirm Password Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Confirm Password</Text>
+              <View style={[styles.inputWrapper, errors.confirmPassword && styles.inputError]}>
+                <Ionicons name="lock-closed-outline" size={20} color="#999" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirm your password"
+                  placeholderTextColor="#999"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirmPassword}
+                />
+                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                  <Ionicons
+                    name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color="#999"
+                  />
+                </TouchableOpacity>
+              </View>
+              {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+            </View>
 
-          <TouchableOpacity style={styles.primaryButton} onPress={handleSignup}>
-            <Text style={styles.primaryButtonText}>Create Account</Text>
-          </TouchableOpacity>
-        </View>
+            {/* Continue Button */}
+            <TouchableOpacity style={styles.continueButton} onPress={handleSignup}>
+              <Text style={styles.continueButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </>
+        )}
 
-        {/* Login Link */}
-        <View style={styles.linkContainer}>
-          <Text style={styles.linkText}>Already have an account? </Text>
+        {/* Sign In Link */}
+        <View style={styles.signInContainer}>
+          <Text style={styles.signInText}>Already have an account? </Text>
           <Link href="/(auth)/login" asChild>
             <TouchableOpacity>
-              <Text style={styles.link}>Sign In</Text>
+              <Text style={styles.signInLink}>Sign In</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -225,3 +238,118 @@ export default function SignupScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 30,
+    paddingTop: 60,
+    paddingBottom: 30,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  logo: {
+    width: 70,
+    height: 70,
+    marginBottom: 10,
+  },
+  logoText: {
+    fontSize: 32,
+    fontWeight: '600',
+    color: '#000',
+    letterSpacing: 1,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  illustrationContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  illustration: {
+    width: 150,
+    height: 150,
+    backgroundColor: '#FFE5E5',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  inputContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 8,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 15,
+    height: 50,
+  },
+  inputError: {
+    borderColor: '#D32F2F',
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: '#000',
+  },
+  errorText: {
+    color: '#D32F2F',
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 15,
+  },
+  continueButton: {
+    backgroundColor: '#D32F2F',
+    paddingVertical: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+    shadowColor: '#D32F2F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  continueButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  signInContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  signInText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  signInLink: {
+    fontSize: 14,
+    color: '#D32F2F',
+    fontWeight: '700',
+  },
+});
