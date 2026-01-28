@@ -107,34 +107,6 @@ npx expo start
 2. Open **Expo Go** app on your phone
 3. Scan the QR code shown in your terminal
 
-## 🔑 API Endpoints
-
-| Method | Endpoint             | Description                |
-| ------ | -------------------- | -------------------------- |
-| GET    | `/api/health`        | Check if server is running |
-| POST   | `/api/auth/register` | Create new user            |
-| POST   | `/api/auth/login`    | Login existing user        |
-
-### Register Request Body
-
-```json
-{
-  "username": "john_doe",
-  "email": "john@iit.edu",
-  "password": "secure123",
-  "studentId": "IIT2024001"
-}
-```
-
-### Login Request Body
-
-```json
-{
-  "email": "john@iit.edu",
-  "password": "secure123"
-}
-```
-
 ## 👥 Team Development Guide
 
 ### For Team Members
@@ -152,28 +124,5 @@ npx expo start
 | "MONGO_URI undefined"      | Make sure `.env` file exists in backend folder    |
 | "User not found"           | Register first before trying to login             |
 | "Port already in use"      | Kill the process: `npx kill-port 5000`            |
-
-## 📱 Development Roadmap
-
-- [x] **Phase 1**: Project structure & basic setup
-- [x] **Phase 2**: User authentication (login/register)
-- [ ] **Phase 3**: Password hashing (bcrypt) & JWT tokens
-- [ ] **Phase 4**: User profiles & feed
-- [ ] **Phase 5**: Real-time features (Socket.io)
-
-## 🛠️ Tech Stack
-
-| Layer    | Technology                              |
-| -------- | --------------------------------------- |
-| Mobile   | React Native + Expo Router              |
-| Backend  | Node.js + Express                       |
-| Database | MongoDB + Mongoose                      |
-| State    | React useState (Context API in Phase 3) |
-
-## 📝 License
-
-ISC
-
----
 
 **Built with ❤️ by the IIT Connect Team**
