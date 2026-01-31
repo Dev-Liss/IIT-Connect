@@ -17,7 +17,7 @@
  */
 
 // ⚠️ CHANGE THIS TO YOUR LAPTOP'S IP ADDRESS!
-const LAPTOP_IP = "10.31.11.64";
+const LAPTOP_IP = "192.168.43.61";
 
 // Backend port (should match PORT in backend/.env)
 const PORT = "5000";
@@ -31,12 +31,20 @@ export const AUTH_ENDPOINTS = {
   REGISTER: `${API_BASE_URL}/auth/register`,
 };
 
+// Post endpoints (Phase 3)
+export const POST_ENDPOINTS = {
+  CREATE: `${API_BASE_URL}/posts`,
+  GET_ALL: `${API_BASE_URL}/posts`,
+  GET_BY_ID: (id: string) => `${API_BASE_URL}/posts/${id}`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
 export default {
   API_BASE_URL,
   AUTH_ENDPOINTS,
+  POST_ENDPOINTS,
   HEALTH_CHECK_URL,
   LAPTOP_IP,
   PORT,

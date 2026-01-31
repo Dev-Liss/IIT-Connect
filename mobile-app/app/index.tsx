@@ -19,6 +19,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { Link } from "expo-router";
 
 // Import API configuration - TEAM: Update the IP in this file!
 import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
@@ -249,6 +250,15 @@ export default function AuthScreen() {
         <TouchableOpacity style={styles.debugButton} onPress={testConnection}>
           <Text style={styles.debugText}>🔌 Test Server Connection</Text>
         </TouchableOpacity>
+
+        {/* Create Post Link - For Phase 3 Testing */}
+        <Link href={"/create-post" as any} asChild>
+          <TouchableOpacity style={styles.createPostButton}>
+            <Text style={styles.createPostText}>
+              📸 Create a Post (Phase 3)
+            </Text>
+          </TouchableOpacity>
+        </Link>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -346,5 +356,17 @@ const styles = StyleSheet.create({
   debugText: {
     color: "#666",
     fontSize: 14,
+  },
+  createPostButton: {
+    marginTop: 15,
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#e63946",
+    borderRadius: 12,
+  },
+  createPostText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

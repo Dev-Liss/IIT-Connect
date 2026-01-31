@@ -12,8 +12,8 @@
 const express = require("express");
 const router = express.Router();
 
-// ⚠️ IMPORTANT: File is 'user.js' (lowercase) - match exactly!
-const User = require("../models/user");
+// Import User model
+const User = require("../models/User");
 
 // ====================================
 // REGISTER ROUTE
