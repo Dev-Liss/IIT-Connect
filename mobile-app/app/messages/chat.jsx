@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,110 +9,235 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-
-const DUMMY_MESSAGES = [
-  {
-    id: '1',
-    text: 'Hey! How are you doing?',
-    sender: 'other',
-    time: '10:15 AM',
-  },
-  {
-    id: '2',
-    text: "I'm good! Just finished the assignment.",
-    sender: 'me',
-    time: '10:16 AM',
-  },
-  {
-    id: '3',
-    text: "That's great! Can you share your notes?",
-    sender: 'other',
-    time: '10:17 AM',
-  },
-  {
-    id: '4',
-    text: 'Sure! Here you go',
-    sender: 'me',
-    time: '10:18 AM',
-  },
-  {
-    id: '5',
-    text: null,
-    sender: 'me',
-    time: '10:18 AM',
-    file: {
-      name: 'CS101_Notes.pdf',
-      size: '2.4 MB',
-    },
-  },
-  {
-    id: '6',
-    text: 'Thanks a lot! Really appreciate it 🙏',
-    sender: 'other',
-    time: '10:20 AM',
-  },
-];
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import socketService from '../../src/services/socketService';
+import { MESSAGE_ENDPOINTS } from '../../src/config/api';
 
 export default function ChatScreen() {
   const router = useRouter();
-  const { id, name, type } = useLocalSearchParams();
-  const [messages, setMessages] = useState(DUMMY_MESSAGES);
+  const { id: conversationId, name, type } = useLocalSearchParams();
+  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingUser, setTypingUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isConnected, setIsConnected] = useState(socketService.getConnectionStatus());
   const flatListRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
-  const sendMessage = () => {
-    if (inputText.trim() === '') return;
-
-    const newMessage = {
-      id: Date.now().toString(),
-      text: inputText,
-      sender: 'me',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  // Load current user and connect to socket
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('userData');
+        if (userData) {
+          const user = JSON.parse(userData);
+          setCurrentUser(user);
+          
+          // Connect to socket if not already connected
+          if (!socketService.getConnectionStatus()) {
+            socketService.connect(user._id);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
     };
 
-    setMessages([...messages, newMessage]);
-    setInputText('');
+    initialize();
+  }, []);
+
+  // Fetch messages and join conversation room
+  useEffect(() => {
+    if (!conversationId || !currentUser) return;
+
+    const fetchMessages = async () => {
+      try {
+        setIsLoading(true);
+        const token = await AsyncStorage.getItem('authToken');
+        
+        const response = await fetch(MESSAGE_ENDPOINTS.GET_MESSAGES(conversationId), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setMessages(data.messages);
+        }
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMessages();
+    
+    // Join conversation room
+    socketService.joinConversation(conversationId);
+    socketService.markAsRead(conversationId);
+
+    return () => {
+      // Leave conversation room when unmounting
+      socketService.leaveConversation(conversationId);
+    };
+  }, [conversationId, currentUser]);
+
+  // Set up message listener
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const handleNewMessage = (message) => {
+      setMessages(prevMessages => [...prevMessages, message]);
+      
+      // Mark as read
+      socketService.markAsRead(conversationId);
+    };
+
+    socketService.addMessageListener(conversationId, handleNewMessage);
+
+    return () => {
+      socketService.removeMessageListener(conversationId, handleNewMessage);
+    };
+  }, [conversationId]);
+
+  // Set up typing indicator listener
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const handleTyping = ({ userId, username, isTyping }) => {
+      if (userId !== currentUser?._id) {
+        setIsTyping(isTyping);
+        setTypingUser(isTyping ? username : null);
+      }
+    };
+
+    socketService.addTypingListener(conversationId, handleTyping);
+
+    return () => {
+      socketService.removeTypingListener(conversationId, handleTyping);
+    };
+  }, [conversationId, currentUser]);
+
+  // Connection status listener
+  useEffect(() => {
+    const handleConnection = (connected) => {
+      setIsConnected(connected);
+    };
+
+    socketService.addConnectionListener(handleConnection);
+
+    return () => {
+      socketService.removeConnectionListener(handleConnection);
+    };
+  }, []);
+
+  // Handle typing indicator
+  const handleInputChange = (text) => {
+    setInputText(text);
+
+    if (!currentUser) return;
+
+    // Clear previous timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Send typing start
+    if (text.length > 0) {
+      socketService.sendTypingIndicator(conversationId, true, currentUser.username);
+    }
+
+    // Send typing stop after 2 seconds of no typing
+    typingTimeoutRef.current = setTimeout(() => {
+      socketService.sendTypingIndicator(conversationId, false, currentUser.username);
+    }, 2000);
+  };
+
+  const sendMessage = () => {
+    if (inputText.trim() === '' || !currentUser) return;
+
+    // Clear typing indicator
+    socketService.sendTypingIndicator(conversationId, false, currentUser.username);
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Send message via socket
+    const sent = socketService.sendMessage({
+      conversationId,
+      content: inputText.trim(),
+      messageType: 'text',
+    });
+
+    if (sent) {
+      setInputText('');
+    }
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   const renderMessage = ({ item }) => {
-    const isMe = item.sender === 'me';
+    const isMe = item.sender?._id === currentUser?._id || item.sender === currentUser?._id;
+    const senderName = item.sender?.username || name || 'User';
 
     return (
       <View style={[styles.messageContainer, isMe ? styles.myMessageContainer : styles.otherMessageContainer]}>
         {!isMe && (
           <View style={styles.otherAvatar}>
-            <Text style={styles.otherAvatarText}>{name ? name[0] : 'U'}</Text>
+            <Text style={styles.otherAvatarText}>{senderName[0]?.toUpperCase() || 'U'}</Text>
           </View>
         )}
         <View style={styles.messageWrapper}>
           <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.otherMessage]}>
-            {item.file ? (
+            {item.messageType === 'file' || item.fileUrl ? (
               <TouchableOpacity style={styles.fileContainer}>
                 <View style={styles.fileIcon}>
                   <Ionicons name="document-text" size={24} color="#D32F2F" />
                 </View>
                 <View style={styles.fileInfo}>
-                  <Text style={[styles.fileName, isMe && styles.myFileName]}>{item.file.name}</Text>
-                  <Text style={[styles.fileSize, isMe && styles.myFileSize]}>{item.file.size}</Text>
+                  <Text style={[styles.fileName, isMe && styles.myFileName]}>{item.fileName || 'File'}</Text>
                 </View>
                 <Ionicons name="download-outline" size={20} color={isMe ? '#fff' : '#D32F2F'} />
               </TouchableOpacity>
+            ) : item.messageType === 'system' ? (
+              <Text style={styles.systemMessageText}>{item.content}</Text>
             ) : (
               <Text style={[styles.messageText, isMe ? styles.myMessageText : styles.otherMessageText]}>
-                {item.text}
+                {item.content}
               </Text>
             )}
           </View>
           <Text style={[styles.messageTime, isMe ? styles.myMessageTime : styles.otherMessageTime]}>
-            {item.time}
+            {formatTime(item.createdAt)}
           </Text>
         </View>
       </View>
     );
   };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#D32F2F" />
+          <Text style={styles.loadingText}>Loading messages...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -123,22 +248,38 @@ export default function ChatScreen() {
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerName}>{name}</Text>
-          <Text style={styles.headerStatus}>Active now</Text>
+          <Text style={[styles.headerStatus, !isConnected && styles.headerStatusOffline]}>
+            {isTyping ? `${typingUser || 'Someone'} is typing...` : isConnected ? 'Online' : 'Connecting...'}
+          </Text>
         </View>
         <TouchableOpacity style={styles.moreButton}>
           <Ionicons name="ellipsis-vertical" size={24} color="#000" />
         </TouchableOpacity>
       </View>
 
+      {/* Connection Status Banner */}
+      {!isConnected && (
+        <View style={styles.connectionBanner}>
+          <Text style={styles.connectionBannerText}>Reconnecting...</Text>
+        </View>
+      )}
+
       {/* Messages List */}
       <FlatList
         ref={flatListRef}
         data={messages}
         renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id || item.id}
         contentContainerStyle={styles.messagesContainer}
         showsVerticalScrollIndicator={false}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="chatbubbles-outline" size={48} color="#ccc" />
+            <Text style={styles.emptyText}>No messages yet</Text>
+            <Text style={styles.emptySubText}>Start the conversation!</Text>
+          </View>
+        }
       />
 
       {/* Input Area */}
@@ -155,15 +296,15 @@ export default function ChatScreen() {
             placeholder="Type a message..."
             placeholderTextColor="#999"
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={handleInputChange}
             multiline
           />
           <TouchableOpacity
             style={[styles.sendButton, inputText.trim() === '' && styles.sendButtonDisabled]}
             onPress={sendMessage}
-            disabled={inputText.trim() === ''}
+            disabled={inputText.trim() === '' || !isConnected}
           >
-            <Ionicons name="send" size={20} color={inputText.trim() === '' ? '#ccc' : '#D32F2F'} />
+            <Ionicons name="send" size={20} color={inputText.trim() === '' || !isConnected ? '#ccc' : '#D32F2F'} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -335,5 +476,49 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     opacity: 0.5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+    fontSize: 14,
+  },
+  headerStatusOffline: {
+    color: '#999',
+  },
+  connectionBanner: {
+    backgroundColor: '#FFF3CD',
+    padding: 8,
+    alignItems: 'center',
+  },
+  connectionBannerText: {
+    color: '#856404',
+    fontSize: 12,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 5,
+  },
+  systemMessageText: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    color: '#666',
+    textAlign: 'center',
   },
 });

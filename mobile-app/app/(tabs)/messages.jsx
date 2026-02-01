@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,85 +9,136 @@ import {
   Image,
   SafeAreaView,
   Modal,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import socketService from '../../src/services/socketService';
+import { CONVERSATION_ENDPOINTS } from '../../src/config/api';
 
 const TABS = ['All', 'Direct', 'Groups', 'Clubs'];
-
-const DUMMY_CONVERSATIONS = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    type: 'direct',
-    avatar: null,
-    lastMessage: 'Hey! Did you finish the assignment?',
-    time: '10:30 AM',
-    unread: 2,
-    online: true,
-  },
-  {
-    id: '2',
-    name: 'CS101 - Tutorial Group 3',
-    type: 'group',
-    avatar: null,
-    lastMessage: 'Meeting tomorrow at 2 PM',
-    time: '9:45 AM',
-    unread: 0,
-    members: 24,
-    isOfficial: true,
-  },
-  {
-    id: '3',
-    name: 'Tech Club',
-    type: 'club',
-    avatar: null,
-    lastMessage: "Don't forget about the Hackathon!",
-    time: '2 hours ago',
-    unread: 5,
-    members: 156,
-  },
-  {
-    id: '4',
-    name: 'Michael Chen',
-    type: 'direct',
-    avatar: null,
-    lastMessage: 'Thanks for the notes!',
-    time: 'Yesterday',
-    unread: 0,
-    online: false,
-  },
-  {
-    id: '5',
-    name: 'MATH201 - Tutorial Group 1',
-    type: 'group',
-    avatar: null,
-    lastMessage: 'Quiz next week, lets study together',
-    time: 'Yesterday',
-    unread: 0,
-    members: 18,
-    isOfficial: true,
-  },
-  {
-    id: '6',
-    name: 'Drama Society',
-    type: 'club',
-    avatar: null,
-    lastMessage: 'Auditions are open!',
-    time: '2 days ago',
-    unread: 0,
-    members: 89,
-  },
-];
 
 export default function MessagesScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewMenu, setShowNewMenu] = useState(false);
+  const [conversations, setConversations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const filteredConversations = DUMMY_CONVERSATIONS.filter((conv) => {
-    const matchesSearch = conv.name.toLowerCase().includes(searchQuery.toLowerCase());
+  // Initialize user and socket connection
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('userData');
+        if (userData) {
+          const user = JSON.parse(userData);
+          setCurrentUser(user);
+          
+          // Connect to socket
+          if (!socketService.getConnectionStatus()) {
+            socketService.connect(user._id);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing:', error);
+      }
+    };
+
+    initialize();
+  }, []);
+
+  // Fetch conversations
+  const fetchConversations = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      
+      if (!token) {
+        console.log('No auth token found');
+        return;
+      }
+
+      const response = await fetch(CONVERSATION_ENDPOINTS.GET_ALL, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setConversations(data.conversations);
+      }
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Refresh conversations when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchConversations();
+    }, [])
+  );
+
+  // Listen for new conversations
+  useEffect(() => {
+    socketService.onConversationCreated(({ conversation }) => {
+      setConversations(prev => [conversation, ...prev]);
+    });
+
+    socketService.onGroupCreated(({ conversation }) => {
+      setConversations(prev => [conversation, ...prev]);
+    });
+  }, []);
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    fetchConversations();
+  };
+
+  const getConversationName = (conversation) => {
+    if (conversation.type === 'direct' && currentUser) {
+      // For direct chats, show the other person's name
+      const otherParticipant = conversation.participants?.find(
+        p => p._id !== currentUser._id
+      );
+      return otherParticipant?.username || 'Unknown User';
+    }
+    return conversation.name || 'Unnamed Conversation';
+  };
+
+  const formatTime = (dateString) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
+
+  const filteredConversations = conversations.filter((conv) => {
+    const name = getConversationName(conv);
+    const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase());
     if (activeTab === 'All') return matchesSearch;
     if (activeTab === 'Direct') return conv.type === 'direct' && matchesSearch;
     if (activeTab === 'Groups') return conv.type === 'group' && matchesSearch;
@@ -129,33 +180,39 @@ export default function MessagesScreen() {
     return null;
   };
 
-  const renderConversation = ({ item }) => (
-    <TouchableOpacity
-      style={styles.conversationItem}
-      onPress={() => router.push({ pathname: '/messages/chat', params: { id: item.id, name: item.name, type: item.type } })}
-    >
-      <View style={styles.avatarContainer}>
-        {getAvatarContent(item)}
-        {item.online && <View style={styles.onlineIndicator} />}
-        {getTypeIcon(item)}
-      </View>
+  const renderConversation = ({ item }) => {
+    const name = getConversationName(item);
+    const lastMessage = item.latestMessage?.content || 'No messages yet';
+    const time = formatTime(item.latestMessage?.createdAt || item.updatedAt);
+    
+    return (
+      <TouchableOpacity
+        style={styles.conversationItem}
+        onPress={() => router.push({ pathname: '/messages/chat', params: { id: item._id, name: name, type: item.type } })}
+      >
+        <View style={styles.avatarContainer}>
+          {getAvatarContent({ ...item, name })}
+          {item.type === 'direct' && <View style={styles.onlineIndicator} />}
+          {getTypeIcon(item)}
+        </View>
 
-      <View style={styles.conversationContent}>
-        <View style={styles.conversationHeader}>
-          <Text style={styles.conversationName} numberOfLines={1}>{item.name}</Text>
-          <Text style={styles.conversationTime}>{item.time}</Text>
+        <View style={styles.conversationContent}>
+          <View style={styles.conversationHeader}>
+            <Text style={styles.conversationName} numberOfLines={1}>{name}</Text>
+            <Text style={styles.conversationTime}>{time}</Text>
+          </View>
+          <View style={styles.conversationFooter}>
+            <Text style={styles.lastMessage} numberOfLines={1}>{lastMessage}</Text>
+            {item.unreadCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadText}>{item.unreadCount}</Text>
+              </View>
+            )}
+          </View>
         </View>
-        <View style={styles.conversationFooter}>
-          <Text style={styles.lastMessage} numberOfLines={1}>{item.lastMessage}</Text>
-          {item.unread > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadText}>{item.unread}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -197,13 +254,40 @@ export default function MessagesScreen() {
       </View>
 
       {/* Conversations List */}
-      <FlatList
-        data={filteredConversations}
-        renderItem={renderConversation}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#D32F2F" />
+          <Text style={styles.loadingText}>Loading conversations...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredConversations}
+          renderItem={renderConversation}
+          keyExtractor={(item) => item._id || item.id}
+          contentContainerStyle={[
+            styles.listContainer,
+            filteredConversations.length === 0 && styles.emptyListContainer
+          ]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={['#D32F2F']}
+              tintColor="#D32F2F"
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbubbles-outline" size={64} color="#ccc" />
+              <Text style={styles.emptyTitle}>No conversations yet</Text>
+              <Text style={styles.emptySubtitle}>
+                Start a new chat by tapping the + button below
+              </Text>
+            </View>
+          }
+        />
+      )}
 
       {/* FAB for New Message */}
       <TouchableOpacity
@@ -523,5 +607,37 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+    fontSize: 14,
+  },
+  emptyListContainer: {
+    flex: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 15,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 5,
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
 });
