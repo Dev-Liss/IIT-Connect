@@ -130,7 +130,7 @@ export default function AuthScreen() {
     } catch (error) {
       Alert.alert(
         "❌ Connection Failed",
-        "Cannot reach the backend server.\nCheck the IP in src/config/api.ts",
+        "Cannot reach the backend server.\nCheck the IP in src/config/api.js",
       );
     } finally {
       setIsLoading(false);
