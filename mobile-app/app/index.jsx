@@ -19,6 +19,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -153,14 +154,15 @@ export default function AuthScreen() {
   // RENDER UI
   // ====================================
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
       >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.logo}>🎓</Text>
@@ -263,6 +265,7 @@ export default function AuthScreen() {
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -270,6 +273,10 @@ export default function AuthScreen() {
 // STYLES
 // ====================================
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f5f7fa",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f5f7fa",

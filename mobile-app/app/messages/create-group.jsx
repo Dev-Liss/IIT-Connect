@@ -6,10 +6,10 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -72,13 +72,14 @@ export default function CreateGroupScreen() {
   };
 
   const getAvatarContent = (user) => {
-    const initials = user.name.split(' ').map(n => n[0]).join('');
+    const name = user.username || user.name || 'U';
+    const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2);
     const colors = ['#D32F2F', '#1976D2', '#388E3C', '#7B1FA2', '#F57C00'];
-    const colorIndex = user.name.length % colors.length;
+    const colorIndex = name.length % colors.length;
 
     return (
       <View style={[styles.memberAvatar, { backgroundColor: colors[colorIndex] }]}>
-        <Text style={styles.memberAvatarText}>{initials}</Text>
+        <Text style={styles.memberAvatarText}>{initials.toUpperCase()}</Text>
       </View>
     );
   };
@@ -141,7 +142,7 @@ export default function CreateGroupScreen() {
             <View key={member.id} style={styles.memberItem}>
               {getAvatarContent(member)}
               <View style={styles.memberInfo}>
-                <Text style={styles.memberName}>{member.name}</Text>
+                <Text style={styles.memberName}>{member.username || member.name}</Text>
                 <Text style={styles.memberEmail}>{member.email}</Text>
               </View>
             </View>
