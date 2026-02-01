@@ -259,6 +259,15 @@ export default function AuthScreen() {
             </Text>
           </TouchableOpacity>
         </Link>
+
+        {/* View Feed Link - For Phase 3 Testing */}
+        <Link href={"/feed" as any} asChild>
+          <TouchableOpacity
+            style={[styles.createPostButton, styles.feedButton]}
+          >
+            <Text style={styles.createPostText}>📱 View Feed (Phase 3)</Text>
+          </TouchableOpacity>
+        </Link>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -368,5 +377,8 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  feedButton: {
+    backgroundColor: "#457b9d",
   },
 });
