@@ -40,9 +40,10 @@ export default function MessagesScreen() {
           const user = JSON.parse(userData);
           setCurrentUser(user);
           
-          // Connect to socket
-          if (!socketService.getConnectionStatus()) {
-            socketService.connect(user._id);
+          // Connect to socket - use id or _id
+          const userId = user.id || user._id;
+          if (!socketService.getConnectionStatus() && userId) {
+            socketService.connect(userId);
           }
         }
       } catch (error) {
@@ -109,8 +110,9 @@ export default function MessagesScreen() {
   const getConversationName = (conversation) => {
     if (conversation.type === 'direct' && currentUser) {
       // For direct chats, show the other person's name
+      const currentUserId = currentUser.id || currentUser._id;
       const otherParticipant = conversation.participants?.find(
-        p => p._id !== currentUser._id
+        p => (p._id || p.id) !== currentUserId
       );
       return otherParticipant?.username || 'Unknown User';
     }
@@ -327,7 +329,7 @@ export default function MessagesScreen() {
               style={styles.menuItem}
               onPress={() => {
                 setShowNewMenu(false);
-                router.push('/messages/new-group');
+                router.push({ pathname: '/messages/new-group', params: { type: 'group' } });
               }}
             >
               <View style={styles.menuIconContainer}>

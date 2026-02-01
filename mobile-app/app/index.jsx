@@ -19,11 +19,15 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Import API configuration - TEAM: Update the IP in this file!
 import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
 
 export default function AuthScreen() {
+  const router = useRouter();
+  
   // ====================================
   // STATE MANAGEMENT
   // ====================================
@@ -92,9 +96,17 @@ export default function AuthScreen() {
           // Clear form for login
           setPassword("");
         } else {
-          Alert.alert("👋 Welcome!", `Hello, ${data.user.username}!`);
+          // Store user data and token for later use
+          await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+          // Use user ID as token for now (until JWT is implemented)
+          const authToken = data.token || data.user.id;
+          await AsyncStorage.setItem('authToken', authToken);
+          
           console.log("✅ Logged in user:", data.user);
-          // TODO: Navigate to home screen in Phase 3
+          console.log("✅ Auth token:", authToken);
+          
+          // Navigate to messages screen
+          router.replace('/(tabs)/messages');
         }
       } else {
         Alert.alert("❌ Error", data.message);

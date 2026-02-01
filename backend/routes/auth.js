@@ -7,6 +7,7 @@
  * Endpoints:
  * - POST /api/auth/register - Create a new user
  * - POST /api/auth/login    - Login an existing user
+ * - GET  /api/auth/users    - Get all users (for new chat)
  */
 
 const express = require("express");
@@ -118,6 +119,40 @@ router.post("/login", async (req, res) => {
     });
   } catch (err) {
     console.error("Login Error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ====================================
+// GET ALL USERS ROUTE
+// GET /api/auth/users
+// ====================================
+router.get("/users", async (req, res) => {
+  try {
+    // Get all users, excluding the current user if userId is provided
+    const { excludeUserId } = req.query;
+
+    let query = {};
+    if (excludeUserId) {
+      query._id = { $ne: excludeUserId };
+    }
+
+    // Find users and exclude password field
+    const users = await User.find(query).select('-password');
+
+    res.json({
+      success: true,
+      users: users.map(user => ({
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        studentId: user.studentId,
+        role: user.role,
+        department: user.department || 'IIT Student',
+      })),
+    });
+  } catch (err) {
+    console.error("Get Users Error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 });

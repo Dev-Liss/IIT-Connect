@@ -7,30 +7,68 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CONVERSATION_ENDPOINTS } from '../../src/config/api';
 
 export default function CreateGroupScreen() {
   const router = useRouter();
-  const { members } = useLocalSearchParams();
+  const { members, type } = useLocalSearchParams();
   const selectedMembers = members ? JSON.parse(members) : [];
+  const isGroup = type === 'group';
 
   const [groupName, setGroupName] = useState('');
   const [description, setDescription] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (groupName.trim() === '') return;
 
-    // TODO: Create group via API
-    console.log('Creating group:', {
-      name: groupName,
-      description,
-      members: selectedMembers,
-    });
+    setIsLoading(true);
 
-    // Navigate back to messages
-    router.replace('/(tabs)/messages');
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      
+      // Create group/community via API
+      const response = await fetch(CONVERSATION_ENDPOINTS.CREATE_GROUP, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: groupName,
+          description,
+          type: isGroup ? 'group' : 'community',
+          participants: selectedMembers.map(m => m.id),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.conversation) {
+        // Navigate to the chat
+        router.replace({
+          pathname: '/messages/chat',
+          params: { 
+            id: data.conversation._id, 
+            name: groupName, 
+            type: isGroup ? 'group' : 'community'
+          },
+        });
+      } else {
+        Alert.alert('Error', data.message || 'Failed to create group');
+      }
+    } catch (error) {
+      console.error('Error creating group:', error);
+      Alert.alert('Error', 'Failed to create group. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getAvatarContent = (user) => {
@@ -114,11 +152,15 @@ export default function CreateGroupScreen() {
       {/* Create Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.createButton, groupName.trim() === '' && styles.createButtonDisabled]}
+          style={[styles.createButton, (groupName.trim() === '' || isLoading) && styles.createButtonDisabled]}
           onPress={handleCreate}
-          disabled={groupName.trim() === ''}
+          disabled={groupName.trim() === '' || isLoading}
         >
-          <Text style={styles.createButtonText}>Create Group</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.createButtonText}>Create {isGroup ? 'Group' : 'Community'}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

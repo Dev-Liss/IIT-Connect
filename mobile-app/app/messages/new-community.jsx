@@ -8,9 +8,13 @@ import {
   ScrollView,
   SafeAreaView,
   Switch,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CONVERSATION_ENDPOINTS } from '../../src/config/api';
 
 export default function NewCommunityScreen() {
   const router = useRouter();
@@ -18,21 +22,56 @@ export default function NewCommunityScreen() {
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(true);
   const [category, setCategory] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const CATEGORIES = ['Academic', 'Sports', 'Arts', 'Technology', 'Social', 'Other'];
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (communityName.trim() === '') return;
 
-    // TODO: Create community via API
-    console.log('Creating community:', {
-      name: communityName,
-      description,
-      isPublic,
-      category,
-    });
+    setIsLoading(true);
 
-    router.replace('/(tabs)/messages');
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      
+      // Create community via API
+      const response = await fetch(CONVERSATION_ENDPOINTS.CREATE_GROUP, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: communityName,
+          description,
+          type: 'community',
+          isPublic,
+          category,
+          participants: [], // Creator will be added by backend
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.conversation) {
+        // Navigate to the chat
+        router.replace({
+          pathname: '/messages/chat',
+          params: { 
+            id: data.conversation._id, 
+            name: communityName, 
+            type: 'community'
+          },
+        });
+      } else {
+        Alert.alert('Error', data.message || 'Failed to create community');
+      }
+    } catch (error) {
+      console.error('Error creating community:', error);
+      Alert.alert('Error', 'Failed to create community. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -123,11 +162,15 @@ export default function NewCommunityScreen() {
       {/* Create Button */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.createButton, communityName.trim() === '' && styles.createButtonDisabled]}
+          style={[styles.createButton, (communityName.trim() === '' || isLoading) && styles.createButtonDisabled]}
           onPress={handleCreate}
-          disabled={communityName.trim() === ''}
+          disabled={communityName.trim() === '' || isLoading}
         >
-          <Text style={styles.createButtonText}>Create Community</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.createButtonText}>Create Community</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

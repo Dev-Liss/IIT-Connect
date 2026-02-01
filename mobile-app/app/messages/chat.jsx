@@ -39,9 +39,10 @@ export default function ChatScreen() {
           const user = JSON.parse(userData);
           setCurrentUser(user);
           
-          // Connect to socket if not already connected
-          if (!socketService.getConnectionStatus()) {
-            socketService.connect(user._id);
+          // Connect to socket if not already connected - use id or _id
+          const userId = user.id || user._id;
+          if (!socketService.getConnectionStatus() && userId) {
+            socketService.connect(userId);
           }
         }
       } catch (error) {
@@ -115,7 +116,8 @@ export default function ChatScreen() {
     if (!conversationId) return;
 
     const handleTyping = ({ userId, username, isTyping }) => {
-      if (userId !== currentUser?._id) {
+      const currentUserId = currentUser?.id || currentUser?._id;
+      if (userId !== currentUserId) {
         setIsTyping(isTyping);
         setTypingUser(isTyping ? username : null);
       }

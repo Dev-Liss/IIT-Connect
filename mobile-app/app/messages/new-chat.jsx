@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,91 +7,122 @@ import {
   TouchableOpacity,
   FlatList,
   SafeAreaView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-
-const DUMMY_USERS = [
-  {
-    id: '1',
-    name: 'Sarah Johnson',
-    email: 'sarah.j@university.edu',
-    department: 'Computer Science',
-  },
-  {
-    id: '2',
-    name: 'Michael Chen',
-    email: 'michael.c@university.edu',
-    department: 'Mathematics',
-  },
-  {
-    id: '3',
-    name: 'Emily Davis',
-    email: 'emily.d@university.edu',
-    department: 'Computer Science',
-  },
-  {
-    id: '4',
-    name: 'James Wilson',
-    email: 'james.w@university.edu',
-    department: 'Engineering',
-  },
-  {
-    id: '5',
-    name: 'Olivia Brown',
-    email: 'olivia.b@university.edu',
-    department: 'Business',
-  },
-  {
-    id: '6',
-    name: 'Daniel Martinez',
-    email: 'daniel.m@university.edu',
-    department: 'Computer Science',
-  },
-  {
-    id: '7',
-    name: 'Sophia Taylor',
-    email: 'sophia.t@university.edu',
-    department: 'Mathematics',
-  },
-  {
-    id: '8',
-    name: 'William Anderson',
-    email: 'william.a@university.edu',
-    department: 'Engineering',
-  },
-];
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL, CONVERSATION_ENDPOINTS } from '../../src/config/api';
 
 export default function NewChatScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const filteredUsers = DUMMY_USERS.filter((user) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      user.name.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query) ||
-      user.department.toLowerCase().includes(query)
-    );
-  });
+  // Fetch all users on mount
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('userData');
+        const token = await AsyncStorage.getItem('authToken');
+        
+        if (userData) {
+          setCurrentUser(JSON.parse(userData));
+        }
+
+        // Fetch users from backend
+        const response = await fetch(`${API_BASE_URL}/auth/users`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+        
+        if (data.success && data.users) {
+          // Filter out current user - use 'id' from API response
+          const parsedUser = JSON.parse(userData);
+          const currentUserId = parsedUser?.id || parsedUser?._id;
+          const otherUsers = data.users.filter(u => u.id !== currentUserId);
+          setUsers(otherUsers);
+          setFilteredUsers(otherUsers);
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  // Filter users based on search
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredUsers(users);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = users.filter((user) => 
+        user.username?.toLowerCase().includes(query) ||
+        user.email?.toLowerCase().includes(query) ||
+        user.studentId?.toLowerCase().includes(query)
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [searchQuery, users]);
 
   const getAvatarContent = (user) => {
-    const initials = user.name.split(' ').map(n => n[0]).join('');
+    const name = user.username || user.name || 'U';
+    const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2);
     const colors = ['#D32F2F', '#1976D2', '#388E3C', '#7B1FA2', '#F57C00'];
-    const colorIndex = user.name.length % colors.length;
+    const colorIndex = name.length % colors.length;
 
     return (
       <View style={[styles.avatarPlaceholder, { backgroundColor: colors[colorIndex] }]}>
-        <Text style={styles.avatarText}>{initials}</Text>
+        <Text style={styles.avatarText}>{initials.toUpperCase()}</Text>
       </View>
     );
   };
 
-  const handleUserSelect = (user) => {
-    router.push({
-      pathname: '/messages/chat',
-      params: { id: user.id, name: user.name, type: 'direct' },
-    });
+  const handleUserSelect = async (user) => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      
+      // Create or get existing direct conversation
+      const response = await fetch(CONVERSATION_ENDPOINTS.CREATE_DIRECT, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ participantId: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.conversation) {
+        // Navigate to the chat
+        router.replace({
+          pathname: '/messages/chat',
+          params: { 
+            id: data.conversation._id, 
+            name: user.username || user.name, 
+            type: 'direct' 
+          },
+        });
+      } else {
+        Alert.alert('Error', data.message || 'Failed to create conversation');
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      Alert.alert('Error', 'Failed to start conversation. Please try again.');
+    }
   };
 
   const renderUser = ({ item }) => (
@@ -101,12 +132,33 @@ export default function NewChatScreen() {
     >
       {getAvatarContent(item)}
       <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.name}</Text>
+        <Text style={styles.userName}>{item.username || item.name}</Text>
         <Text style={styles.userEmail}>{item.email}</Text>
-        <Text style={styles.userDepartment}>{item.department}</Text>
+        {item.studentId && (
+          <Text style={styles.userDepartment}>ID: {item.studentId}</Text>
+        )}
       </View>
+      <Ionicons name="chatbubble-outline" size={20} color="#D32F2F" />
     </TouchableOpacity>
   );
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>New Chat</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#D32F2F" />
+          <Text style={styles.loadingText}>Loading users...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -124,7 +176,7 @@ export default function NewChatScreen() {
         <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search by name, email, or department..."
+          placeholder="Search by name, email, or student ID..."
           placeholderTextColor="#999"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -135,9 +187,15 @@ export default function NewChatScreen() {
       <FlatList
         data={filteredUsers}
         renderItem={renderUser}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id || item.id}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="people-outline" size={48} color="#ccc" />
+            <Text style={styles.emptyText}>No users found</Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -226,5 +284,26 @@ const styles = StyleSheet.create({
   userDepartment: {
     fontSize: 12,
     color: '#999',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+    fontSize: 14,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
   },
 });

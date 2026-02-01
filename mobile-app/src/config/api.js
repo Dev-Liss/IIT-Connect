@@ -32,6 +32,7 @@ export const SOCKET_URL = `http://${LAPTOP_IP}:${PORT}`;
 export const AUTH_ENDPOINTS = {
     LOGIN: `${API_BASE_URL}/auth/login`,
     REGISTER: `${API_BASE_URL}/auth/register`,
+    GET_USERS: `${API_BASE_URL}/auth/users`,
 };
 
 // Conversation endpoints
