@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -86,8 +89,8 @@ export default function NewGroupScreen() {
   };
 
   const handleNext = () => {
-    if (selectedUsers.length < 2) {
-      // Show alert - need at least 2 members
+    if (selectedUsers.length < 1) {
+      Alert.alert('Select Members', 'Please select at least 1 member to create a group');
       return;
     }
     router.push({
@@ -152,21 +155,25 @@ export default function NewGroupScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>New {isGroup ? 'Group' : 'Community'}</Text>
-        <TouchableOpacity
-          onPress={handleNext}
-          disabled={selectedUsers.length < 2}
-        >
-          <Text style={[styles.nextButton, selectedUsers.length < 2 && styles.nextButtonDisabled]}>
-            Next
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>New {isGroup ? 'Group' : 'Community'}</Text>
+          <TouchableOpacity
+            onPress={handleNext}
+            disabled={selectedUsers.length < 1}
+          >
+            <Text style={[styles.nextButton, selectedUsers.length < 1 && styles.nextButtonDisabled]}>
+              Next
+            </Text>
+          </TouchableOpacity>
+        </View>
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
@@ -183,7 +190,7 @@ export default function NewGroupScreen() {
       {/* Selected Count */}
       <View style={styles.selectedInfo}>
         <Text style={styles.selectedCount}>{selectedUsers.length} selected</Text>
-        <Text style={styles.minimumText}>Minimum 2 members</Text>
+        <Text style={styles.minimumText}>Select at least 1 member</Text>
       </View>
 
       {/* Users List */}
@@ -193,7 +200,9 @@ export default function NewGroupScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
