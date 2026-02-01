@@ -1,5 +1,47 @@
 node_modules/
+
+# Environment variables - NEVER COMMIT THESE!
 .env
+.env.local
+.env.development
+.env.production
+.env*.local
+backend/.env
+mobile-app/.env
+
+# macOS
 .DS_Store
+
+# Expo
 .expo/
 dist/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Metro
+.metro-health-check*
+
+# Debug logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build outputs
+build/
+android/app/build/
+ios/Pods/
+
+# Temporary files
+*.log
+tmp/
+temp/
