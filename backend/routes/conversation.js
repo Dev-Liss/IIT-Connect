@@ -130,7 +130,7 @@ router.post('/direct', protect, async (req, res) => {
  */
 router.post('/group', protect, async (req, res) => {
     try {
-        const { name, description, participants, category } = req.body;
+        const { name, description, participants, category, type, isPublic } = req.body;
 
         if (!name) {
             return res.status(400).json({
@@ -153,13 +153,20 @@ router.post('/group', protect, async (req, res) => {
             });
         }
 
+        // Map 'community' to 'club' for database compatibility
+        let conversationType = type || 'group';
+        if (conversationType === 'community') {
+            conversationType = 'club';
+        }
+
         const conversation = new Conversation({
-            type: 'group',
+            type: conversationType,
             name,
             description,
             participants: allParticipants,
             admin: req.user._id,
-            category: category || 'general'
+            category: category || null,
+            isPublic: isPublic || false
         });
 
         await conversation.save();
