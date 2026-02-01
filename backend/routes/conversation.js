@@ -145,10 +145,11 @@ router.post('/group', protect, async (req, res) => {
             ...(participants || [])
         ])];
 
-        if (allParticipants.length < 2) {
+        // Allow creating groups with just the creator (can add members later)
+        if (allParticipants.length < 1) {
             return res.status(400).json({
                 success: false,
-                message: 'Group must have at least 2 participants'
+                message: 'Group must have at least 1 participant'
             });
         }
 

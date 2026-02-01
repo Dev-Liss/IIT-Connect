@@ -89,10 +89,7 @@ export default function NewGroupScreen() {
   };
 
   const handleNext = () => {
-    if (selectedUsers.length < 1) {
-      Alert.alert('Select Members', 'Please select at least 1 member to create a group');
-      return;
-    }
+    // Allow creating groups with 0 selected members (creator will be added by backend)
     router.push({
       pathname: '/messages/create-group',
       params: { members: JSON.stringify(selectedUsers), type: type || 'group' },
