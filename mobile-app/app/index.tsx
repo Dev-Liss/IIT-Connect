@@ -262,9 +262,7 @@ export default function AuthScreen() {
 
         {/* View Feed Link - For Phase 3 Testing */}
         <Link href={"/feed" as any} asChild>
-          <TouchableOpacity
-            style={[styles.createPostButton, styles.feedButton]}
-          >
+          <TouchableOpacity style={styles.createPostButton}>
             <Text style={styles.createPostText}>📱 View Feed (Phase 3)</Text>
           </TouchableOpacity>
         </Link>
