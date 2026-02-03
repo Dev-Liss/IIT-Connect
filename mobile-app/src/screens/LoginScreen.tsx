@@ -1,25 +1,47 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, Alert, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Alert,
+  StyleSheet,
+  NativeSyntheticEvent,
+  TextInputChangeEventData,
+} from "react-native";
+import { AUTH_ENDPOINTS } from "../config/api";
 
-export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+// Type for the API response
+interface AuthResponse {
+  success: boolean;
+  message?: string;
+  user?: {
+    id: string;
+    email: string;
+    name?: string;
+  };
+  token?: string;
+}
 
-  // ⚠️ YOUR SPECIFIC IP IS SET HERE
-  const API_URL = "http://192.168.43.61:5000/api/auth/register";
+export default function LoginScreen(): React.JSX.Element {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const handleLogin = async () => {
+  const handleLogin = async (): Promise<void> => {
     // 1. Basic validation
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      console.log("Sending data to:", API_URL);
+      console.log("Sending data to:", AUTH_ENDPOINTS.REGISTER);
 
       // 2. The API Call
-      const response = await fetch(API_URL, {
+      const response = await fetch(AUTH_ENDPOINTS.REGISTER, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -30,7 +52,7 @@ export default function LoginScreen() {
         }),
       });
 
-      const data = await response.json();
+      const data: AuthResponse = await response.json();
 
       // 3. Handle Response
       if (data.success) {
@@ -38,7 +60,7 @@ export default function LoginScreen() {
         console.log("User Info:", data.user);
         // This is where we will navigate to the Home Screen later
       } else {
-        Alert.alert("Login Failed", data.message);
+        Alert.alert("Login Failed", data.message ?? "Unknown error occurred");
       }
     } catch (error) {
       Alert.alert(
@@ -46,6 +68,8 @@ export default function LoginScreen() {
         "Could not connect to server.\nCheck if your laptop server is running.",
       );
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -57,20 +81,26 @@ export default function LoginScreen() {
         style={styles.input}
         placeholder="Enter Email"
         value={email}
-        onChangeText={(text) => setEmail(text)}
+        onChangeText={(text: string) => setEmail(text)}
         autoCapitalize="none"
         keyboardType="email-address"
+        editable={!isLoading}
       />
 
       <TextInput
         style={styles.input}
         placeholder="Enter Password"
         value={password}
-        onChangeText={(text) => setPassword(text)}
+        onChangeText={(text: string) => setPassword(text)}
         secureTextEntry={true}
+        editable={!isLoading}
       />
 
-      <Button title="Sign In" onPress={handleLogin} />
+      <Button
+        title={isLoading ? "Signing In..." : "Sign In"}
+        onPress={handleLogin}
+        disabled={isLoading}
+      />
     </View>
   );
 }
