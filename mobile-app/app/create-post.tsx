@@ -26,6 +26,9 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { POST_ENDPOINTS } from "../src/config/api";
 
+// Import Auth Context for user session
+import { useAuth } from "../src/context/AuthContext";
+
 // Post categories
 const CATEGORIES = [
   "General",
@@ -36,17 +39,34 @@ const CATEGORIES = [
   "Memes",
 ];
 
-// Dummy user ID for testing (replace with real auth in Phase 4)
-const DUMMY_USER_ID = "697e42ecc42b21e774a425de";
-
 export default function CreatePostScreen() {
   const router = useRouter();
+  const { user } = useAuth();
 
   // State
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [category, setCategory] = useState("General");
   const [isUploading, setIsUploading] = useState(false);
+
+  // ====================================
+  // AUTH GUARD - Redirect if not logged in
+  // ====================================
+  if (!user) {
+    return (
+      <View style={styles.guardContainer}>
+        <Text style={styles.guardIcon}>🔒</Text>
+        <Text style={styles.guardTitle}>Not Logged In</Text>
+        <Text style={styles.guardSubtitle}>Please log in to create a post</Text>
+        <TouchableOpacity
+          style={styles.guardButton}
+          onPress={() => router.replace("/")}
+        >
+          <Text style={styles.guardButtonText}>Go to Login</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // ====================================
   // PICK IMAGE FROM GALLERY
@@ -114,7 +134,7 @@ export default function CreatePostScreen() {
       // Append other fields
       formData.append("caption", caption);
       formData.append("category", category);
-      formData.append("userId", DUMMY_USER_ID);
+      formData.append("userId", user.id);
 
       console.log("📤 Uploading to:", POST_ENDPOINTS.CREATE);
 
@@ -408,5 +428,40 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  // Auth Guard Styles
+  guardContainer: {
+    flex: 1,
+    backgroundColor: "#f5f7fa",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  guardIcon: {
+    fontSize: 60,
+    marginBottom: 20,
+  },
+  guardTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#1d3557",
+    marginBottom: 10,
+  },
+  guardSubtitle: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 30,
+    textAlign: "center",
+  },
+  guardButton: {
+    backgroundColor: "#e63946",
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 12,
+  },
+  guardButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

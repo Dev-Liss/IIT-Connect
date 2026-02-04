@@ -19,12 +19,21 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 
 // Import API configuration - TEAM: Update the IP in this file!
 import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
 
+// Import Auth Context for session management
+import { useAuth } from "../src/context/AuthContext";
+
 export default function AuthScreen() {
+  // ====================================
+  // HOOKS
+  // ====================================
+  const router = useRouter();
+  const { login } = useAuth();
+
   // ====================================
   // STATE MANAGEMENT
   // ====================================
@@ -93,9 +102,11 @@ export default function AuthScreen() {
           // Clear form for login
           setPassword("");
         } else {
-          Alert.alert("👋 Welcome!", `Hello, ${data.user.username}!`);
+          // Save user to global auth state
+          await login(data.user);
           console.log("✅ Logged in user:", data.user);
-          // TODO: Navigate to home screen in Phase 3
+          // Navigate to feed screen
+          router.replace("/feed");
         }
       } else {
         Alert.alert("❌ Error", data.message);
