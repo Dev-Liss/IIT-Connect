@@ -20,10 +20,13 @@ import {
   ActivityIndicator,
 } from "react-native";
 
+import { useRouter } from "expo-router";
+
 // Import API configuration - TEAM: Update the IP in this file!
 import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
 
 export default function AuthScreen() {
+  const router = useRouter();
   // ====================================
   // STATE MANAGEMENT
   // ====================================
@@ -92,9 +95,11 @@ export default function AuthScreen() {
           // Clear form for login
           setPassword("");
         } else {
-          Alert.alert("👋 Welcome!", `Hello, ${data.user.username}!`);
+          // Alert.alert("👋 Welcome!", `Hello, ${data.user.username}!`);
           console.log("✅ Logged in user:", data.user);
-          // TODO: Navigate to home screen in Phase 3
+
+          // Navigate to Timetable
+          router.replace("/timetable" as any);
         }
       } else {
         Alert.alert("❌ Error", data.message);
@@ -104,10 +109,10 @@ export default function AuthScreen() {
       Alert.alert(
         "🔌 Connection Error",
         "Could not connect to server.\n\n" +
-          "Check:\n" +
-          "1. Backend is running (node server.js)\n" +
-          "2. IP address in src/config/api.ts is correct\n" +
-          "3. Phone and laptop on same WiFi",
+        "Check:\n" +
+        "1. Backend is running (node server.js)\n" +
+        "2. IP address in src/config/api.ts is correct\n" +
+        "3. Phone and laptop on same WiFi",
       );
     } finally {
       setIsLoading(false);
