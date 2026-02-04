@@ -108,3 +108,35 @@ exports.createTimetableEntry = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc    Get timetable by group (Path Parameter)
+ * @route   GET /api/timetable/:tutGroup
+ * @access  Public
+ */
+exports.getTimetableByGroup = async (req, res) => {
+  try {
+    const { tutGroup } = req.params;
+
+    if (!tutGroup) {
+      return res.status(400).json({
+        success: false,
+        message: "Tutorial group parameter is required",
+      });
+    }
+
+    const timetable = await TimetableEntry.find({ tutGroup });
+
+    res.status(200).json({
+      success: true,
+      count: timetable.length,
+      data: timetable,
+    });
+  } catch (error) {
+    console.error("Error fetching timetable by group:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};

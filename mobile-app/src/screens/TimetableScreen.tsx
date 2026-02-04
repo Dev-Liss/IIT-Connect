@@ -47,29 +47,34 @@ const HOURS = [
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const SLOT_HEIGHT = 80; // Height for 1 hour slot
 
+import ModalDropdown from "react-native-modal-dropdown";
+
+const TUTORIAL_GROUPS = ["CS-2A", "CS-2B", "CS-2C"];
+
 export default function TimetableScreen() {
     const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
     const [todayClasses, setTodayClasses] = useState<TimetableEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<"weekly" | "today">("weekly");
     const [activeTab, setActiveTab] = useState("Timetable");
+    const [selectedGroup, setSelectedGroup] = useState(TUTORIAL_GROUPS[0]);
 
     const todayIndex = new Date().getDay();
     const currentDay = DAYS[todayIndex - 1] || "";
 
     useEffect(() => {
         if (view === "weekly") {
-            fetchTimetable();
+            fetchTimetable(selectedGroup);
         } else {
-            fetchTodayTimetable();
+            fetchTodayTimetable(selectedGroup);
         }
-    }, [view]);
+    }, [view, selectedGroup]);
 
-    const fetchTimetable = async () => {
+    const fetchTimetable = async (group: string) => {
         setLoading(true);
         try {
             const response = await fetch(
-                `${API_BASE_URL}/timetable?tutGroup=${user.tutGroup}`,
+                `${API_BASE_URL}/timetable/${group}`,
             );
             const data = await response.json();
 
@@ -86,11 +91,11 @@ export default function TimetableScreen() {
         }
     };
 
-    const fetchTodayTimetable = async () => {
+    const fetchTodayTimetable = async (group: string) => {
         setLoading(true);
         try {
             const response = await fetch(
-                `${API_BASE_URL}/timetable/today?tutGroup=${user.tutGroup}`,
+                `${API_BASE_URL}/timetable/today?tutGroup=${group}`,
             );
             const data = await response.json();
 
@@ -156,9 +161,21 @@ export default function TimetableScreen() {
             <View style={styles.header}>
                 <View>
                     <Text style={styles.headerTitle}>My Timetable</Text>
-                    <View style={styles.badge}>
-                        <Text style={styles.badgeText}>Tutorial Group: {user.tutGroup}</Text>
-                    </View>
+                    <ModalDropdown
+                        options={TUTORIAL_GROUPS}
+                        defaultValue={selectedGroup}
+                        onSelect={(index: number, value: string) => setSelectedGroup(value)}
+                        style={styles.dropdownButton}
+                        textStyle={styles.dropdownButtonText}
+                        dropdownStyle={styles.dropdownList}
+                        dropdownTextStyle={styles.dropdownListText}
+                        dropdownTextHighlightStyle={styles.dropdownHighlightText}
+                    >
+                        <View style={styles.dropdownContainer}>
+                            <Text style={styles.badgeText}>Tutorial Group: {selectedGroup}</Text>
+                            <Ionicons name="chevron-down" size={12} color="#f9252b" style={{ marginLeft: 4 }} />
+                        </View>
+                    </ModalDropdown>
                 </View>
                 <TouchableOpacity
                     style={styles.calendarButton}
@@ -465,5 +482,44 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 18,
         color: "#888",
+    },
+    dropdownButton: {
+        marginTop: 4,
+        alignSelf: 'flex-start',
+    },
+    dropdownContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: "rgba(249, 37, 43, 0.1)", // Light red background
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: "#f9252b",
+    },
+    dropdownButtonText: {
+        fontSize: 14,
+    },
+    dropdownList: {
+        width: 150,
+        height: 'auto',
+        maxHeight: 120, // Limit height
+        borderRadius: 8,
+        marginTop: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    dropdownListText: {
+        fontSize: 14,
+        color: "#333",
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+    },
+    dropdownHighlightText: {
+        color: "#f9252b",
+        fontWeight: "bold",
     },
 });
