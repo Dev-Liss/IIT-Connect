@@ -37,6 +37,10 @@ app.get("/api/health", (req, res) => {
 // Authentication routes (login, register)
 app.use("/api/auth", authRoutes);
 
+// Timetable routes
+const timetableRoutes = require("./routes/timetable");
+app.use("/api/timetable", timetableRoutes);
+
 // ====================================
 // DATABASE CONNECTION & SERVER START
 // ====================================
