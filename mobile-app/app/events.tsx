@@ -217,9 +217,9 @@ const AnnouncementCard: React.FC<{ announcement: Announcement }> = ({
     return (
         <View style={styles.announcementCard}>
             <View style={styles.announcementHeader}>
-                {/* Red Bell Icon */}
+                {/* Blue Bell Icon */}
                 <View style={styles.announcementIcon}>
-                    <Ionicons name="notifications" size={20} color="#e63946" />
+                    <Ionicons name="notifications" size={20} color="#1d3557" />
                 </View>
 
                 <View style={styles.announcementHeaderText}>
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 22,
         fontWeight: "bold",
-        color: "#1d3557",
+        color: "#000000",
     },
     bellButton: {
         padding: 8,
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
         fontWeight: "500",
     },
     tabTextActive: {
-        color: "#1d3557",
+        color: "#000000",
         fontWeight: "600",
     },
     loadingContainer: {
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 17,
         fontWeight: "700",
-        color: "#1d3557",
+        color: "#000000",
     },
     eventDetail: {
         flexDirection: "row",
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     announcementTitle: {
         fontSize: 16,
         fontWeight: "700",
-        color: "#1d3557",
+        color: "#000000",
         marginBottom: 3,
     },
     announcementMeta: {
