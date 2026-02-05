@@ -174,23 +174,15 @@ const sampleAnnouncements: Announcement[] = [
 // EVENT CARD COMPONENT
 // ====================================
 const EventCard: React.FC<{ event: Event }> = ({ event }) => {
-    const categoryLabel =
-        event.category.charAt(0).toUpperCase() + event.category.slice(1);
-
     return (
         <View style={styles.eventCard}>
-            {/* Category Badge */}
-            <View
-                style={[
-                    styles.categoryBadge,
-                    { backgroundColor: categoryColors[event.category] },
-                ]}
-            >
-                <Text style={styles.categoryText}>{categoryLabel}</Text>
+            {/* Header with Icon and Title */}
+            <View style={styles.eventHeader}>
+                <View style={styles.eventIcon}>
+                    <Ionicons name="calendar" size={20} color="#e63946" />
+                </View>
+                <Text style={styles.eventTitle}>{event.title}</Text>
             </View>
-
-            {/* Event Title */}
-            <Text style={styles.eventTitle}>{event.title}</Text>
 
             {/* Event Details */}
             <View style={styles.eventDetail}>
@@ -522,23 +514,25 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 3,
     },
-    categoryBadge: {
-        alignSelf: "flex-start",
-        paddingVertical: 5,
-        paddingHorizontal: 12,
-        borderRadius: 6,
+    eventHeader: {
+        flexDirection: "row",
+        alignItems: "flex-start",
         marginBottom: 12,
     },
-    categoryText: {
-        color: "#fff",
-        fontSize: 12,
-        fontWeight: "600",
+    eventIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#fef2f2",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
     },
     eventTitle: {
+        flex: 1,
         fontSize: 17,
         fontWeight: "700",
         color: "#1d3557",
-        marginBottom: 12,
     },
     eventDetail: {
         flexDirection: "row",
