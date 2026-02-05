@@ -1,15 +1,15 @@
 /**
  * ====================================
- * SOCIAL FEED SCREEN
+ * HOME SCREEN (FEED)
  * ====================================
- * Displays all posts in a scrollable feed.
+ * Main home tab displaying the social feed.
  *
  * Features:
+ * - Custom Header with "CoNNect" logo
+ * - Create post & notification icons
  * - Fetches posts from API on mount
  * - Pull-to-refresh functionality
- * - Loading spinner
- * - Empty state handling
- * - Error handling with retry
+ * - Loading, empty, and error states
  */
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -23,11 +23,12 @@ import {
   TouchableOpacity,
   Platform,
   StatusBar,
+  SafeAreaView,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import PostCard from "../src/components/PostCard";
-import { POST_ENDPOINTS } from "../src/config/api";
+import PostCard from "../../src/components/PostCard";
+import { POST_ENDPOINTS } from "../../src/config/api";
 
 // Post type (matches backend response)
 interface Post {
@@ -47,7 +48,7 @@ interface Post {
   createdAt: string;
 }
 
-export default function FeedScreen() {
+export default function HomeScreen() {
   const router = useRouter();
 
   // State
@@ -98,24 +99,28 @@ export default function FeedScreen() {
   };
 
   // ====================================
-  // RENDER HEADER
+  // RENDER CUSTOM HEADER
   // ====================================
   const renderHeader = () => (
     <View style={styles.header}>
-      <Text style={styles.headerTitle}>IIT Connect</Text>
+      {/* Left: CoNNect Logo */}
+      <Text style={styles.headerLogo}>
+        Co<Text style={styles.headerLogoHighlight}>NN</Text>ect
+      </Text>
+
+      {/* Right: Action Icons */}
       <View style={styles.headerActions}>
+        {/* Create Post Button */}
         <TouchableOpacity
           style={styles.headerButton}
-          onPress={() => router.push("/create-post" as any)}
+          onPress={() => router.push("/create-post")}
         >
-          <Ionicons name="add-circle-outline" size={28} color="#262626" />
+          <Feather name="plus" size={24} color="#262626" />
         </TouchableOpacity>
+
+        {/* Notifications Button */}
         <TouchableOpacity style={styles.headerButton}>
-          <Ionicons
-            name="chatbubble-ellipses-outline"
-            size={26}
-            color="#262626"
-          />
+          <Ionicons name="notifications-outline" size={24} color="#262626" />
         </TouchableOpacity>
       </View>
     </View>
@@ -133,7 +138,7 @@ export default function FeedScreen() {
       </Text>
       <TouchableOpacity
         style={styles.createButton}
-        onPress={() => router.push("/create-post" as any)}
+        onPress={() => router.push("/create-post")}
       >
         <Ionicons name="add" size={20} color="#fff" />
         <Text style={styles.createButtonText}>Create Post</Text>
@@ -161,14 +166,14 @@ export default function FeedScreen() {
   // ====================================
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         {renderHeader()}
         <View style={styles.loadingContent}>
-          <ActivityIndicator size="large" color="#e63946" />
+          <ActivityIndicator size="large" color="#f9252b" />
           <Text style={styles.loadingText}>Loading feed...</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -177,11 +182,11 @@ export default function FeedScreen() {
   // ====================================
   if (error && posts.length === 0) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         {renderHeader()}
         {renderErrorState()}
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -189,7 +194,7 @@ export default function FeedScreen() {
   // RENDER FEED
   // ====================================
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       {renderHeader()}
 
@@ -208,8 +213,8 @@ export default function FeedScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            colors={["#e63946"]}
-            tintColor="#e63946"
+            colors={["#f9252b"]}
+            tintColor="#f9252b"
           />
         }
         ListEmptyComponent={renderEmptyState}
@@ -218,7 +223,7 @@ export default function FeedScreen() {
           posts.length === 0 ? styles.emptyList : undefined
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -230,31 +235,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fafafa",
   },
-  // Header
+  // Custom Header
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === "ios" ? 50 : StatusBar.currentHeight! + 10,
-    paddingBottom: 10,
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10,
+    paddingBottom: 12,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
     borderBottomColor: "#efefef",
   },
-  headerTitle: {
+  headerLogo: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#e63946",
-    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    color: "#262626",
+    letterSpacing: 0.5,
+  },
+  headerLogoHighlight: {
+    color: "#f9252b",
+    fontWeight: "800",
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
   },
   headerButton: {
-    marginLeft: 20,
-    padding: 2,
+    marginLeft: 18,
+    padding: 4,
   },
   // Loading
   loadingContainer: {
@@ -299,7 +308,7 @@ const styles = StyleSheet.create({
   createButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#e63946",
+    backgroundColor: "#f9252b",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

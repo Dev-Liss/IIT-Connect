@@ -19,7 +19,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 
 // Import API configuration - TEAM: Update the IP in this file!
 import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
@@ -105,8 +105,8 @@ export default function AuthScreen() {
           // Save user to global auth state
           await login(data.user);
           console.log("✅ Logged in user:", data.user);
-          // Navigate to feed screen
-          router.replace("/feed");
+          // Navigate to home (tabs)
+          router.replace("/(tabs)");
         }
       } else {
         Alert.alert("❌ Error", data.message);
@@ -261,22 +261,6 @@ export default function AuthScreen() {
         <TouchableOpacity style={styles.debugButton} onPress={testConnection}>
           <Text style={styles.debugText}>🔌 Test Server Connection</Text>
         </TouchableOpacity>
-
-        {/* Create Post Link - For Phase 3 Testing */}
-        <Link href={"/create-post" as any} asChild>
-          <TouchableOpacity style={styles.createPostButton}>
-            <Text style={styles.createPostText}>
-              📸 Create a Post (Phase 3)
-            </Text>
-          </TouchableOpacity>
-        </Link>
-
-        {/* View Feed Link - For Phase 3 Testing */}
-        <Link href={"/feed" as any} asChild>
-          <TouchableOpacity style={styles.createPostButton}>
-            <Text style={styles.createPostText}>📱 View Feed (Phase 3)</Text>
-          </TouchableOpacity>
-        </Link>
       </ScrollView>
     </KeyboardAvoidingView>
   );
