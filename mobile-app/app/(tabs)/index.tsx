@@ -28,6 +28,7 @@ import {
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import PostCard from "../../src/components/PostCard";
+import StoriesRail from "../../src/components/StoriesRail";
 import { POST_ENDPOINTS } from "../../src/config/api";
 
 // Post type (matches backend response)
@@ -211,6 +212,7 @@ export default function HomeScreen() {
             onShare={(id) => console.log("Share:", id)}
           />
         )}
+        ListHeaderComponent={<StoriesRail />}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
