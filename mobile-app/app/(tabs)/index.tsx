@@ -12,7 +12,7 @@
  * - Loading, empty, and error states
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -26,7 +26,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import PostCard from "../../src/components/PostCard";
 import { POST_ENDPOINTS } from "../../src/config/api";
 
@@ -88,10 +88,12 @@ export default function HomeScreen() {
     }
   }, []);
 
-  // Fetch on mount
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+  // Fetch posts when screen comes into focus (fixes stale data issue)
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, [fetchPosts]),
+  );
 
   // Pull to refresh handler
   const onRefresh = () => {
