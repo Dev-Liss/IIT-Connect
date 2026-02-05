@@ -41,6 +41,10 @@ app.use("/api/auth", authRoutes);
 const timetableRoutes = require("./routes/timetable");
 app.use("/api/timetable", timetableRoutes);
 
+// Kuppi routes
+const kuppiRoutes = require("./routes/kuppi");
+app.use("/api/kuppi", kuppiRoutes);
+
 // ====================================
 // DATABASE CONNECTION & SERVER START
 // ====================================

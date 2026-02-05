@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { API_BASE_URL } from "../config/api";
 import ClassCard from "../components/ClassCard";
 import TodayClassCard from "../components/TodayClassCard";
+import KuppiScreen from "./KuppiScreen";
 
 // Mock user - in real app, get from AuthContext
 const user = {
@@ -160,22 +161,26 @@ export default function TimetableScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <View>
-                    <Text style={styles.headerTitle}>My Timetable</Text>
-                    <ModalDropdown
-                        options={TUTORIAL_GROUPS}
-                        defaultValue={selectedGroup}
-                        onSelect={(index: number, value: string) => setSelectedGroup(value)}
-                        style={styles.dropdownButton}
-                        textStyle={styles.dropdownButtonText}
-                        dropdownStyle={styles.dropdownList}
-                        dropdownTextStyle={styles.dropdownListText}
-                        dropdownTextHighlightStyle={styles.dropdownHighlightText}
-                    >
-                        <View style={styles.dropdownContainer}>
-                            <Text style={styles.badgeText}>Tutorial Group: {selectedGroup}</Text>
-                            <Ionicons name="chevron-down" size={12} color="#f9252b" style={{ marginLeft: 4 }} />
-                        </View>
-                    </ModalDropdown>
+                    <Text style={styles.headerTitle}>
+                        {activeTab === "Kuppi" ? "Kuppi Sessions" : "My Timetable"}
+                    </Text>
+                    {activeTab === "Timetable" && (
+                        <ModalDropdown
+                            options={TUTORIAL_GROUPS}
+                            defaultValue={selectedGroup}
+                            onSelect={(index: number, value: string) => setSelectedGroup(value)}
+                            style={styles.dropdownButton}
+                            textStyle={styles.dropdownButtonText}
+                            dropdownStyle={styles.dropdownList}
+                            dropdownTextStyle={styles.dropdownListText}
+                            dropdownTextHighlightStyle={styles.dropdownHighlightText}
+                        >
+                            <View style={styles.dropdownContainer}>
+                                <Text style={styles.badgeText}>Tutorial Group: {selectedGroup}</Text>
+                                <Ionicons name="chevron-down" size={12} color="#f9252b" style={{ marginLeft: 4 }} />
+                            </View>
+                        </ModalDropdown>
+                    )}
                 </View>
                 <TouchableOpacity
                     style={styles.calendarButton}
@@ -213,91 +218,101 @@ export default function TimetableScreen() {
             </View>
 
             {/* Content */}
-            {loading ? (
-                <ActivityIndicator
-                    size="large"
-                    color="#f9252b"
-                    style={{ marginTop: 50 }}
-                />
-            ) : view === "weekly" ? (
-                // WEEKLY GRID VIEW
-                <View style={styles.gridContainer}>
-                    {/* Header Row (Days) */}
-                    <View style={styles.headerRow}>
-                        <View style={styles.timeColumnHeader} />
-                        {DAYS.map((day) => (
-                            <View key={day} style={styles.dayHeader}>
-                                <Text
-                                    style={[
-                                        styles.dayText,
-                                        day === currentDay && styles.currentDayText,
-                                    ]}
-                                >
-                                    {day}
-                                </Text>
-                            </View>
-                        ))}
-                    </View>
-
-                    <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
-                        <View style={{ flexDirection: "row" }}>
-                            {/* Time Column */}
-                            <View style={styles.timeColumn}>
-                                {HOURS.map((time) => (
-                                    <View key={time} style={styles.timeSlot}>
-                                        <Text style={styles.timeText}>
-                                            {parseInt(time.split(":")[0]) > 12
-                                                ? `${parseInt(time.split(":")[0]) - 12} PM`
-                                                : `${parseInt(time.split(":")[0])} AM`}
+            <View style={{ flex: 1 }}>
+                {activeTab === "Timetable" ? (
+                    loading ? (
+                        <ActivityIndicator
+                            size="large"
+                            color="#f9252b"
+                            style={{ marginTop: 50 }}
+                        />
+                    ) : view === "weekly" ? (
+                        // WEEKLY GRID VIEW
+                        <View style={styles.gridContainer}>
+                            {/* Header Row (Days) */}
+                            <View style={styles.headerRow}>
+                                <View style={styles.timeColumnHeader} />
+                                {DAYS.map((day) => (
+                                    <View key={day} style={styles.dayHeader}>
+                                        <Text
+                                            style={[
+                                                styles.dayText,
+                                                day === currentDay && styles.currentDayText,
+                                            ]}
+                                        >
+                                            {day}
                                         </Text>
                                     </View>
                                 ))}
                             </View>
 
-                            {/* Grid Columns */}
-                            {DAYS.map((day) => (
-                                <View key={day} style={styles.dayColumn}>
-                                    {/* Grid Lines */}
-                                    {HOURS.map((h, i) => (
-                                        <View key={i} style={styles.gridLine} />
-                                    ))}
-                                    {/* Cards */}
-                                    {renderClassCards(day)}
-                                </View>
-                            ))}
-                        </View>
-                    </ScrollView>
-                </View>
-            ) : (
-                // TODAY LIST VIEW
-                <View style={styles.listContainer}>
-                    <View style={styles.dayHeaderSection}>
-                        <Text style={styles.dayTitle}>{currentDay || "Today"}</Text>
-                        <Text style={styles.classCount}>
-                            {todayClasses.length} classes today
-                        </Text>
-                    </View>
+                            <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+                                <View style={{ flexDirection: "row" }}>
+                                    {/* Time Column */}
+                                    <View style={styles.timeColumn}>
+                                        {HOURS.map((time) => (
+                                            <View key={time} style={styles.timeSlot}>
+                                                <Text style={styles.timeText}>
+                                                    {parseInt(time.split(":")[0]) > 12
+                                                        ? `${parseInt(time.split(":")[0]) - 12} PM`
+                                                        : `${parseInt(time.split(":")[0])} AM`}
+                                                </Text>
+                                            </View>
+                                        ))}
+                                    </View>
 
-                    <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
-                        {todayClasses.length > 0 ? (
-                            todayClasses.map((entry) => (
-                                <TodayClassCard
-                                    key={entry._id}
-                                    courseCode={entry.courseCode}
-                                    courseName={entry.courseName || ""}
-                                    startTime={entry.startTime}
-                                    endTime={entry.endTime}
-                                    location={entry.location}
-                                />
-                            ))
-                        ) : (
-                            <View style={styles.emptyState}>
-                                <Text style={styles.emptyText}>No classes today 🎉</Text>
+                                    {/* Grid Columns */}
+                                    {DAYS.map((day) => (
+                                        <View key={day} style={styles.dayColumn}>
+                                            {/* Grid Lines */}
+                                            {HOURS.map((h, i) => (
+                                                <View key={i} style={styles.gridLine} />
+                                            ))}
+                                            {/* Cards */}
+                                            {renderClassCards(day)}
+                                        </View>
+                                    ))}
+                                </View>
+                            </ScrollView>
+                        </View>
+                    ) : (
+                        // TODAY LIST VIEW
+                        <View style={styles.listContainer}>
+                            <View style={styles.dayHeaderSection}>
+                                <Text style={styles.dayTitle}>{currentDay || "Today"}</Text>
+                                <Text style={styles.classCount}>
+                                    {todayClasses.length} classes today
+                                </Text>
                             </View>
-                        )}
-                    </ScrollView>
-                </View>
-            )}
+
+                            <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+                                {todayClasses.length > 0 ? (
+                                    todayClasses.map((entry) => (
+                                        <TodayClassCard
+                                            key={entry._id}
+                                            courseCode={entry.courseCode}
+                                            courseName={entry.courseName || ""}
+                                            startTime={entry.startTime}
+                                            endTime={entry.endTime}
+                                            location={entry.location}
+                                        />
+                                    ))
+                                ) : (
+                                    <View style={styles.emptyState}>
+                                        <Text style={styles.emptyText}>No classes today 🎉</Text>
+                                    </View>
+                                )}
+                            </ScrollView>
+                        </View>
+                    )
+                ) : activeTab === "Kuppi" ? (
+                    <KuppiScreen />
+                ) : (
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyText}>Resources Coming Soon 📚</Text>
+                    </View>
+                )}
+            </View>
 
             {/* Bottom Nav Placeholder (Visual Only) */}
             <View style={styles.bottomNav}>

@@ -31,6 +31,14 @@ export const AUTH_ENDPOINTS = {
   REGISTER: `${API_BASE_URL}/auth/register`,
 };
 
+// Kuppi endpoints
+// Kuppi endpoints
+export const KUPPI_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/kuppi`,
+  CREATE: `${API_BASE_URL}/kuppi/create`,
+  JOIN: (id: string) => `${API_BASE_URL}/kuppi/join/${id}`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
