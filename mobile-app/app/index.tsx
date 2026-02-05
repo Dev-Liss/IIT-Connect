@@ -22,6 +22,7 @@ import {
 
 // Import API configuration - TEAM: Update the IP in this file!
 import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
+import { router } from "expo-router";
 
 export default function AuthScreen() {
   // ====================================
@@ -94,7 +95,8 @@ export default function AuthScreen() {
         } else {
           Alert.alert("👋 Welcome!", `Hello, ${data.user.username}!`);
           console.log("✅ Logged in user:", data.user);
-          // TODO: Navigate to home screen in Phase 3
+          // Navigate to events screen
+          router.replace("/events");
         }
       } else {
         Alert.alert("❌ Error", data.message);
@@ -104,10 +106,10 @@ export default function AuthScreen() {
       Alert.alert(
         "🔌 Connection Error",
         "Could not connect to server.\n\n" +
-          "Check:\n" +
-          "1. Backend is running (node server.js)\n" +
-          "2. IP address in src/config/api.ts is correct\n" +
-          "3. Phone and laptop on same WiFi",
+        "Check:\n" +
+        "1. Backend is running (node server.js)\n" +
+        "2. IP address in src/config/api.ts is correct\n" +
+        "3. Phone and laptop on same WiFi",
       );
     } finally {
       setIsLoading(false);

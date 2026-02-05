@@ -17,7 +17,7 @@
  */
 
 // ⚠️ CHANGE THIS TO YOUR LAPTOP'S IP ADDRESS!
-const LAPTOP_IP = "10.31.11.64";
+const LAPTOP_IP = "192.168.8.109";
 
 // Backend port (should match PORT in backend/.env)
 const PORT = "5000";
@@ -31,12 +31,32 @@ export const AUTH_ENDPOINTS = {
   REGISTER: `${API_BASE_URL}/auth/register`,
 };
 
+// Events endpoints
+export const EVENTS_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/events`,
+  GET_ONE: (id: string) => `${API_BASE_URL}/events/${id}`,
+  CREATE: `${API_BASE_URL}/events`,
+  UPDATE: (id: string) => `${API_BASE_URL}/events/${id}`,
+  DELETE: (id: string) => `${API_BASE_URL}/events/${id}`,
+};
+
+// Announcements endpoints
+export const ANNOUNCEMENTS_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/announcements`,
+  GET_ONE: (id: string) => `${API_BASE_URL}/announcements/${id}`,
+  CREATE: `${API_BASE_URL}/announcements`,
+  UPDATE: (id: string) => `${API_BASE_URL}/announcements/${id}`,
+  DELETE: (id: string) => `${API_BASE_URL}/announcements/${id}`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
 export default {
   API_BASE_URL,
   AUTH_ENDPOINTS,
+  EVENTS_ENDPOINTS,
+  ANNOUNCEMENTS_ENDPOINTS,
   HEALTH_CHECK_URL,
   LAPTOP_IP,
   PORT,
