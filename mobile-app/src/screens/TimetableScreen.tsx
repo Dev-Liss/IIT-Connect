@@ -182,16 +182,18 @@ export default function TimetableScreen() {
                         </ModalDropdown>
                     )}
                 </View>
-                <TouchableOpacity
-                    style={styles.calendarButton}
-                    onPress={() => setView(view === "weekly" ? "today" : "weekly")}
-                >
-                    <Ionicons
-                        name={view === "weekly" ? "list-outline" : "grid-outline"}
-                        size={24}
-                        color="#555"
-                    />
-                </TouchableOpacity>
+                {activeTab === "Timetable" && (
+                    <TouchableOpacity
+                        style={styles.calendarButton}
+                        onPress={() => setView(view === "weekly" ? "today" : "weekly")}
+                    >
+                        <Ionicons
+                            name={view === "weekly" ? "list-outline" : "grid-outline"}
+                            size={24}
+                            color="#555"
+                        />
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Tabs */}

@@ -184,18 +184,9 @@ export default function KuppiScreen() {
         const userIsOrganizer = isOrganizer(session);
 
         return (
-            <View key={session._id} style={styles.card}>
+            <View key={session._id} style={[styles.card, isMySession && styles.mySessionCard]}>
                 <View style={styles.cardHeader}>
-                    <View style={styles.tagContainer}>
-                        <View style={styles.subjectTag}>
-                            <Text style={styles.subjectText}>{session.subject}</Text>
-                        </View>
-                        {joined && !isMySession && (
-                            <View style={styles.joinedBadge}>
-                                <Text style={styles.joinedText}>✓ Joined</Text>
-                            </View>
-                        )}
-                    </View>
+                    <Text style={styles.cardTitle}>{session.title}</Text>
                     {userIsOrganizer && isMySession && (
                         <View style={styles.organizerBadge}>
                             <Text style={styles.organizerText}>ORGANIZER</Text>
@@ -203,7 +194,16 @@ export default function KuppiScreen() {
                     )}
                 </View>
 
-                <Text style={styles.cardTitle}>{session.title}</Text>
+                <View style={styles.tagContainer}>
+                    <View style={styles.subjectTag}>
+                        <Text style={styles.subjectText}>{session.subject}</Text>
+                    </View>
+                    {joined && !isMySession && (
+                        <View style={styles.joinedBadge}>
+                            <Text style={styles.joinedText}>✓ Joined</Text>
+                        </View>
+                    )}
+                </View>
 
                 <Text style={styles.timeText}>
                     {session.date}, {session.time} • {session.sessionMode === 'Online' ? 'Online' : session.location}
@@ -230,10 +230,10 @@ export default function KuppiScreen() {
                     ) : (
                         !joined ? (
                             <TouchableOpacity
-                                style={styles.actionButton}
+                                style={styles.joinButtonSmall}
                                 onPress={() => handleJoinSession(session)}
                             >
-                                <Text style={styles.actionButtonText}>Join</Text>
+                                <Text style={styles.joinButtonText}>Join</Text>
                             </TouchableOpacity>
                         ) : (
                             <TouchableOpacity style={[styles.actionButton, styles.disabledButton]} disabled>
@@ -566,6 +566,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingBottom: 40,
+        paddingHorizontal: 20, // Align text and cards with page margins
     },
     sectionTitle: {
         fontSize: 18,
@@ -582,8 +583,8 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.WHITE,
         borderRadius: 16,
         padding: 16,
-        marginBottom: 12, // Reduced bottom margin
-        marginVertical: 4, // Added vertical separation for breathing room
+        marginBottom: 12,
+        marginVertical: 4,
         // Light Shadow
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
@@ -592,6 +593,10 @@ const styles = StyleSheet.create({
         elevation: 2,
         borderWidth: 1,
         borderColor: "#f0f0f0",
+    },
+    mySessionCard: {
+        borderLeftWidth: 4,
+        borderLeftColor: COLORS.RED,
     },
     cardHeader: {
         flexDirection: "row",
@@ -678,13 +683,18 @@ const styles = StyleSheet.create({
         backgroundColor: "#e0e0e0",
         paddingHorizontal: 24,
         paddingVertical: 10,
-        borderRadius: 20, // Rounded pill shape as seen in typical view buttons, or 12 for strict full-width if requested, but "View" is small in card.
-        // User asked for "Align all primary buttons (Create, Join, View) to be full-width", 
-        // BUT typical cards have small buttons. I will make Create full width. Card buttons usually small. 
-        // Rereading: "Align all primary buttons... to be full-width". 
-        // If I make card buttons full width, it breaks layout. I'll stick to pill for card buttons but make them look premium.
-        // Wait, "Create, Join, View" primary buttons. 
-        // I'll update the MODAL Create/Join buttons to be full width. Card buttons might be better as pills.
+        borderRadius: 20,
+    },
+    joinButtonSmall: {
+        backgroundColor: COLORS.RED,
+        paddingHorizontal: 24,
+        paddingVertical: 10,
+        borderRadius: 20,
+    },
+    joinButtonText: {
+        color: "white",
+        fontWeight: "bold",
+        fontSize: 14,
     },
     disabledButton: {
         backgroundColor: COLORS.LIGHT_GREY,
