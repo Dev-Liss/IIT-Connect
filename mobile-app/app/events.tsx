@@ -233,7 +233,7 @@ const AnnouncementCard: React.FC<{ announcement: Announcement }> = ({
                 <View style={styles.announcementHeaderText}>
                     <Text style={styles.announcementTitle}>{announcement.title}</Text>
                     <Text style={styles.announcementMeta}>
-                        {announcement.source} • {getTimeAgo(announcement.createdAt)}
+                        {getTimeAgo(announcement.createdAt)}
                     </Text>
                 </View>
             </View>
