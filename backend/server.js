@@ -45,6 +45,11 @@ app.use("/api/timetable", timetableRoutes);
 const kuppiRoutes = require("./routes/kuppi");
 app.use("/api/kuppi", kuppiRoutes);
 
+// Resource routes
+const resourceRoutes = require("./routes/resources");
+app.use("/api/resources", resourceRoutes);
+
+
 // ====================================
 // DATABASE CONNECTION & SERVER START
 // ====================================
