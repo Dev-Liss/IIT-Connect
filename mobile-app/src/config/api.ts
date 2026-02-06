@@ -39,12 +39,19 @@ export const KUPPI_ENDPOINTS = {
   JOIN: (id: string) => `${API_BASE_URL}/kuppi/join/${id}`,
 };
 
+// Resource endpoints
+export const RESOURCE_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/resources/all`,
+  UPLOAD: `${API_BASE_URL}/resources/upload`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
 export default {
   API_BASE_URL,
   AUTH_ENDPOINTS,
+  RESOURCE_ENDPOINTS,
   HEALTH_CHECK_URL,
   LAPTOP_IP,
   PORT,

@@ -13,6 +13,7 @@ import { API_BASE_URL } from "../config/api";
 import ClassCard from "../components/ClassCard";
 import TodayClassCard from "../components/TodayClassCard";
 import KuppiScreen from "./KuppiScreen";
+import ResourcesScreen from "./ResourcesScreen";
 
 // Mock user - in real app, get from AuthContext
 const user = {
@@ -162,7 +163,11 @@ export default function TimetableScreen() {
             <View style={styles.header}>
                 <View>
                     <Text style={styles.headerTitle}>
-                        {activeTab === "Kuppi" ? "Kuppi Sessions" : "My Timetable"}
+                        {activeTab === "Kuppi"
+                            ? "Kuppi Sessions"
+                            : activeTab === "Resources"
+                                ? "Resource Library"
+                                : "My Timetable"}
                     </Text>
                     {activeTab === "Timetable" && (
                         <ModalDropdown
@@ -310,9 +315,7 @@ export default function TimetableScreen() {
                 ) : activeTab === "Kuppi" ? (
                     <KuppiScreen />
                 ) : (
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyText}>Resources Coming Soon 📚</Text>
-                    </View>
+                    <ResourcesScreen />
                 )}
             </View>
 
