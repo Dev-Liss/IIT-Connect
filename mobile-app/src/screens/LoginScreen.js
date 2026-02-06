@@ -14,22 +14,44 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function LoginScreen({ onSignUp }) {
+export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   // ⚠️ YOUR SPECIFIC IP IS SET HERE
-  const API_URL = "http://192.168.43.61:5000/api/auth/login";
+  const API_URL = "http://192.168.1.74:5000/api/auth/login";
 
   const handleLogin = async () => {
+    const trimmedEmail = email.trim();
     // 1. Basic validation
-    if (!email || !password) {
+    if (!trimmedEmail || !password) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
+    // Suggest IIT email if domain is common or not IIT
+    if (!trimmedEmail.toLowerCase().endsWith("@iit.ac.lk")) {
+      // Since we don't know if the user is a student/lecture or alumni here,
+      // we should warn them but maybe allow if they are alumni?
+      // User said: "doesn't go to the next page until they enter iit mail"
+      // Let's implement a prompt.
+      Alert.alert(
+        "IIT Email Required",
+        "Students and Lecturers must use their official @iit.ac.lk email. Are you an Alumni using a personal mail?",
+        [
+          { text: "No, I'm a Student/Lecture", onPress: () => { }, style: "cancel" },
+          { text: "Yes, I'm an Alumni", onPress: () => performLogin(trimmedEmail) }
+        ]
+      );
+      return;
+    }
+
+    performLogin(trimmedEmail);
+  };
+
+  const performLogin = async (loginEmail) => {
     try {
       console.log("Sending data to:", API_URL);
 
@@ -40,7 +62,7 @@ export default function LoginScreen({ onSignUp }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email,
+          email: loginEmail,
           password: password,
         }),
       });
@@ -51,9 +73,18 @@ export default function LoginScreen({ onSignUp }) {
       if (data.success) {
         Alert.alert("Success", "Welcome back!");
         console.log("User Info:", data.user);
-        // This is where we will navigate to the Home Screen later
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        }
       } else {
-        Alert.alert("Login Failed", data.message);
+        // Handle specific error cases
+        if (data.userNotFound) {
+          Alert.alert("Account Not Found", "Please sign up");
+        } else if (data.wrongPassword) {
+          Alert.alert("Login Failed", "Password is incorrect");
+        } else {
+          Alert.alert("Login Failed", data.message || "Invalid credentials");
+        }
       }
     } catch (error) {
       Alert.alert(
@@ -69,7 +100,9 @@ export default function LoginScreen({ onSignUp }) {
   };
 
   const handleForgotPassword = () => {
-    Alert.alert("Forgot Password", "Password recovery will be implemented soon");
+    if (onForgotPassword) {
+      onForgotPassword();
+    }
   };
 
   const handleSignUp = () => {
@@ -233,7 +266,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     color: "#000",
   },
   eyeIcon: {
