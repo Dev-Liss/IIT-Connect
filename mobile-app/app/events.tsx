@@ -17,6 +17,7 @@ import {
     RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { EVENTS_ENDPOINTS, ANNOUNCEMENTS_ENDPOINTS } from "../src/config/api";
 
 // ====================================
@@ -308,7 +309,10 @@ export default function EventsAnnouncementsScreen() {
                     <TouchableOpacity style={styles.actionButtonActive}>
                         <Text style={styles.actionButtonTextActive}>Events</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton}>
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => router.push("/admin")}
+                    >
                         <Text style={styles.actionButtonText}>Admin</Text>
                     </TouchableOpacity>
                 </View>
