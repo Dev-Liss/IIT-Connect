@@ -23,7 +23,7 @@ export default function AdminPanelScreen() {
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => router.back()}
+                    onPress={() => router.replace("/events")}
                 >
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
@@ -36,7 +36,10 @@ export default function AdminPanelScreen() {
             {/* Options */}
             <View style={styles.optionsContainer}>
                 {/* Create Announcement */}
-                <TouchableOpacity style={styles.optionCard}>
+                <TouchableOpacity
+                    style={styles.optionCard}
+                    onPress={() => router.push("/create-announcement")}
+                >
                     <View style={[styles.iconContainer, styles.iconRed]}>
                         <Ionicons name="megaphone" size={28} color="#fff" />
                     </View>
