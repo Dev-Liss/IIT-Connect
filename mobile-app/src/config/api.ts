@@ -26,6 +26,13 @@ export const POST_ENDPOINTS = {
   GET_BY_ID: (id: string) => `${API_BASE_URL}/posts/${id}`,
 };
 
+// Story endpoints
+export const STORY_ENDPOINTS = {
+  CREATE: `${API_BASE_URL}/stories`,
+  GET_ALL: `${API_BASE_URL}/stories`,
+  MARK_VIEWED: (id: string) => `${API_BASE_URL}/stories/${id}/view`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
@@ -33,6 +40,7 @@ export default {
   API_BASE_URL,
   AUTH_ENDPOINTS,
   POST_ENDPOINTS,
+  STORY_ENDPOINTS,
   HEALTH_CHECK_URL,
   LAPTOP_IP,
   PORT,

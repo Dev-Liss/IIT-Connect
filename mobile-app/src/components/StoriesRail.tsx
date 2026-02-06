@@ -8,11 +8,13 @@
  * - Horizontal scrollable stories list
  * - Mini-Poster card design (vertical rectangles)
  * - Red border for unviewed, gray border for viewed
- * - "Add Story" card for current user
- * - User avatar overlay on each story
+ * - "Add Story" card for current user with image picker
+ * - Full-screen modal for viewing stories
+ * - Auto-close after 5 seconds or on tap
+ * - Real API integration with backend
  */
 
-import React from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -21,97 +23,74 @@ import {
   TouchableOpacity,
   Image,
   ImageBackground,
+  Modal,
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import * as ImagePicker from "expo-image-picker";
+import { useAuth } from "../context/AuthContext";
+import { STORY_ENDPOINTS } from "../config/api";
 
 // ====================================
 // TYPES
 // ====================================
-interface Story {
-  id: string;
+interface StoryUser {
+  _id: string;
   username: string;
-  userAvatar: string;
-  storyImage: string;
+  email?: string;
+  profilePicture?: string;
+}
+
+interface Story {
+  _id: string;
+  user: StoryUser;
+  mediaUrl: string;
+  mediaType: string;
   viewed: boolean;
+  createdAt: string;
+  viewerCount?: number;
 }
 
 // ====================================
-// MOCK DATA
+// CONSTANTS
 // ====================================
-const CURRENT_USER = {
-  id: "current-user",
-  username: "You",
-  avatar:
-    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop",
-};
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const CARD_WIDTH = 90;
+const CARD_HEIGHT = 125;
+const CARD_BORDER_RADIUS = 12;
+const STORY_DISPLAY_DURATION = 5000; // 5 seconds
 
-const MOCK_STORIES: Story[] = [
-  {
-    id: "1",
-    username: "priya_iit",
-    userAvatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    storyImage:
-      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=200&h=300&fit=crop",
-    viewed: false,
-  },
-  {
-    id: "2",
-    username: "rahul_dev",
-    userAvatar:
-      "https://images.unsplash.com/photo-1599566150163-29194dcabd36?w=100&h=100&fit=crop",
-    storyImage:
-      "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=200&h=300&fit=crop",
-    viewed: false,
-  },
-  {
-    id: "3",
-    username: "campus_life",
-    userAvatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-    storyImage:
-      "https://images.unsplash.com/photo-1562774053-701939374585?w=200&h=300&fit=crop",
-    viewed: true,
-  },
-  {
-    id: "4",
-    username: "tech_club",
-    userAvatar:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-    storyImage:
-      "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=200&h=300&fit=crop",
-    viewed: false,
-  },
-  {
-    id: "5",
-    username: "sports_iit",
-    userAvatar:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
-    storyImage:
-      "https://images.unsplash.com/photo-1461896836934-68b42dc6d4f7?w=200&h=300&fit=crop",
-    viewed: true,
-  },
-  {
-    id: "6",
-    username: "fest_2024",
-    userAvatar:
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
-    storyImage:
-      "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=200&h=300&fit=crop",
-    viewed: false,
-  },
-];
+// Default avatar for users without profile picture
+const DEFAULT_AVATAR = "https://via.placeholder.com/100x100?text=User";
 
 // ====================================
 // ADD STORY CARD (Current User)
 // ====================================
-const AddStoryCard = () => (
-  <TouchableOpacity style={styles.storyCard} activeOpacity={0.8}>
+interface AddStoryCardProps {
+  userAvatar?: string;
+  onPress: () => void;
+  isUploading: boolean;
+}
+
+const AddStoryCard: React.FC<AddStoryCardProps> = ({
+  userAvatar,
+  onPress,
+  isUploading,
+}) => (
+  <TouchableOpacity
+    style={styles.storyCard}
+    activeOpacity={0.8}
+    onPress={onPress}
+    disabled={isUploading}
+  >
     <View style={styles.addStoryContainer}>
       {/* User's avatar as background */}
       <Image
-        source={{ uri: CURRENT_USER.avatar }}
+        source={{ uri: userAvatar || DEFAULT_AVATAR }}
         style={styles.addStoryBackground}
         resizeMode="cover"
       />
@@ -122,16 +101,22 @@ const AddStoryCard = () => (
         style={styles.cardGradient}
       />
 
-      {/* Plus icon circle */}
+      {/* Plus icon circle or loading indicator */}
       <View style={styles.addIconContainer}>
-        <View style={styles.addIconCircle}>
-          <Ionicons name="add" size={18} color="#fff" />
-        </View>
+        {isUploading ? (
+          <View style={styles.addIconCircle}>
+            <ActivityIndicator size="small" color="#fff" />
+          </View>
+        ) : (
+          <View style={styles.addIconCircle}>
+            <Ionicons name="add" size={18} color="#fff" />
+          </View>
+        )}
       </View>
 
       {/* Username */}
       <Text style={styles.storyUsername} numberOfLines={1}>
-        Add Story
+        {isUploading ? "Uploading..." : "Add Story"}
       </Text>
     </View>
   </TouchableOpacity>
@@ -142,59 +127,311 @@ const AddStoryCard = () => (
 // ====================================
 interface StoryCardProps {
   story: Story;
-  onPress?: () => void;
+  onPress: () => void;
 }
 
-const StoryCard: React.FC<StoryCardProps> = ({ story, onPress }) => (
-  <TouchableOpacity
-    style={[
-      styles.storyCard,
-      story.viewed ? styles.viewedBorder : styles.unviewedBorder,
-    ]}
-    activeOpacity={0.8}
-    onPress={onPress}
-  >
-    <ImageBackground
-      source={{ uri: story.storyImage }}
-      style={styles.storyBackground}
-      imageStyle={styles.storyBackgroundImage}
-      resizeMode="cover"
+const StoryCard: React.FC<StoryCardProps> = ({ story, onPress }) => {
+  const avatarUri = story.user?.profilePicture || DEFAULT_AVATAR;
+  const username = story.user?.username || "Unknown";
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.storyCard,
+        story.viewed ? styles.viewedBorder : styles.unviewedBorder,
+      ]}
+      activeOpacity={0.8}
+      onPress={onPress}
     >
-      {/* Gradient overlay for text readability */}
-      <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.7)"]}
-        style={styles.cardGradient}
-      />
-
-      {/* User avatar overlay (bottom-left) */}
-      <View style={styles.avatarContainer}>
-        <Image
-          source={{ uri: story.userAvatar }}
-          style={[
-            styles.userAvatar,
-            story.viewed
-              ? styles.avatarViewedBorder
-              : styles.avatarUnviewedBorder,
-          ]}
+      <ImageBackground
+        source={{ uri: story.mediaUrl }}
+        style={styles.storyBackground}
+        imageStyle={styles.storyBackgroundImage}
+        resizeMode="cover"
+      >
+        {/* Gradient overlay for text readability */}
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.7)"]}
+          style={styles.cardGradient}
         />
-      </View>
 
-      {/* Username at bottom */}
-      <Text style={styles.storyUsername} numberOfLines={1}>
-        {story.username}
-      </Text>
-    </ImageBackground>
-  </TouchableOpacity>
-);
+        {/* User avatar overlay (bottom-left) */}
+        <View style={styles.avatarContainer}>
+          <Image
+            source={{ uri: avatarUri }}
+            style={[
+              styles.userAvatar,
+              story.viewed
+                ? styles.avatarViewedBorder
+                : styles.avatarUnviewedBorder,
+            ]}
+          />
+        </View>
+
+        {/* Username at bottom */}
+        <Text style={styles.storyUsername} numberOfLines={1}>
+          {username}
+        </Text>
+      </ImageBackground>
+    </TouchableOpacity>
+  );
+};
+
+// ====================================
+// STORY VIEWER MODAL
+// ====================================
+interface StoryViewerModalProps {
+  visible: boolean;
+  story: Story | null;
+  onClose: () => void;
+}
+
+const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
+  visible,
+  story,
+  onClose,
+}) => {
+  const [progress, setProgress] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (visible && story) {
+      // Start progress animation
+      setProgress(0);
+      const progressInterval = 50; // Update every 50ms
+      const steps = STORY_DISPLAY_DURATION / progressInterval;
+      let currentStep = 0;
+
+      progressRef.current = setInterval(() => {
+        currentStep++;
+        setProgress(currentStep / steps);
+      }, progressInterval);
+
+      // Auto-close timer
+      timerRef.current = setTimeout(() => {
+        onClose();
+      }, STORY_DISPLAY_DURATION);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      if (progressRef.current) {
+        clearInterval(progressRef.current);
+        progressRef.current = null;
+      }
+    };
+  }, [visible, story, onClose]);
+
+  if (!story) return null;
+
+  const avatarUri = story.user?.profilePicture || DEFAULT_AVATAR;
+  const username = story.user?.username || "Unknown";
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={false}
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
+      <StatusBar backgroundColor="black" barStyle="light-content" />
+      <TouchableOpacity
+        style={styles.modalContainer}
+        activeOpacity={1}
+        onPress={onClose}
+      >
+        {/* Progress Bar */}
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+        </View>
+
+        {/* Header with user info */}
+        <View style={styles.modalHeader}>
+          <Image source={{ uri: avatarUri }} style={styles.modalAvatar} />
+          <Text style={styles.modalUsername}>{username}</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+            <Ionicons name="close" size={28} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Story Image */}
+        <Image
+          source={{ uri: story.mediaUrl }}
+          style={styles.modalImage}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+    </Modal>
+  );
+};
 
 // ====================================
 // MAIN COMPONENT
 // ====================================
 const StoriesRail: React.FC = () => {
-  const handleStoryPress = (story: Story) => {
-    console.log("📖 Opening story:", story.username);
-    // TODO: Navigate to story viewer
+  // Auth context for current user
+  const { user } = useAuth();
+
+  // State
+  const [stories, setStories] = useState<Story[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  // ====================================
+  // FETCH STORIES
+  // ====================================
+  const fetchStories = useCallback(async () => {
+    try {
+      const url = user
+        ? `${STORY_ENDPOINTS.GET_ALL}?userId=${user.id}`
+        : STORY_ENDPOINTS.GET_ALL;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.success) {
+        // Filter out current user's stories from the main list
+        // (they'll be handled separately via "Add Story" card)
+        const otherStories = data.data.filter(
+          (story: Story) => story.user?._id !== user?.id,
+        );
+        setStories(otherStories);
+      }
+    } catch (error) {
+      console.error("❌ Failed to fetch stories:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchStories();
+  }, [fetchStories]);
+
+  // ====================================
+  // UPLOAD STORY
+  // ====================================
+  const handleAddStory = async () => {
+    if (!user) {
+      Alert.alert("Login Required", "Please login to add a story.");
+      return;
+    }
+
+    try {
+      // Request permission
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert(
+          "Permission Required",
+          "Please allow access to your photos to add a story.",
+        );
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [9, 16], // Story aspect ratio
+        quality: 0.8,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const selectedImage = result.assets[0];
+      setIsUploading(true);
+
+      // Prepare form data
+      const formData = new FormData();
+      formData.append("userId", user.id);
+      formData.append("media", {
+        uri: selectedImage.uri,
+        type: selectedImage.mimeType || "image/jpeg",
+        name: `story_${Date.now()}.jpg`,
+      } as unknown as Blob);
+
+      // Upload to backend
+      const response = await fetch(STORY_ENDPOINTS.CREATE, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log("✅ Story uploaded successfully");
+        // Refresh stories list
+        fetchStories();
+      } else {
+        Alert.alert("Upload Failed", data.message || "Failed to upload story");
+      }
+    } catch (error) {
+      console.error("❌ Story upload error:", error);
+      Alert.alert("Error", "Failed to upload story. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   };
+
+  // ====================================
+  // VIEW STORY
+  // ====================================
+  const handleViewStory = async (story: Story) => {
+    setSelectedStory(story);
+    setIsModalVisible(true);
+
+    // Mark as viewed in the backend
+    if (user && !story.viewed) {
+      try {
+        await fetch(STORY_ENDPOINTS.MARK_VIEWED(story._id), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: user.id }),
+        });
+
+        // Update local state to mark as viewed
+        setStories((prevStories) =>
+          prevStories.map((s) =>
+            s._id === story._id ? { ...s, viewed: true } : s,
+          ),
+        );
+      } catch (error) {
+        console.error("❌ Failed to mark story as viewed:", error);
+      }
+    }
+  };
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalVisible(false);
+    setSelectedStory(null);
+  }, []);
+
+  // ====================================
+  // RENDER
+  // ====================================
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="small" color="#f9252b" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -204,17 +441,28 @@ const StoriesRail: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Add Story Card (First) */}
-        <AddStoryCard />
+        <AddStoryCard
+          userAvatar={user?.profilePicture}
+          onPress={handleAddStory}
+          isUploading={isUploading}
+        />
 
-        {/* Other Stories */}
-        {MOCK_STORIES.map((story) => (
+        {/* Other Users' Stories */}
+        {stories.map((story) => (
           <StoryCard
-            key={story.id}
+            key={story._id}
             story={story}
-            onPress={() => handleStoryPress(story)}
+            onPress={() => handleViewStory(story)}
           />
         ))}
       </ScrollView>
+
+      {/* Story Viewer Modal */}
+      <StoryViewerModal
+        visible={isModalVisible}
+        story={selectedStory}
+        onClose={handleCloseModal}
+      />
     </View>
   );
 };
@@ -222,16 +470,17 @@ const StoriesRail: React.FC = () => {
 // ====================================
 // STYLES
 // ====================================
-const CARD_WIDTH = 90;
-const CARD_HEIGHT = 125;
-const CARD_BORDER_RADIUS = 12;
-
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#efefef",
+  },
+  loadingContainer: {
+    minHeight: CARD_HEIGHT + 24,
+    justifyContent: "center",
+    alignItems: "center",
   },
   scrollContent: {
     paddingHorizontal: 12,
@@ -329,6 +578,62 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1.5,
     borderColor: "#fff",
+  },
+
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  progressBarContainer: {
+    position: "absolute",
+    top: 50,
+    left: 8,
+    right: 8,
+    height: 3,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    borderRadius: 2,
+    zIndex: 10,
+  },
+  progressBar: {
+    height: "100%",
+    backgroundColor: "#fff",
+    borderRadius: 2,
+  },
+  modalHeader: {
+    position: "absolute",
+    top: 60,
+    left: 12,
+    right: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  modalAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  modalUsername: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    marginLeft: 10,
+    flex: 1,
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
   },
 });
 
