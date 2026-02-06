@@ -71,11 +71,19 @@ router.post("/", upload.single("media"), async (req, res) => {
 });
 
 // ====================================
-// GET ALL ACTIVE STORIES
+// GET ALL ACTIVE STORIES (GROUPED BY USER)
 // GET /api/stories
 // ====================================
-// Returns all stories from the last 24 hours, grouped by user
+// Returns all stories from the last 24 hours, GROUPED by user
 // Query param: ?userId=xxx to calculate 'viewed' status
+// Response format:
+// [
+//   {
+//     "user": { "_id": "...", "username": "...", "profilePicture": "..." },
+//     "stories": [{ "_id": "...", "mediaUrl": "...", "viewed": false, "createdAt": "..." }, ...],
+//     "allViewed": false
+//   }
+// ]
 router.get("/", async (req, res) => {
   try {
     const currentUserId = req.query.userId; // Current user's ID for viewed calculation
@@ -88,10 +96,15 @@ router.get("/", async (req, res) => {
       createdAt: { $gte: twentyFourHoursAgo },
     })
       .populate("user", "username email profilePicture")
-      .sort({ createdAt: -1 }); // Newest first
+      .sort({ createdAt: 1 }); // Oldest first (for sequential playback order)
 
-    // Transform stories to include 'viewed' boolean for current user
-    const storiesWithViewStatus = stories.map((story) => {
+    // Group stories by user
+    const groupedStoriesMap = new Map();
+
+    stories.forEach((story) => {
+      if (!story.user) return; // Skip if user is null (deleted user)
+
+      const userId = story.user._id.toString();
       const storyObj = story.toObject();
 
       // Check if current user has viewed this story
@@ -101,13 +114,60 @@ router.get("/", async (req, res) => {
           )
         : false;
 
-      return storyObj;
+      // Remove viewers array from response (not needed on frontend)
+      delete storyObj.viewers;
+
+      if (!groupedStoriesMap.has(userId)) {
+        // First story for this user - create new group
+        groupedStoriesMap.set(userId, {
+          user: story.user.toObject(),
+          stories: [storyObj],
+          latestStoryTime: new Date(story.createdAt).getTime(),
+        });
+      } else {
+        // Add story to existing user group
+        const group = groupedStoriesMap.get(userId);
+        group.stories.push(storyObj);
+        // Track most recent story time for sorting
+        const storyTime = new Date(story.createdAt).getTime();
+        if (storyTime > group.latestStoryTime) {
+          group.latestStoryTime = storyTime;
+        }
+      }
     });
+
+    // Convert Map to Array and calculate allViewed
+    const groupedStories = Array.from(groupedStoriesMap.values()).map(
+      (group) => {
+        // allViewed is true only if ALL stories in the group are viewed
+        const allViewed = group.stories.every((story) => story.viewed === true);
+
+        return {
+          user: group.user,
+          stories: group.stories,
+          allViewed: allViewed,
+          _latestStoryTime: group.latestStoryTime, // For sorting (will be removed)
+        };
+      },
+    );
+
+    // Sort: Unviewed groups first, then by most recent story
+    groupedStories.sort((a, b) => {
+      // Unviewed stories come first
+      if (a.allViewed !== b.allViewed) {
+        return a.allViewed ? 1 : -1;
+      }
+      // Then sort by most recent story (newest first)
+      return b._latestStoryTime - a._latestStoryTime;
+    });
+
+    // Remove internal sorting field from response
+    groupedStories.forEach((group) => delete group._latestStoryTime);
 
     res.json({
       success: true,
-      count: storiesWithViewStatus.length,
-      data: storiesWithViewStatus,
+      count: groupedStories.length,
+      data: groupedStories,
     });
   } catch (error) {
     console.error("❌ Fetch Stories Error:", error);
