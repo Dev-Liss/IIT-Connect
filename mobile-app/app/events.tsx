@@ -311,9 +311,6 @@ export default function EventsAnnouncementsScreen() {
                     <TouchableOpacity style={styles.actionButton}>
                         <Text style={styles.actionButtonText}>Admin</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton}>
-                        <Text style={styles.actionButtonText}>Report</Text>
-                    </TouchableOpacity>
                 </View>
             </View>
 
