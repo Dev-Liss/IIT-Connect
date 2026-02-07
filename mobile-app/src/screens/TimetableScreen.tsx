@@ -14,6 +14,7 @@ import ClassCard from "../components/ClassCard";
 import TodayClassCard from "../components/TodayClassCard";
 import KuppiScreen from "./KuppiScreen";
 import ResourcesScreen from "./ResourcesScreen";
+import AcademicNavBar from "../components/AcademicNavBar";
 
 // Mock user - in real app, get from AuthContext
 const user = {
@@ -161,7 +162,7 @@ export default function TimetableScreen() {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <View>
+                <View style={styles.titleContainer}>
                     <Text style={styles.headerTitle}>
                         {activeTab === "Kuppi"
                             ? "Kuppi Sessions"
@@ -169,149 +170,136 @@ export default function TimetableScreen() {
                                 ? "Resource Library"
                                 : "My Timetable"}
                     </Text>
-                    {activeTab === "Timetable" && (
-                        <ModalDropdown
-                            options={TUTORIAL_GROUPS}
-                            defaultValue={selectedGroup}
-                            onSelect={(index: number, value: string) => setSelectedGroup(value)}
-                            style={styles.dropdownButton}
-                            textStyle={styles.dropdownButtonText}
-                            dropdownStyle={styles.dropdownList}
-                            dropdownTextStyle={styles.dropdownListText}
-                            dropdownTextHighlightStyle={styles.dropdownHighlightText}
-                        >
-                            <View style={styles.dropdownContainer}>
-                                <Text style={styles.badgeText}>Tutorial Group: {selectedGroup}</Text>
-                                <Ionicons name="chevron-down" size={12} color="#f9252b" style={{ marginLeft: 4 }} />
-                            </View>
-                        </ModalDropdown>
-                    )}
                 </View>
-                {activeTab === "Timetable" && (
+                {activeTab === "Timetable" ? (
                     <TouchableOpacity
                         style={styles.calendarButton}
                         onPress={() => setView(view === "weekly" ? "today" : "weekly")}
                     >
                         <Ionicons
                             name={view === "weekly" ? "list-outline" : "grid-outline"}
-                            size={24}
+                            size={24} // Ensure icon size matches text line height roughly or is centered
                             color="#555"
                         />
                     </TouchableOpacity>
+                ) : (
+                    <View style={{ width: 40 }} /> // Placeholder to keep title aligned if needed, or remove if Title should be left-aligned. User said "Standardize the main heading... TitleContainer style...". Usually Title is left aligned. I'll leave the right side empty or use a placeholder if they want center title. But standard iOS/Android headers are usually Title Left, Actions Right. I'll assume Title Left.
                 )}
             </View>
 
             {/* Tabs */}
-            <View style={styles.tabContainer}>
-                {["Timetable", "Kuppi", "Resources"].map((tab) => (
-                    <TouchableOpacity
-                        key={tab}
-                        onPress={() => setActiveTab(tab)}
-                        style={[
-                            styles.tabButton,
-                            activeTab === tab && styles.activeTabButton,
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.tabText,
-                                activeTab === tab && styles.activeTabText,
-                            ]}
-                        >
-                            {tab}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
+            <AcademicNavBar activeTab={activeTab} onTabPress={setActiveTab} />
 
             {/* Content */}
             <View style={{ flex: 1 }}>
                 {activeTab === "Timetable" ? (
-                    loading ? (
-                        <ActivityIndicator
-                            size="large"
-                            color="#f9252b"
-                            style={{ marginTop: 50 }}
-                        />
-                    ) : view === "weekly" ? (
-                        // WEEKLY GRID VIEW
-                        <View style={styles.gridContainer}>
-                            {/* Header Row (Days) */}
-                            <View style={styles.headerRow}>
-                                <View style={styles.timeColumnHeader} />
-                                {DAYS.map((day) => (
-                                    <View key={day} style={styles.dayHeader}>
-                                        <Text
-                                            style={[
-                                                styles.dayText,
-                                                day === currentDay && styles.currentDayText,
-                                            ]}
-                                        >
-                                            {day}
-                                        </Text>
+                    <>
+                        <View style={styles.filterContainer}>
+                            <View style={styles.pickerWrapper}>
+                                <ModalDropdown
+                                    options={TUTORIAL_GROUPS}
+                                    defaultValue={selectedGroup}
+                                    onSelect={(index: number, value: string) => setSelectedGroup(value)}
+                                    style={styles.dropdownButton}
+                                    textStyle={styles.dropdownButtonText}
+                                    dropdownStyle={styles.dropdownList}
+                                    dropdownTextStyle={styles.dropdownListText}
+                                    dropdownTextHighlightStyle={styles.dropdownHighlightText}
+                                >
+                                    <View style={styles.dropdownContainer}>
+                                        <Text style={styles.badgeText}>Tutorial Group: {selectedGroup}</Text>
+                                        <Ionicons name="chevron-down" size={12} color="#f9252b" style={{ marginLeft: 4 }} />
                                     </View>
-                                ))}
+                                </ModalDropdown>
                             </View>
-
-                            <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
-                                <View style={{ flexDirection: "row" }}>
-                                    {/* Time Column */}
-                                    <View style={styles.timeColumn}>
-                                        {HOURS.map((time) => (
-                                            <View key={time} style={styles.timeSlot}>
-                                                <Text style={styles.timeText}>
-                                                    {parseInt(time.split(":")[0]) > 12
-                                                        ? `${parseInt(time.split(":")[0]) - 12} PM`
-                                                        : `${parseInt(time.split(":")[0])} AM`}
-                                                </Text>
-                                            </View>
-                                        ))}
-                                    </View>
-
-                                    {/* Grid Columns */}
+                        </View>
+                        {loading ? (
+                            <ActivityIndicator
+                                size="large"
+                                color="#f9252b"
+                                style={{ marginTop: 50 }}
+                            />
+                        ) : view === "weekly" ? (
+                            // WEEKLY GRID VIEW
+                            <View style={styles.gridContainer}>
+                                {/* Header Row (Days) */}
+                                <View style={styles.headerRow}>
+                                    <View style={styles.timeColumnHeader} />
                                     {DAYS.map((day) => (
-                                        <View key={day} style={styles.dayColumn}>
-                                            {/* Grid Lines */}
-                                            {HOURS.map((h, i) => (
-                                                <View key={i} style={styles.gridLine} />
-                                            ))}
-                                            {/* Cards */}
-                                            {renderClassCards(day)}
+                                        <View key={day} style={styles.dayHeader}>
+                                            <Text
+                                                style={[
+                                                    styles.dayText,
+                                                    day === currentDay && styles.currentDayText,
+                                                ]}
+                                            >
+                                                {day}
+                                            </Text>
                                         </View>
                                     ))}
                                 </View>
-                            </ScrollView>
-                        </View>
-                    ) : (
-                        // TODAY LIST VIEW
-                        <View style={styles.listContainer}>
-                            <View style={styles.dayHeaderSection}>
-                                <Text style={styles.dayTitle}>{currentDay || "Today"}</Text>
-                                <Text style={styles.classCount}>
-                                    {todayClasses.length} classes today
-                                </Text>
-                            </View>
 
-                            <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
-                                {todayClasses.length > 0 ? (
-                                    todayClasses.map((entry) => (
-                                        <TodayClassCard
-                                            key={entry._id}
-                                            courseCode={entry.courseCode}
-                                            courseName={entry.courseName || ""}
-                                            startTime={entry.startTime}
-                                            endTime={entry.endTime}
-                                            location={entry.location}
-                                        />
-                                    ))
-                                ) : (
-                                    <View style={styles.emptyState}>
-                                        <Text style={styles.emptyText}>No classes today 🎉</Text>
+                                <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+                                    <View style={{ flexDirection: "row" }}>
+                                        {/* Time Column */}
+                                        <View style={styles.timeColumn}>
+                                            {HOURS.map((time) => (
+                                                <View key={time} style={styles.timeSlot}>
+                                                    <Text style={styles.timeText}>
+                                                        {parseInt(time.split(":")[0]) > 12
+                                                            ? `${parseInt(time.split(":")[0]) - 12} PM`
+                                                            : `${parseInt(time.split(":")[0])} AM`}
+                                                    </Text>
+                                                </View>
+                                            ))}
+                                        </View>
+
+                                        {/* Grid Columns */}
+                                        {DAYS.map((day) => (
+                                            <View key={day} style={styles.dayColumn}>
+                                                {/* Grid Lines */}
+                                                {HOURS.map((h, i) => (
+                                                    <View key={i} style={styles.gridLine} />
+                                                ))}
+                                                {/* Cards */}
+                                                {renderClassCards(day)}
+                                            </View>
+                                        ))}
                                     </View>
-                                )}
-                            </ScrollView>
-                        </View>
-                    )
+                                </ScrollView>
+                            </View>
+                        ) : (
+                            // TODAY LIST VIEW
+                            <View style={styles.listContainer}>
+                                <View style={styles.dayHeaderSection}>
+                                    <Text style={styles.dayTitle}>{currentDay || "Today"}</Text>
+                                    <Text style={styles.classCount}>
+                                        {todayClasses.length} classes today
+                                    </Text>
+                                </View>
+
+                                <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+                                    {todayClasses.length > 0 ? (
+                                        todayClasses.map((entry) => (
+                                            <TodayClassCard
+                                                key={entry._id}
+                                                courseCode={entry.courseCode}
+                                                courseName={entry.courseName || ""}
+                                                startTime={entry.startTime}
+                                                endTime={entry.endTime}
+                                                location={entry.location}
+                                            />
+                                        ))
+                                    ) : (
+                                        <View style={styles.emptyState}>
+                                            <Text style={styles.emptyText}>No classes today 🎉</Text>
+                                        </View>
+                                    )}
+                                </ScrollView>
+                            </View>
+                        )
+                        }
+                    </>
                 ) : activeTab === "Kuppi" ? (
                     <KuppiScreen />
                 ) : (
@@ -363,12 +351,18 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         paddingHorizontal: 20,
-        marginBottom: 20,
+        marginTop: 10,
+        height: 50, // Fixed height
+    },
+    titleContainer: {
+        // flex: 1, // Let title take available space
+        justifyContent: 'center',
     },
     headerTitle: {
-        fontSize: 24,
+        fontSize: 28, // Standardized font size
         fontWeight: "bold",
         color: "#000",
+        lineHeight: 34,
     },
     badge: {
         backgroundColor: "#FFEBEB",
@@ -542,4 +536,19 @@ const styles = StyleSheet.create({
         color: "#f9252b",
         fontWeight: "bold",
     },
+    filterContainer: {
+        paddingHorizontal: 20,
+        marginBottom: 10,
+        height: 40, // Fixed height specifically
+        justifyContent: 'center',
+        zIndex: 10, // Ensure dropdown goes over content
+    },
+    pickerWrapper: {
+        // Absolute position to keep it from pushing ONLY if requested via absolute
+        // position: 'absolute', 
+        // top: 0, 
+        // left: 20,
+        // But user said "absolute OR specifically padded container". Fixed height container is safer for layout.
+    },
 });
+

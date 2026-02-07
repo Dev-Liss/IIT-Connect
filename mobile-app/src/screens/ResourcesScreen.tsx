@@ -11,12 +11,14 @@ import {
     Alert,
     Dimensions,
     ScrollView,
+    Platform,
 } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Linking from 'expo-linking';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+import * as MediaLibrary from 'expo-media-library';
 import { RESOURCE_ENDPOINTS } from '../config/api';
 
 const { width } = Dimensions.get('window');
@@ -35,6 +37,24 @@ interface Resource {
     uploadedBy?: string;
     createdAt: string;
 }
+
+const getMimeType = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    switch (ext) {
+        case 'pdf': return 'application/pdf';
+        case 'doc': return 'application/msword';
+        case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        case 'xls': return 'application/vnd.ms-excel';
+        case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        case 'ppt': return 'application/vnd.ms-powerpoint';
+        case 'pptx': return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+        case 'txt': return 'text/plain';
+        case 'jpg':
+        case 'jpeg': return 'image/jpeg';
+        case 'png': return 'image/png';
+        default: return 'application/octet-stream';
+    }
+};
 
 export default function ResourcesScreen() {
     const [resources, setResources] = useState<Resource[]>([]);
@@ -177,31 +197,88 @@ export default function ResourcesScreen() {
         if (!selectedResource?.fileUrl) return;
 
         try {
-            if (!FileSystem.documentDirectory) {
-                Alert.alert('Error', 'Device storage not accessible.');
-                return;
-            }
-
-            // 1. Determine local file path
+            // 1. Determine file name and path
+            // Use originalName if available to ensure correct extension and user familiarity
             const fileName = selectedResource.originalName
                 ? selectedResource.originalName
-                : `${selectedResource.title.replace(/[^a-zA-Z0-9]/g, '_')}.${selectedResource.fileType.toLowerCase()}`;
+                : `${selectedResource.title.replace(/[^a-zA-Z0-9]/g, '_')}.${selectedResource.fileType}`;
 
             const fileUri = FileSystem.documentDirectory + fileName;
 
-            // 2. Download file
+            // 2. Download file to internal cache first
             const downloadRes = await FileSystem.downloadAsync(selectedResource.fileUrl, fileUri);
 
-            // 3. Share/Save file
-            if (downloadRes.status === 200) {
-                if (await Sharing.isAvailableAsync()) {
-                    await Sharing.shareAsync(downloadRes.uri);
+            if (downloadRes.status !== 200) {
+                Alert.alert('Error', 'Failed to download file.');
+                return;
+            }
+
+            // 3. Determine resource type (Image/Video vs Document)
+            // We check extension from the file name or fileType
+            const isImageOrVideo = (fileName.match(/\.(jpg|jpeg|png|gif|mp4|mov|avi|heic)$/i)) ||
+                ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi'].includes((selectedResource.fileType || '').toLowerCase());
+
+            if (isImageOrVideo) {
+                // Save to Gallery
+                const { status } = await MediaLibrary.requestPermissionsAsync();
+
+                if (status === 'granted') {
+                    try {
+                        const asset = await MediaLibrary.createAssetAsync(downloadRes.uri);
+                        // Attempt to save to a specific album, or just create it.
+                        // On Android, createAlbumAsync with false (no copy) checks if album exists or creates it.
+                        // On iOS, it creates an album.
+                        const albumName = 'Download';
+                        const album = await MediaLibrary.getAlbumAsync(albumName);
+
+                        if (album) {
+                            await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+                        } else {
+                            await MediaLibrary.createAlbumAsync(albumName, asset, false);
+                        }
+
+                        Alert.alert('Success', 'Saved to Gallery!');
+                    } catch (err) {
+                        console.error('Gallery save error:', err);
+                        Alert.alert('Error', 'Could not save to gallery.');
+                    }
                 } else {
-                    Alert.alert('Success', 'File downloaded to internal storage.');
+                    Alert.alert('Permission Required', 'Gallery permission is needed to save media.');
                 }
             } else {
-                Alert.alert('Error', 'Failed to download file.');
+                // Document handling
+                if (Platform.OS === 'android') {
+                    // Android: Use Storage Access Framework to save to user-selected folder
+                    try {
+                        const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+
+                        if (permissions.granted) {
+                            const base64 = await FileSystem.readAsStringAsync(downloadRes.uri, { encoding: FileSystem.EncodingType.Base64 });
+                            const mimeType = getMimeType(fileName);
+
+                            const createdUri = await FileSystem.StorageAccessFramework.createFileAsync(
+                                permissions.directoryUri,
+                                fileName,
+                                mimeType
+                            );
+
+                            await FileSystem.writeAsStringAsync(createdUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+                            Alert.alert('Success', 'File saved successfully!');
+                        }
+                    } catch (err) {
+                        console.error('SAF Error:', err);
+                        Alert.alert('Error', 'Failed to save file to storage.');
+                    }
+                } else {
+                    // iOS: Use Share Sheet as "Save to Files"
+                    if (await Sharing.isAvailableAsync()) {
+                        await Sharing.shareAsync(downloadRes.uri, { UTI: 'public.item' });
+                    } else {
+                        Alert.alert('Error', 'Sharing not available.');
+                    }
+                }
             }
+
         } catch (error) {
             console.error('Download error:', error);
             Alert.alert('Error', 'Failed to download and save file.');
