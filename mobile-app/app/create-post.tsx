@@ -1,12 +1,11 @@
 /**
  * ====================================
- * CREATE POST SCREEN
+ * CREATE POST SCREEN (NEW DESIGN)
  * ====================================
- * Allows users to:
- * - Pick an image from their gallery
- * - Add a caption
- * - Select a category
- * - Upload and share the post
+ * Modal-card style post creation with:
+ * - Text content (required)
+ * - Optional media upload
+ * - Tags input
  */
 
 import React, { useState } from "react";
@@ -19,263 +18,202 @@ import {
   Alert,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   Platform,
+  StatusBar,
+  SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { POST_ENDPOINTS } from "../src/config/api";
-
-// Import Auth Context for user session
 import { useAuth } from "../src/context/AuthContext";
 
-// Post categories
-const CATEGORIES = [
-  "General",
-  "Academic",
-  "Events",
-  "Sports",
-  "Clubs",
-  "Memes",
-];
-
-export default function CreatePostScreen() {
+export default function CreatePostNewScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  // State
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [caption, setCaption] = useState("");
-  const [category, setCategory] = useState("General");
+  // Form state
+  const [content, setContent] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
+  const [tags, setTags] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  // ====================================
-  // AUTH GUARD - Redirect if not logged in
-  // ====================================
+  // Auth guard
   if (!user) {
     return (
-      <View style={styles.guardContainer}>
-        <Text style={styles.guardIcon}>🔒</Text>
-        <Text style={styles.guardTitle}>Not Logged In</Text>
-        <Text style={styles.guardSubtitle}>Please log in to create a post</Text>
-        <TouchableOpacity
-          style={styles.guardButton}
-          onPress={() => router.replace("/")}
-        >
-          <Text style={styles.guardButtonText}>Go to Login</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.guardContainer}>
+          <Text style={styles.guardIcon}>🔒</Text>
+          <Text style={styles.guardTitle}>Not Logged In</Text>
+          <Text style={styles.guardSubtitle}>
+            Please log in to create a post
+          </Text>
+          <TouchableOpacity
+            style={styles.previewButton}
+            onPress={() => router.replace("/")}
+          >
+            <Text style={styles.previewButtonText}>Go to Login</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
-  // ====================================
-  // PICK IMAGE FROM GALLERY
-  // ====================================
-  const pickImage = async () => {
+  // Pick media from gallery
+  const pickMedia = async () => {
     try {
-      // Request permission
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (!permissionResult.granted) {
         Alert.alert(
           "Permission Required",
-          "Please allow access to your photo library to upload images.",
+          "Please allow access to your photo library.",
         );
         return;
       }
 
-      // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
         allowsEditing: true,
-        quality: 0.8, // Compress slightly for faster upload
+        quality: 0.8,
       });
 
-      console.log("📷 Image picker result:", result);
-
       if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0].uri);
+        setSelectedMedia(result.assets[0].uri);
       }
     } catch (error) {
-      console.error("Image pick error:", error);
-      Alert.alert("Error", "Failed to pick image. Please try again.");
+      console.error("Media pick error:", error);
+      Alert.alert("Error", "Failed to pick media. Please try again.");
     }
   };
 
-  // ====================================
-  // UPLOAD POST
-  // ====================================
-  const uploadPost = async () => {
-    if (!selectedImage) {
-      Alert.alert("No Image", "Please select an image first!");
+  // Handle preview - navigate to preview screen
+  const handlePreview = () => {
+    if (!content.trim()) {
+      Alert.alert(
+        "Required Field",
+        "Please enter your thoughts before continuing.",
+      );
       return;
     }
 
-    setIsUploading(true);
-
-    try {
-      // Create FormData for multipart upload
-      const formData = new FormData();
-
-      // Append the image file
-      // Extract filename from URI
-      const filename = selectedImage.split("/").pop() || "photo.jpg";
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : "image/jpeg";
-
-      // @ts-ignore - FormData append type issue in React Native
-      formData.append("media", {
-        uri: selectedImage,
-        name: filename,
-        type: type,
-      });
-
-      // Append other fields
-      formData.append("caption", caption);
-      formData.append("category", category);
-      formData.append("userId", user.id);
-
-      console.log("📤 Uploading to:", POST_ENDPOINTS.CREATE);
-
-      // Make the POST request
-      const response = await fetch(POST_ENDPOINTS.CREATE, {
-        method: "POST",
-        body: formData,
-        headers: {
-          // Don't set Content-Type for FormData - fetch will set it automatically
-          // with the correct boundary
-        },
-      });
-
-      const data = await response.json();
-      console.log("📥 Server response:", data);
-
-      if (data.success) {
-        Alert.alert("🎉 Success!", "Your post has been shared!", [
-          {
-            text: "OK",
-            onPress: () => {
-              // Reset form
-              setSelectedImage(null);
-              setCaption("");
-              setCategory("General");
-              // Navigate back
-              router.back();
-            },
-          },
-        ]);
-      } else {
-        Alert.alert("❌ Upload Failed", data.message || "Something went wrong");
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      Alert.alert(
-        "🔌 Connection Error",
-        "Could not connect to server.\n\nMake sure:\n1. Backend is running\n2. IP address is correct\n3. Same WiFi network",
-      );
-    } finally {
-      setIsUploading(false);
-    }
+    // Navigate to preview screen with post data
+    router.push({
+      pathname: "/preview-post",
+      params: {
+        content: content,
+        media: selectedMedia || "",
+        tags: tags,
+      },
+    });
   };
 
-  // ====================================
-  // RENDER
-  // ====================================
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Create Post</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#f5f7fa" />
 
-      {/* Image Picker Area */}
-      <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-        {selectedImage ? (
-          <Image source={{ uri: selectedImage }} style={styles.previewImage} />
-        ) : (
-          <View style={styles.placeholderContent}>
-            <Text style={styles.cameraIcon}>📷</Text>
-            <Text style={styles.placeholderText}>Tap to select a photo</Text>
-            <Text style={styles.placeholderSubtext}>
-              Choose from your gallery
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
-
-      {/* Change Photo Button (shown when image selected) */}
-      {selectedImage && (
-        <TouchableOpacity style={styles.changePhotoBtn} onPress={pickImage}>
-          <Text style={styles.changePhotoText}>📷 Change Photo</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* Caption Input */}
-      <View style={styles.inputSection}>
-        <Text style={styles.label}>Caption</Text>
-        <TextInput
-          style={styles.captionInput}
-          placeholder="Write a caption..."
-          placeholderTextColor="#999"
-          value={caption}
-          onChangeText={setCaption}
-          multiline
-          maxLength={500}
-        />
-        <Text style={styles.charCount}>{caption.length}/500</Text>
-      </View>
-
-      {/* Category Selector */}
-      <View style={styles.inputSection}>
-        <Text style={styles.label}>Category</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoryScroll}
-        >
-          {CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[
-                styles.categoryChip,
-                category === cat && styles.categoryChipActive,
-              ]}
-              onPress={() => setCategory(cat)}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  category === cat && styles.categoryTextActive,
-                ]}
-              >
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Upload Button */}
-      <TouchableOpacity
-        style={[
-          styles.uploadButton,
-          (!selectedImage || isUploading) && styles.uploadButtonDisabled,
-        ]}
-        onPress={uploadPost}
-        disabled={!selectedImage || isUploading}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        {isUploading ? (
-          <View style={styles.uploadingContent}>
-            <ActivityIndicator color="#fff" />
-            <Text style={styles.uploadButtonText}> Uploading...</Text>
+        {/* Modal Card */}
+        <View style={styles.card}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Create Post</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => router.back()}
+            >
+              <Ionicons name="close" size={24} color="#262626" />
+            </TouchableOpacity>
           </View>
-        ) : (
-          <Text style={styles.uploadButtonText}>🚀 Share Post</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+
+          {/* Content Input */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>
+              What's on your mind? <Text style={styles.required}>*</Text>
+            </Text>
+            <TextInput
+              style={styles.textArea}
+              placeholder="Share your thoughts..."
+              placeholderTextColor="#999"
+              value={content}
+              onChangeText={setContent}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* Media Picker */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Media (Optional)</Text>
+            <TouchableOpacity style={styles.mediaPicker} onPress={pickMedia}>
+              {selectedMedia ? (
+                <View style={styles.mediaPreviewContainer}>
+                  <Image
+                    source={{ uri: selectedMedia }}
+                    style={styles.mediaPreview}
+                  />
+                  <TouchableOpacity
+                    style={styles.removeMedia}
+                    onPress={() => setSelectedMedia(null)}
+                  >
+                    <Ionicons name="close-circle" size={24} color="#f9252b" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.mediaPlaceholder}>
+                  <Ionicons name="images-outline" size={32} color="#999" />
+                  <Text style={styles.mediaText}>Add photos or videos</Text>
+                  <Text style={styles.mediaSubtext}>Click to select files</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Tags Input */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Tags</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="campus, events, community"
+              placeholderTextColor="#999"
+              value={tags}
+              onChangeText={setTags}
+            />
+            <Text style={styles.hint}>Separate tags with commas</Text>
+          </View>
+
+          {/* Action Buttons */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.previewButton,
+                isUploading && styles.buttonDisabled,
+              ]}
+              onPress={handlePreview}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.previewButtonText}>Preview</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -287,152 +225,154 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f7fa",
   },
-  content: {
-    padding: 20,
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
+  scrollView: {
+    flex: 1,
   },
+  scrollContent: {
+    padding: 20,
+    paddingTop:
+      Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 20 : 20,
+  },
+  // Card
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  // Header
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 25,
+    marginBottom: 24,
   },
-  backButton: {
-    padding: 5,
-  },
-  backText: {
-    fontSize: 16,
-    color: "#457b9d",
-    fontWeight: "600",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1d3557",
-  },
-  placeholder: {
-    width: 60, // Balance the header
-  },
-  imagePicker: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    overflow: "hidden",
-    borderWidth: 2,
-    borderColor: "#e0e0e0",
-    borderStyle: "dashed",
-    minHeight: 250,
-    marginBottom: 15,
-  },
-  placeholderContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
-    minHeight: 250,
-  },
-  cameraIcon: {
-    fontSize: 50,
-    marginBottom: 15,
-  },
-  placeholderText: {
+  headerTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#1d3557",
-    marginBottom: 5,
+    color: "#262626",
   },
-  placeholderSubtext: {
-    fontSize: 14,
-    color: "#999",
+  closeButton: {
+    padding: 4,
   },
-  previewImage: {
-    width: "100%",
-    height: 300,
-    resizeMode: "cover",
-  },
-  changePhotoBtn: {
-    alignSelf: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginBottom: 20,
-  },
-  changePhotoText: {
-    color: "#457b9d",
-    fontSize: 14,
-    fontWeight: "600",
-  },
+  // Form
   inputSection: {
     marginBottom: 20,
   },
   label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1d3557",
-    marginBottom: 10,
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#262626",
+    marginBottom: 8,
   },
-  captionInput: {
+  required: {
+    color: "#f9252b",
+  },
+  textArea: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 15,
-    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 15,
     minHeight: 100,
     textAlignVertical: "top",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
+    color: "#262626",
   },
-  charCount: {
-    textAlign: "right",
-    color: "#999",
-    fontSize: 12,
-    marginTop: 5,
-  },
-  categoryScroll: {
-    flexDirection: "row",
-  },
-  categoryChip: {
+  input: {
     backgroundColor: "#fff",
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 20,
-    marginRight: 10,
     borderWidth: 1,
     borderColor: "#e0e0e0",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 15,
+    color: "#262626",
   },
-  categoryChipActive: {
-    backgroundColor: "#e63946",
-    borderColor: "#e63946",
+  hint: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 6,
   },
-  categoryText: {
+  // Media Picker
+  mediaPicker: {
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderStyle: "dashed",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  mediaPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 30,
+  },
+  mediaText: {
     fontSize: 14,
     color: "#666",
-    fontWeight: "500",
+    marginTop: 8,
   },
-  categoryTextActive: {
-    color: "#fff",
+  mediaSubtext: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 2,
   },
-  uploadButton: {
-    backgroundColor: "#e63946",
-    padding: 18,
+  mediaPreviewContainer: {
+    position: "relative",
+  },
+  mediaPreview: {
+    width: "100%",
+    height: 180,
+    resizeMode: "cover",
+  },
+  removeMedia: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "#fff",
     borderRadius: 12,
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 30,
   },
-  uploadButtonDisabled: {
-    backgroundColor: "#ccc",
-  },
-  uploadingContent: {
+  // Buttons
+  buttonRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+    gap: 12,
+  },
+  backButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
     alignItems: "center",
   },
-  uploadButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+  backButtonText: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#262626",
   },
-  // Auth Guard Styles
+  previewButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    backgroundColor: "#f9252b",
+    alignItems: "center",
+  },
+  previewButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  buttonDisabled: {
+    backgroundColor: "#fca5a5",
+  },
+  // Auth Guard
   guardContainer: {
     flex: 1,
-    backgroundColor: "#f5f7fa",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
@@ -442,26 +382,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   guardTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#1d3557",
-    marginBottom: 10,
+    color: "#262626",
+    marginBottom: 8,
   },
   guardSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#666",
-    marginBottom: 30,
-    textAlign: "center",
-  },
-  guardButton: {
-    backgroundColor: "#e63946",
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 12,
-  },
-  guardButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+    marginBottom: 24,
   },
 });

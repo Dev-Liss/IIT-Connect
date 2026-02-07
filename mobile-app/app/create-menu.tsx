@@ -40,7 +40,7 @@ const MENU_OPTIONS = [
     subtitle: "Share a photo or update",
     icon: "image-outline",
     iconType: "ionicons",
-    action: "create-post-new",
+    action: "create-post",
   },
   {
     id: "event",
@@ -66,8 +66,8 @@ export default function CreateMenuScreen() {
   // Handle option press
   const handleOptionPress = (option: (typeof MENU_OPTIONS)[0]) => {
     switch (option.action) {
-      case "create-post-new":
-        router.push("/create-post-new");
+      case "create-post":
+        router.push("/create-post");
         break;
       case "create-reel":
         router.push("/create-reel");
