@@ -25,10 +25,13 @@ const ResourceSchema = new mongoose.Schema({
         type: String,
         required: [true, 'File URL is required']
     },
+    originalName: {
+        type: String,
+        required: false
+    },
     fileType: {
         type: String,
         required: true,
-        enum: ['PDF', 'DOCX', 'DOC', 'PPT', 'PPTX', 'OTHER'], // Accommodate common academic formats
         default: 'OTHER'
     },
     fileSize: {

@@ -15,11 +15,12 @@ import {
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Linking from 'expo-linking';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { RESOURCE_ENDPOINTS } from '../config/api';
 
 const { width } = Dimensions.get('window');
 const BRAND_RED = '#f9252b';
-const CATEGORIES = ['All', 'CS101', 'MATH201', 'CS102', 'Recent'];
 
 interface Resource {
     _id: string;
@@ -30,6 +31,7 @@ interface Resource {
     fileUrl: string;
     fileType: string;
     fileSize: number;
+    originalName?: string;
     uploadedBy?: string;
     createdAt: string;
 }
@@ -39,7 +41,6 @@ export default function ResourcesScreen() {
     const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('All');
 
     // Upload Modal State
     const [uploadModalVisible, setUploadModalVisible] = useState(false);
@@ -60,7 +61,7 @@ export default function ResourcesScreen() {
 
     useEffect(() => {
         filterResources();
-    }, [searchQuery, selectedCategory, resources]);
+    }, [searchQuery, resources]);
 
     const fetchResources = async () => {
         setLoading(true);
@@ -83,17 +84,6 @@ export default function ResourcesScreen() {
     const filterResources = () => {
         let filtered = resources;
 
-        // Filter by Category
-        if (selectedCategory !== 'All') {
-            if (selectedCategory === 'Recent') {
-                filtered = filtered.slice(0, 10);
-            } else {
-                filtered = filtered.filter((res) =>
-                    res.courseCode.toUpperCase() === selectedCategory.toUpperCase()
-                );
-            }
-        }
-
         // Filter by Search
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
@@ -111,7 +101,7 @@ export default function ResourcesScreen() {
     const pickFile = async () => {
         try {
             const result = await DocumentPicker.getDocumentAsync({
-                type: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+                type: '*/*',
                 copyToCacheDirectory: true,
             });
 
@@ -187,15 +177,34 @@ export default function ResourcesScreen() {
         if (!selectedResource?.fileUrl) return;
 
         try {
-            const supported = await Linking.canOpenURL(selectedResource.fileUrl);
-            if (supported) {
-                await Linking.openURL(selectedResource.fileUrl);
+            if (!FileSystem.documentDirectory) {
+                Alert.alert('Error', 'Device storage not accessible.');
+                return;
+            }
+
+            // 1. Determine local file path
+            const fileName = selectedResource.originalName
+                ? selectedResource.originalName
+                : `${selectedResource.title.replace(/[^a-zA-Z0-9]/g, '_')}.${selectedResource.fileType.toLowerCase()}`;
+
+            const fileUri = FileSystem.documentDirectory + fileName;
+
+            // 2. Download file
+            const downloadRes = await FileSystem.downloadAsync(selectedResource.fileUrl, fileUri);
+
+            // 3. Share/Save file
+            if (downloadRes.status === 200) {
+                if (await Sharing.isAvailableAsync()) {
+                    await Sharing.shareAsync(downloadRes.uri);
+                } else {
+                    Alert.alert('Success', 'File downloaded to internal storage.');
+                }
             } else {
-                Alert.alert('Error', 'Cannot open this URL: ' + selectedResource.fileUrl);
+                Alert.alert('Error', 'Failed to download file.');
             }
         } catch (error) {
             console.error('Download error:', error);
-            Alert.alert('Error', 'Failed to open file link.');
+            Alert.alert('Error', 'Failed to download and save file.');
         }
     };
 
@@ -236,30 +245,7 @@ export default function ResourcesScreen() {
                 />
             </View>
 
-            {/* Categories */}
-            <View style={styles.chipsContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
-                    {CATEGORIES.map((cat) => (
-                        <TouchableOpacity
-                            key={cat}
-                            style={[
-                                styles.chip,
-                                selectedCategory === cat && styles.chipActive,
-                            ]}
-                            onPress={() => setSelectedCategory(cat)}
-                        >
-                            <Text
-                                style={[
-                                    styles.chipText,
-                                    selectedCategory === cat && styles.chipTextActive,
-                                ]}
-                            >
-                                {cat}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>
+
 
             {/* Resource Grid */}
             {loading ? (
@@ -462,30 +448,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#333',
     },
-    chipsContainer: {
-        marginBottom: 15,
-    },
-    chip: {
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 20,
-        backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#eee',
-        marginRight: 10,
-    },
-    chipActive: {
-        backgroundColor: BRAND_RED,
-        borderColor: BRAND_RED,
-    },
-    chipText: {
-        fontSize: 14,
-        color: '#666',
-        fontWeight: '500',
-    },
-    chipTextActive: {
-        color: '#fff',
-    },
+
     listContent: {
         paddingHorizontal: 12,
         paddingBottom: 80,

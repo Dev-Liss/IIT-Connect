@@ -13,8 +13,10 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'IIT-Connect-Resources',
-        allowed_formats: ['pdf', 'doc', 'docx', 'ppt', 'pptx'], // Restrict file types
-        resource_type: 'raw' // 'raw' is often needed for non-image files like PDFs/Docs in some contexts, or 'auto'
+        allowed_formats: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'zip', 'jpg', 'jpeg', 'png', 'txt'],
+        resource_type: 'raw',
+        use_filename: true,
+        unique_filename: false
     }
 });
 

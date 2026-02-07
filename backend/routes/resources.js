@@ -15,20 +15,18 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
         const { title, courseCode, moduleName, description, uploadedBy } = req.body;
 
-        // fileType determination logic if not explicitly sent, or trust extension
-        const fileExtension = req.file.originalname.split('.').pop().toUpperCase();
-        let fileType = 'OTHER';
-        if (['PDF', 'DOC', 'DOCX', 'PPT', 'PPTX'].includes(fileExtension)) {
-            fileType = fileExtension;
-        }
+        // fileType determination
+        const originalName = req.file.originalname;
+        const fileExtension = originalName.split('.').pop().toUpperCase();
 
         const newResource = new Resource({
             title,
             courseCode,
             moduleName,
             description,
-            fileUrl: req.file.path, // Cloudinary URL
-            fileType: fileType,
+            fileUrl: req.file.path,
+            originalName: originalName,
+            fileType: fileExtension,
             fileSize: req.file.size,
             uploadedBy: uploadedBy || null // Handle optional user for now
         });
