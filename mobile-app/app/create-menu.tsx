@@ -32,7 +32,7 @@ const MENU_OPTIONS = [
     subtitle: "Share a short video",
     icon: "videocam-outline",
     iconType: "ionicons",
-    action: "coming-soon",
+    action: "create-reel",
   },
   {
     id: "post",
@@ -40,7 +40,7 @@ const MENU_OPTIONS = [
     subtitle: "Share a photo or update",
     icon: "image-outline",
     iconType: "ionicons",
-    action: "create-post",
+    action: "create-post-new",
   },
   {
     id: "event",
@@ -65,14 +65,19 @@ export default function CreateMenuScreen() {
 
   // Handle option press
   const handleOptionPress = (option: (typeof MENU_OPTIONS)[0]) => {
-    if (option.action === "create-post") {
-      router.push("/create-post");
-    } else {
-      Alert.alert(
-        "Coming Soon",
-        `${option.title} feature will be available soon!`,
-        [{ text: "OK" }],
-      );
+    switch (option.action) {
+      case "create-post-new":
+        router.push("/create-post-new");
+        break;
+      case "create-reel":
+        router.push("/create-reel");
+        break;
+      default:
+        Alert.alert(
+          "Coming Soon",
+          `${option.title} feature will be available soon!`,
+          [{ text: "OK" }],
+        );
     }
   };
 
