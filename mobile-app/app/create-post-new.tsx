@@ -27,7 +27,6 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "../src/context/AuthContext";
-import { POST_ENDPOINTS } from "../src/config/api";
 
 export default function CreatePostNewScreen() {
   const router = useRouter();
@@ -89,8 +88,8 @@ export default function CreatePostNewScreen() {
     }
   };
 
-  // Handle preview/submit
-  const handlePreview = async () => {
+  // Handle preview - navigate to preview screen
+  const handlePreview = () => {
     if (!content.trim()) {
       Alert.alert(
         "Required Field",
@@ -99,53 +98,15 @@ export default function CreatePostNewScreen() {
       return;
     }
 
-    // For now, directly upload instead of preview
-    setIsUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("caption", content);
-      formData.append("userId", user.id);
-
-      // Add tags as category for now
-      if (tags.trim()) {
-        formData.append("tags", tags);
-      }
-
-      // Add media if selected
-      if (selectedMedia) {
-        const filename = selectedMedia.split("/").pop() || "photo.jpg";
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : "image/jpeg";
-
-        // @ts-ignore
-        formData.append("media", {
-          uri: selectedMedia,
-          name: filename,
-          type: type,
-        });
-      }
-
-      const response = await fetch(POST_ENDPOINTS.CREATE, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        Alert.alert("🎉 Success!", "Your post has been shared!", [
-          { text: "OK", onPress: () => router.back() },
-        ]);
-      } else {
-        Alert.alert("Upload Failed", data.message || "Something went wrong");
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      Alert.alert("Connection Error", "Could not connect to server.");
-    } finally {
-      setIsUploading(false);
-    }
+    // Navigate to preview screen with post data
+    router.push({
+      pathname: "/preview-post",
+      params: {
+        content: content,
+        media: selectedMedia || "",
+        tags: tags,
+      },
+    });
   };
 
   return (
@@ -398,7 +359,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 8,
-    backgroundColor: "#6366f1",
+    backgroundColor: "#f9252b",
     alignItems: "center",
   },
   previewButtonText: {
@@ -407,7 +368,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   buttonDisabled: {
-    backgroundColor: "#a5a6f6",
+    backgroundColor: "#fca5a5",
   },
   // Auth Guard
   guardContainer: {

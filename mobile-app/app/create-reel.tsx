@@ -89,19 +89,22 @@ export default function CreateReelScreen() {
     }
   };
 
-  // Handle preview/submit
-  const handlePreview = async () => {
+  // Handle preview - navigate to preview screen
+  const handlePreview = () => {
     if (!selectedVideo) {
       Alert.alert("Required Field", "Please select a video before continuing.");
       return;
     }
 
-    // Show coming soon for now - video upload backend may not be ready
-    Alert.alert(
-      "Coming Soon",
-      "Reel upload functionality will be available soon!",
-      [{ text: "OK" }],
-    );
+    // Navigate to preview screen with reel data
+    router.push({
+      pathname: "/preview-reel",
+      params: {
+        video: selectedVideo,
+        caption: caption,
+        tags: tags,
+      },
+    });
   };
 
   return (
@@ -376,7 +379,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 8,
-    backgroundColor: "#6366f1",
+    backgroundColor: "#f9252b",
     alignItems: "center",
   },
   previewButtonText: {
@@ -385,7 +388,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   buttonDisabled: {
-    backgroundColor: "#a5a6f6",
+    backgroundColor: "#fca5a5",
   },
   // Auth Guard
   guardContainer: {
