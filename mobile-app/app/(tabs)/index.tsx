@@ -116,7 +116,7 @@ export default function HomeScreen() {
         {/* Create Post Button */}
         <TouchableOpacity
           style={styles.headerButton}
-          onPress={() => router.push("/create-post")}
+          onPress={() => router.push("/create-menu")}
         >
           <Feather name="plus" size={24} color="#262626" />
         </TouchableOpacity>
