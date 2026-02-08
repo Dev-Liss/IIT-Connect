@@ -31,7 +31,14 @@ app.use(express.json());
 // ====================================
 // Health check endpoint - useful for testing if server is running
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", message: "IIT Connect API is running!" });
+  const mongoose = require("mongoose");
+  res.json({
+    status: "ok",
+    message: "IIT Connect API is running!",
+    database: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    dbName: mongoose.connection.name,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Authentication routes (login, register)
