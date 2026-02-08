@@ -27,7 +27,7 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     return {
-      folder: "iit-connect-posts",
+      folder: "iit-connect-posts + stories",
       allowed_formats: ["jpg", "jpeg", "png", "gif", "mp4", "mov"],
       // Request Cloudinary to return image dimensions
       // This is CRUCIAL for aspect ratio calculation!

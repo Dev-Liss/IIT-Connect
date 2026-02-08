@@ -5,7 +5,7 @@
  * Main home tab displaying the social feed.
  *
  * Features:
- * - Custom Header with "CoNNect" logo
+ * - Custom Header with IIT CoNNect logo image
  * - Create post & notification icons
  * - Fetches posts from API on mount
  * - Pull-to-refresh functionality
@@ -24,6 +24,7 @@ import {
   Platform,
   StatusBar,
   SafeAreaView,
+  Image,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -106,10 +107,12 @@ export default function HomeScreen() {
   // ====================================
   const renderHeader = () => (
     <View style={styles.header}>
-      {/* Left: CoNNect Logo */}
-      <Text style={styles.headerLogo}>
-        Co<Text style={styles.headerLogoHighlight}>NN</Text>ect
-      </Text>
+      {/* Left: IIT CoNNect Logo Image */}
+      <Image
+        source={require("../../src/assets/images/iit-connect-logo.png")}
+        style={styles.headerLogo}
+        resizeMode="contain"
+      />
 
       {/* Right: Action Icons */}
       <View style={styles.headerActions}>
@@ -251,16 +254,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#efefef",
   },
+
   headerLogo: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#262626",
-    letterSpacing: 0.5,
+    height: 40,
+    width: 140,
   },
-  headerLogoHighlight: {
-    color: "#f9252b",
-    fontWeight: "800",
-  },
+
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
