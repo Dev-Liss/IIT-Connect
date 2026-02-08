@@ -19,14 +19,13 @@ const { width } = Dimensions.get("window");
 
 export default function ProfileScreen() {
   const router = useRouter();
+  // We removed the <AuthContextType> casting here
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState("Posts");
 
   // ==========================================
   // 🎨 PLACEHOLDER DATA (To Match Design)
   // ==========================================
-  // These variables hold data shown in your design that isn't in your Auth 'user' object yet.
-  // We can connect these to your backend database in the next phase.
   const MOCK_DATA = {
     batch: "L4 CSG24",
     position: "Batch Representative",
@@ -81,6 +80,7 @@ export default function ProfileScreen() {
         {/* 3. User Details */}
         <View style={styles.infoContainer}>
           {/* Name & Role */}
+          {/* Added optional chaining (?.) to prevent crash if user is null */}
           <Text style={styles.name}>
             {user?.username || "Yasindu Janapriya"}
           </Text>
@@ -177,8 +177,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 80, // Space for bottom tab bar
   },
-
-  // Header
   coverContainer: {
     height: 120,
     width: "100%",
@@ -190,14 +188,12 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
     opacity: 0.8,
   },
-
-  // Profile Section
   profileHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
     paddingHorizontal: 20,
-    marginTop: -50, // This pulls the row up into the cover image
+    marginTop: -50,
   },
   avatarContainer: {
     padding: 3,
@@ -232,8 +228,6 @@ const styles = StyleSheet.create({
     color: "#333",
     fontSize: 14,
   },
-
-  // Info Section
   infoContainer: {
     paddingHorizontal: 20,
     marginTop: 15,
@@ -259,14 +253,12 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 10,
-    width: 20, // Fixed width for alignment
+    width: 20,
   },
   detailText: {
     fontSize: 14,
     color: "#333",
   },
-
-  // Tabs
   tabContainer: {
     flexDirection: "row",
     marginTop: 25,
@@ -291,8 +283,6 @@ const styles = StyleSheet.create({
     color: "#000",
     fontWeight: "bold",
   },
-
-  // Feed
   feedContainer: {
     padding: 20,
   },
