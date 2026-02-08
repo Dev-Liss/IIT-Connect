@@ -32,9 +32,9 @@ export const AUTH_ENDPOINTS = {
 };
 
 // Kuppi endpoints
-// Kuppi endpoints
 export const KUPPI_ENDPOINTS = {
   GET_ALL: `${API_BASE_URL}/kuppi`,
+  MY_SESSIONS: `${API_BASE_URL}/kuppi/my-sessions`,
   CREATE: `${API_BASE_URL}/kuppi/create`,
   JOIN: (id: string) => `${API_BASE_URL}/kuppi/join/${id}`,
 };

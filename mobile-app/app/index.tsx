@@ -25,8 +25,15 @@ import { useRouter } from "expo-router";
 // Import API configuration - TEAM: Update the IP in this file!
 import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
 
+// ====================================
+// AUTH CONTEXT
+// ====================================
+import { useAuth } from "../src/context/AuthContext";
+
+
 export default function AuthScreen() {
   const router = useRouter();
+  const { login } = useAuth(); // Destructure login from context
   // ====================================
   // STATE MANAGEMENT
   // ====================================
@@ -87,16 +94,26 @@ export default function AuthScreen() {
 
       if (data.success) {
         if (isRegistering) {
-          Alert.alert(
-            "🎉 Success!",
-            "Account created! Now switch to Login and sign in.",
-            [{ text: "OK", onPress: () => setIsRegistering(false) }],
-          );
-          // Clear form for login
-          setPassword("");
+
+          // Auto login after registration if backend returns token, or ask to switch
+          if (data.token) {
+            await login(data.user, data.token);
+            // Alert.alert("Success", "Account created!");
+            router.replace("/timetable" as any); // Navigate to main app
+          } else {
+            Alert.alert(
+              "🎉 Success!",
+              "Account created! Now switch to Login and sign in.",
+              [{ text: "OK", onPress: () => setIsRegistering(false) }],
+            );
+            // Clear form for login
+            setPassword("");
+          }
+
         } else {
-          // Alert.alert("👋 Welcome!", `Hello, ${data.user.username}!`);
+          // Login Success
           console.log("✅ Logged in user:", data.user);
+          await login(data.user, data.token); // Store in context
 
           // Navigate to Timetable
           router.replace("/timetable" as any);

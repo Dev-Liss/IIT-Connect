@@ -53,10 +53,17 @@ router.post("/register", async (req, res) => {
     // Save to database
     await newUser.save();
 
+    // Generate JWT Token
+    const jwt = require("jsonwebtoken");
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET || "default_secret", {
+      expiresIn: "30d",
+    });
+
     // Return success (don't send password back!)
     res.status(201).json({
       success: true,
       message: "Account created successfully!",
+      token,
       user: {
         id: newUser._id,
         username: newUser.username,
@@ -104,10 +111,18 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    // Generate JWT Token
+    // Reuse jwt if imported at top, or re-require
+    const jwt = require("jsonwebtoken");
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || "default_secret", {
+      expiresIn: "30d",
+    });
+
     // Success! Return user data (never send password!)
     res.json({
       success: true,
       message: "Login successful!",
+      token,
       user: {
         id: user._id,
         username: user.username,
