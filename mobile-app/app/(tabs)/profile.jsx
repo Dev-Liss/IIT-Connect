@@ -71,7 +71,8 @@ export default function ProfileScreen() {
               {/* Using Log Out icon for now since Settings isn't built */}
               <Ionicons name="log-out-outline" size={24} color="#333" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.editButton}>
+            <TouchableOpacity style={styles.editButton}
+              onPress={() => router.push("/edit-profile")}>
               <Text style={styles.editButtonText}>Edit Profile</Text>
             </TouchableOpacity>
           </View>
