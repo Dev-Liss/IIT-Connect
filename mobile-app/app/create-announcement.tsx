@@ -56,7 +56,16 @@ export default function CreateAnnouncementScreen() {
 
             if (data.success) {
                 Alert.alert("Success", "Announcement created successfully!", [
-                    { text: "OK", onPress: () => router.back() },
+                    {
+                        text: "OK",
+                        onPress: () => {
+                            // Clear form
+                            setTitle("");
+                            setContent("");
+                            // Navigate to events page
+                            router.replace("/events");
+                        }
+                    },
                 ]);
             } else {
                 Alert.alert("Error", data.message || "Failed to create announcement");
