@@ -2,7 +2,7 @@ const User = require("../models/user");
 
 const registerUser = async (req, res) => {
   try {
-    const { email, username, password, studentId, role } = req.body;
+    const { email, username, password, studentId, nationalId, pastIitId, role } = req.body;
 
     // Validate IIT email for students and lecturers
     if (role === "student" || role === "lecture") {
@@ -54,13 +54,29 @@ const registerUser = async (req, res) => {
     }
 
     // Create new user
-    const newUser = await User.create({
+    const userData = {
       username,
       email: email.toLowerCase().trim(),
       password,
-      studentId,
       role,
-    });
+    };
+
+    // Only include studentId for students
+    if (role === "student" && studentId) {
+      userData.studentId = studentId;
+    }
+
+    // Only include alumniId and pastIitId for alumni
+    if (role === "alumni") {
+      if (nationalId) {
+        userData.alumniId = nationalId;
+      }
+      if (pastIitId) {
+        userData.pastIitId = pastIitId;
+      }
+    }
+
+    const newUser = await User.create(userData);
 
     res.status(201).json({
       success: true,

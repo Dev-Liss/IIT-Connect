@@ -39,7 +39,17 @@ const UserSchema = new mongoose.Schema(
     },
     studentId: {
       type: String,
-      required: [true, "Student ID is required"],
+      required: false, // Optional - only used for students
+      trim: true,
+    },
+    alumniId: {
+      type: String,
+      required: false, // Optional - stores national ID for alumni
+      trim: true,
+    },
+    pastIitId: {
+      type: String,
+      required: false, // Optional - stores past IIT ID for alumni
       trim: true,
     },
     role: {

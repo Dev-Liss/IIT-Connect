@@ -174,9 +174,21 @@ export default function App() {
                                     username: `${userData.firstName || ""} ${userData.lastName || ""}`.trim(),
                                     email: userEmail,
                                     password: userData.password,
-                                    studentId: studentId || userData.nationalId || userData.pastIitId || "N/A",
                                     role: selectedRole,
                                 };
+
+                                // Add role-specific fields
+                                if (selectedRole === "student" && studentId) {
+                                    registrationData.studentId = studentId;
+                                } else if (selectedRole === "alumni") {
+                                    // For alumni, send nationalId and pastIitId
+                                    if (userData.nationalId) {
+                                        registrationData.nationalId = userData.nationalId;
+                                    }
+                                    if (userData.pastIitId) {
+                                        registrationData.pastIitId = userData.pastIitId;
+                                    }
+                                }
 
                                 console.log("Sending registration data to backend:", registrationData);
                                 const response = await registerUser(registrationData);
