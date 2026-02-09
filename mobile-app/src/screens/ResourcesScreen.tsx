@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -66,6 +66,7 @@ export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
     const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const inputRef = useRef<TextInput>(null);
 
     // Upload Modal State
     const [uploadModalVisible, setUploadModalVisible] = useState(false);
@@ -313,22 +314,10 @@ export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
         </TouchableOpacity>
     );
 
+
+
     return (
         <View style={styles.container}>
-            {/* Search Bar - No Header here as Parent provides it */}
-            <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search notes, papers, subjects..."
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    placeholderTextColor="#999"
-                />
-            </View>
-
-
-
             {/* Resource Grid */}
             {loading ? (
                 <ActivityIndicator size="large" color={BRAND_RED} style={{ marginTop: 20 }} />
@@ -336,6 +325,32 @@ export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
                 <Animated.FlatList
                     data={filteredResources}
                     renderItem={renderResourceItem}
+                    ListHeaderComponent={
+                        <View style={styles.searchContainer}>
+                            <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+                            <TextInput
+                                ref={inputRef}
+                                style={styles.searchInput}
+                                placeholder="Search notes, papers, subjects..."
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                placeholderTextColor="#999"
+                                autoFocus={false}
+                                blurOnSubmit={false}
+                            />
+                            {searchQuery.length > 0 && (
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setSearchQuery('');
+                                        inputRef.current?.focus();
+                                    }}
+                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                >
+                                    <Ionicons name="close-circle" size={20} color={BRAND_RED} style={{ marginLeft: 8 }} />
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    }
                     keyExtractor={(item) => item._id}
                     numColumns={2}
                     columnWrapperStyle={styles.columnWrapper}

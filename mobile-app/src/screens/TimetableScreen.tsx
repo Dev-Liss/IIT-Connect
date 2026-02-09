@@ -19,7 +19,7 @@ import TodayClassCard from "../components/TodayClassCard";
 import KuppiScreen from "./KuppiScreen";
 import ResourcesScreen from "./ResourcesScreen";
 import AcademicNavBar from "../components/AcademicNavBar";
-import ModalDropdown from "react-native-modal-dropdown";
+import ModalDropdown from "../components/ModalDropdown";
 
 interface TimetableEntry {
     _id: string;
