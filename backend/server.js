@@ -16,6 +16,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const postRoutes = require("./routes/posts");
 const storyRoutes = require("./routes/stories");
+const userRoutes = require("./routes/users");
 
 // Initialize Express App
 const app = express();
@@ -40,6 +41,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/stories", storyRoutes);
+app.use("/api/users", userRoutes);
 
 // ====================================
 // DATABASE CONNECTION & SERVER START

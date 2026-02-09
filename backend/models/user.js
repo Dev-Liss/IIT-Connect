@@ -47,6 +47,22 @@ const UserSchema = new mongoose.Schema(
       enum: ["student", "lecturer", "admin"],
       default: "student",
     },
+    profilePicture: {
+      type: String,
+      default: "",
+    },
+    coverPicture: {
+      type: String,
+      default: "",
+    },
+    batch: {
+      type: String,
+      default: "", // e.g., "L4 G1"
+    },
+    bio: {
+      type: String,
+      default: "",
+    },
   },
   {
     // Automatically add createdAt and updatedAt fields
