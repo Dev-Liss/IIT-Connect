@@ -251,6 +251,16 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     }
   }, [visible, group]);
 
+  // Store stable references to callbacks to avoid useEffect re-triggers
+  const onCloseRef = useRef(onClose);
+  const onStoryViewedRef = useRef(onStoryViewed);
+
+  // Keep refs updated with latest callbacks
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    onStoryViewedRef.current = onStoryViewed;
+  }, [onClose, onStoryViewed]);
+
   // Handle story timing and auto-advance
   useEffect(() => {
     if (visible && group && group.stories.length > 0) {
@@ -258,7 +268,7 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 
       // Mark story as viewed
       if (currentStory && !currentStory.viewed) {
-        onStoryViewed(currentStory._id);
+        onStoryViewedRef.current(currentStory._id);
       }
 
       // Start progress animation
@@ -272,14 +282,17 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         setProgress(currentStep / steps);
       }, progressInterval);
 
+      // Capture group length for closure
+      const storiesLength = group.stories.length;
+
       // Auto-advance or close timer
       timerRef.current = setTimeout(() => {
-        if (currentIndex < group.stories.length - 1) {
+        if (currentIndex < storiesLength - 1) {
           // Move to next story
           setCurrentIndex((prev) => prev + 1);
         } else {
           // Close modal after last story
-          onClose();
+          onCloseRef.current();
         }
       }, STORY_DISPLAY_DURATION);
     }
@@ -294,7 +307,8 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         progressRef.current = null;
       }
     };
-  }, [visible, group, currentIndex, onClose, onStoryViewed]);
+    // Only depend on stable values - callbacks are accessed via refs
+  }, [visible, group, currentIndex]);
 
   // Handle tap to go next/previous
   const handleTap = (event: { nativeEvent: { locationX: number } }) => {
@@ -495,12 +509,11 @@ const StoriesRail: React.FC = () => {
       } as unknown as Blob);
 
       // Upload to backend
+      // Note: Don't set Content-Type header manually for multipart/form-data
+      // Let fetch auto-generate it with the correct boundary
       const response = await fetch(STORY_ENDPOINTS.CREATE, {
         method: "POST",
         body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
       });
 
       const data = await response.json();
@@ -535,45 +548,82 @@ const StoriesRail: React.FC = () => {
     }
   };
 
-  const handleStoryViewed = async (storyId: string) => {
-    if (!user) return;
+  const handleStoryViewed = useCallback(
+    async (storyId: string) => {
+      if (!user) return;
 
-    try {
-      await fetch(STORY_ENDPOINTS.MARK_VIEWED(storyId), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId: user.id }),
-      });
+      try {
+        // Fire and forget - don't await to prevent blocking
+        fetch(STORY_ENDPOINTS.MARK_VIEWED(storyId), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: user.id }),
+        }).catch((error) => {
+          console.error("❌ Failed to mark story as viewed:", error);
+        });
 
-      // Update local state to mark as viewed - preserve all story data
-      setStoryGroups((prevGroups) =>
-        prevGroups.map((group) => {
-          // Update stories with viewed status
-          const updatedStories = group.stories.map((s) =>
+        // Update local state to mark as viewed - preserve all story data
+        setStoryGroups((prevGroups) =>
+          prevGroups.map((group) => {
+            // Update stories with viewed status
+            const updatedStories = group.stories.map((s) =>
+              s._id === storyId ? { ...s, viewed: true } : s,
+            );
+            // Recalculate allViewed based on updated stories
+            const allViewed = updatedStories.every((s) => s.viewed);
+            return {
+              ...group,
+              stories: updatedStories,
+              allViewed,
+            };
+          }),
+        );
+
+        // Also update myStoryGroup if viewing own stories
+        setMyStoryGroup((prevMyGroup) => {
+          if (!prevMyGroup) return null;
+          const updatedStories = prevMyGroup.stories.map((s) =>
             s._id === storyId ? { ...s, viewed: true } : s,
           );
-          // Recalculate allViewed based on updated stories
           const allViewed = updatedStories.every((s) => s.viewed);
           return {
-            ...group,
+            ...prevMyGroup,
             stories: updatedStories,
             allViewed,
           };
-        }),
-      );
-    } catch (error) {
-      console.error("❌ Failed to mark story as viewed:", error);
-    }
-  };
+        });
+
+        // Update the selected group as well to keep modal in sync
+        setSelectedGroup((prevSelected) => {
+          if (!prevSelected) return null;
+          const updatedStories = prevSelected.stories.map((s) =>
+            s._id === storyId ? { ...s, viewed: true } : s,
+          );
+          const allViewed = updatedStories.every((s) => s.viewed);
+          return {
+            ...prevSelected,
+            stories: updatedStories,
+            allViewed,
+          };
+        });
+      } catch (error) {
+        console.error("❌ Failed to mark story as viewed:", error);
+      }
+    },
+    [user],
+  );
 
   const handleCloseModal = useCallback(() => {
     setIsModalVisible(false);
-    setSelectedGroup(null);
-    // Refresh to get updated view states
-    fetchStories();
-  }, [fetchStories]);
+    // Don't set selectedGroup to null immediately - let the modal animate out
+    // The state is already updated locally, no need to refetch
+    // Only clear selectedGroup after a brief delay
+    setTimeout(() => {
+      setSelectedGroup(null);
+    }, 100);
+  }, []);
 
   // ====================================
   // RENDER
