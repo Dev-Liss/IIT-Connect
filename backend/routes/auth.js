@@ -2,52 +2,60 @@
  * ====================================
  * AUTH ROUTES - /api/auth
  * ====================================
- * Handles user registration and login.
+ * Clerk Integration Routes
  *
  * Endpoints:
- * - POST /api/auth/register - Create a new user
- * - POST /api/auth/login    - Login an existing user
- * - POST /api/auth/check-email - Check if email exists
+ * - POST /api/auth/sync-profile - Sync user profile to MongoDB after Clerk auth
+ * - GET  /api/auth/profile/:clerkId - Get user profile
+ * - POST /api/auth/check-email - Check if email exists (legacy compatibility)
  */
 
 const express = require("express");
 const router = express.Router();
 const {
-    registerUser,
-    loginUser,
-    checkEmailExists,
-    resetPasswordRequest,
-    resetPassword
+    syncUserProfile,
+    getUserProfile,
 } = require("../controllers/authController");
+const { requireAuth } = require("../middleware/clerkAuth");
 
 // ====================================
-// REGISTER ROUTE
-// POST /api/auth/register
+// SYNC PROFILE ROUTE (Primary endpoint)
+// POST /api/auth/sync-profile
+// Called after Clerk signup/login to save profile data to MongoDB
 // ====================================
-router.post("/register", registerUser);
+router.post("/sync-profile", syncUserProfile);
 
 // ====================================
-// LOGIN ROUTE
-// POST /api/auth/login
+// GET USER PROFILE ROUTE
+// GET /api/auth/profile/:clerkId
+// Fetch user profile from MongoDB
 // ====================================
-router.post("/login", loginUser);
+router.get("/profile/:clerkId", getUserProfile);
 
 // ====================================
-// CHECK EMAIL EXISTS ROUTE
+// CHECK EMAIL EXISTS ROUTE (Legacy - for reference)
 // POST /api/auth/check-email
+// Note: With Clerk, email checking happens on Clerk's side
+// This can be kept for backwards compatibility or removed
 // ====================================
-router.post("/check-email", checkEmailExists);
+const User = require("../models/user");
 
-// ====================================
-// PASSWORD RESET REQUEST ROUTE
-// POST /api/auth/reset-password-request
-// ====================================
-router.post("/reset-password-request", resetPasswordRequest);
+router.post("/check-email", async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email: email.toLowerCase() });
 
-// ====================================
-// PASSWORD RESET ROUTE
-// POST /api/auth/reset-password
-// ====================================
-router.post("/reset-password", resetPassword);
+        res.json({
+            success: true,
+            exists: !!user,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error checking email",
+        });
+    }
+});
 
 module.exports = router;
+

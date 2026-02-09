@@ -17,6 +17,12 @@ const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema(
   {
+    clerkId: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
     username: {
       type: String,
       required: [true, "Username is required"],
@@ -31,12 +37,7 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
-    password: {
-      type: String,
-      required: [true, "Password is required"],
-      minlength: [6, "Password must be at least 6 characters"],
-      // TODO Phase 3: Add bcrypt hashing via pre-save hook
-    },
+    // Password removed - Clerk handles authentication
     studentId: {
       type: String,
       required: false, // Optional - only used for students

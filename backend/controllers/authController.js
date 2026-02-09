@@ -1,73 +1,78 @@
+/**
+ * ====================================
+ * AUTH CONTROLLER - CLERK INTEGRATION
+ * ====================================
+ * Handles user profile syncing after Clerk authentication
+ * Clerk handles: authentication, password, email verification
+ * MongoDB stores: user profiles, role-specific data
+ */
+
 const User = require("../models/user");
 
-const registerUser = async (req, res) => {
+/**
+ * Sync user profile to MongoDB after Clerk signup/login
+ * Called from mobile app after successful Clerk authentication
+ */
+const syncUserProfile = async (req, res) => {
   try {
-    const { email, username, password, studentId, nationalId, pastIitId, role } = req.body;
+    const { clerkId, email, role, studentId, nationalId, pastIitId, username } = req.body;
 
-    // Validate IIT email for students and lecturers
-    if (role === "student" || role === "lecture") {
-      if (!email || !email.toLowerCase().endsWith("@iit.ac.lk")) {
-        return res.status(400).json({
-          success: false,
-          message: "Students and Lecturers must use an @iit.ac.lk email address.",
-        });
-      }
-
-      // Validate email format matches the role
-      const emailUsername = email.split("@")[0];
-      const hasNumbers = /\d/.test(emailUsername);
-
-      if (role === "student" && !hasNumbers) {
-        return res.status(400).json({
-          success: false,
-          message: "This is a lecturer email, you cannot sign up as a student",
-        });
-      }
-
-      if (role === "lecture" && hasNumbers) {
-        return res.status(400).json({
-          success: false,
-          message: "This is a student email, you cannot sign up as a lecturer",
-        });
-      }
-
-      // Additional validation for lecturer emails: must have format like name.letter@iit.ac.lk
-      if (role === "lecture") {
-        const lecturerPattern = /^[a-z]+\.[a-z]+$/i;
-        if (!lecturerPattern.test(emailUsername)) {
-          return res.status(400).json({
-            success: false,
-            message: "This is not a valid email. Lecturer emails should be in format: name.letter@iit.ac.lk",
-          });
-        }
-      }
-    }
-
-    // Check if email already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
-    if (existingUser) {
-      return res.status(409).json({
+    // Validate required fields
+    if (!clerkId || !email || !role) {
+      return res.status(400).json({
         success: false,
-        message: "An account with this email already exists. Please login instead.",
-        emailExists: true,
+        message: "Missing required fields: clerkId, email, role",
       });
     }
 
-    // Create new user
+    // Validate role
+    if (!["student", "lecture", "alumni"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role. Must be student, lecture, or alumni",
+      });
+    }
+
+    // IMPORTANT: Keep custom email validation for role verification
+    const emailUsername = email.split("@")[0];
+    const hasNumbers = /\d/.test(emailUsername);
+
+    // Students must have numbers in their email
+    if (role === "student" && !hasNumbers) {
+      return res.status(400).json({
+        success: false,
+        message: "This is a lecturer email format. Students must have numbers in their IIT email (e.g., john.20231234@iit.ac.lk)",
+      });
+    }
+
+    // Lecturers must NOT have numbers in their email
+    if (role === "lecture" && hasNumbers) {
+      return res.status(400).json({
+        success: false,
+        message: "This is a student email format. Lecturers cannot have numbers in their IIT email (e.g., john.d@iit.ac.lk)",
+      });
+    }
+
+    // Students and lecturers must use @iit.ac.lk domain
+    if ((role === "student" || role === "lecture") && !email.toLowerCase().endsWith("@iit.ac.lk")) {
+      return res.status(400).json({
+        success: false,
+        message: "Students and Lecturers must use an @iit.ac.lk email address",
+      });
+    }
+
+    // Build user data object
     const userData = {
-      username,
+      clerkId,
       email: email.toLowerCase().trim(),
-      password,
+      username: username || "User",
       role,
     };
 
-    // Only include studentId for students
+    // Add role-specific fields
     if (role === "student" && studentId) {
       userData.studentId = studentId;
-    }
-
-    // Only include alumniId and pastIitId for alumni
-    if (role === "alumni") {
+    } else if (role === "alumni") {
       if (nationalId) {
         userData.alumniId = nationalId;
       }
@@ -76,216 +81,78 @@ const registerUser = async (req, res) => {
       }
     }
 
-    const newUser = await User.create(userData);
+    // Create or update user profile in MongoDB
+    // upsert: true creates if doesn't exist, new: true returns updated doc
+    const user = await User.findOneAndUpdate(
+      { clerkId },
+      userData,
+      { upsert: true, new: true, runValidators: true }
+    );
 
-    res.status(201).json({
+    console.log("✅ User profile synced:", user.email);
+
+    res.status(200).json({
       success: true,
-      message: "User registered successfully",
-      user: {
-        id: newUser._id,
-        username: newUser.username,
-        email: newUser.email,
-        role: newUser.role,
-      },
-    });
-  } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred during registration. Please try again.",
-    });
-  }
-};
-
-const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Validate required fields
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and password are required",
-      });
-    }
-
-    // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-
-    // Check if user exists
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "Please sign up",
-        userNotFound: true,
-      });
-    }
-
-    // Check password (TODO: Use bcrypt.compare in Phase 3)
-    if (user.password !== password) {
-      return res.status(401).json({
-        success: false,
-        message: "Password is incorrect",
-        wrongPassword: true,
-      });
-    }
-
-    // Success! Return user data (never send password!)
-    res.json({
-      success: true,
-      message: "Login successful!",
+      message: "Profile synced successfully",
       user: {
         id: user._id,
-        username: user.username,
+        clerkId: user.clerkId,
         email: user.email,
-        studentId: user.studentId,
+        username: user.username,
         role: user.role,
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("❌ Profile sync error:", error);
+
+    // Handle duplicate clerkId or email
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "User profile already exists",
+      });
+    }
+
     res.status(500).json({
       success: false,
-      message: "An error occurred during login. Please try again.",
+      message: "Failed to sync profile",
+      error: error.message,
     });
   }
 };
 
-const getMe = async (req, res) => {
-  res.json({ message: "User data display" });
-};
-
-const checkEmailExists = async (req, res) => {
+/**
+ * Get user profile by clerkId
+ * Used to fetch additional profile data after Clerk authentication
+ */
+const getUserProfile = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { clerkId } = req.params;
 
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required",
-      });
-    }
-
-    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
-
-    if (existingUser) {
-      return res.json({
-        success: true,
-        exists: true,
-        message: "An account with this email already exists.",
-      });
-    }
-
-    return res.json({
-      success: true,
-      exists: false,
-      message: "Email is available",
-    });
-  } catch (error) {
-    console.error("Email check error:", error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred while checking email.",
-    });
-  }
-};
-
-const resetPasswordRequest = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is required",
-      });
-    }
-
-    // Check if user exists
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const user = await User.findOne({ clerkId }).select("-__v");
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "No account found with this email. Please sign up first.",
-        userNotFound: true,
+        message: "User profile not found",
       });
     }
 
-    // TODO: In production, send actual OTP via email service
-    // For now, we'll simulate OTP sending
-    console.log(`[Password Reset] OTP would be sent to: ${email}`);
-
-    return res.json({
+    res.status(200).json({
       success: true,
-      message: "Verification code sent to your email",
-      email: user.email,
+      user,
     });
   } catch (error) {
-    console.error("Password reset request error:", error);
+    console.error("❌ Get profile error:", error);
     res.status(500).json({
       success: false,
-      message: "An error occurred. Please try again.",
-    });
-  }
-};
-
-const resetPassword = async (req, res) => {
-  try {
-    const { email, newPassword, otpCode } = req.body;
-
-    // Validate required fields
-    if (!email || !newPassword || !otpCode) {
-      return res.status(400).json({
-        success: false,
-        message: "Email, new password, and OTP code are required",
-      });
-    }
-
-    // TODO: In production, verify OTP code from database/cache
-    // For now, we'll accept any 5-digit code as valid
-    if (!/^\d{5}$/.test(otpCode)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP code format",
-      });
-    }
-
-    // Find user
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // Update password
-    // TODO: In production, hash the password using bcrypt
-    user.password = newPassword;
-    await user.save();
-
-    console.log(`[Password Reset] Password updated for: ${email}`);
-
-    return res.json({
-      success: true,
-      message: "Password updated successfully",
-    });
-  } catch (error) {
-    console.error("Password reset error:", error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred while resetting password. Please try again.",
+      message: "Failed to fetch profile",
+      error: error.message,
     });
   }
 };
 
 module.exports = {
-  registerUser,
-  loginUser,
-  getMe,
-  checkEmailExists,
-  resetPasswordRequest,
-  resetPassword,
+  syncUserProfile,
+  getUserProfile,
 };
