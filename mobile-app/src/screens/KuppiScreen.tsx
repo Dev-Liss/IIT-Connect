@@ -10,6 +10,7 @@ import {
     Alert,
     RefreshControl,
     Linking,
+    Animated, // Add Animated
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
@@ -45,7 +46,12 @@ export interface KuppiSession {
     meetingLink?: string;
 }
 
-export default function KuppiScreen() {
+interface KuppiScreenProps {
+    scrollY: Animated.Value;
+}
+
+export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
+    // Removed snapToHeader logic as header is now fixed
     const [sessions, setSessions] = useState<KuppiSession[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -311,20 +317,17 @@ export default function KuppiScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.headerContainer}>
-                {/* <Text style={styles.headerTitle}>Kuppi Sessions</Text>  -- REMOVED because parent might handle header, or keep it? user screenshot shows header. Keeping it but maybe style adjustments needed if integrated */}
-                {/* Actually, user screenshot shows "Kuppi Sessions" header. I will keep it but maybe remove "Back" button functionality if it was there (I didn't add one anyway). */}
-                <TouchableOpacity
-                    style={styles.createButton}
-                    onPress={() => setCreateModalVisible(true)}
-                >
-                    <Ionicons name="add" size={24} color="white" />
-                    <Text style={styles.createButtonText}>Create New Session</Text>
-                </TouchableOpacity>
+                {/* Header logic removed as per request */}
             </View>
 
-            <ScrollView
+            <Animated.ScrollView
                 contentContainerStyle={styles.scrollContent}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: true }
+                )}
+                scrollEventThrottle={16}
             >
                 <Text style={styles.sectionTitle}>Upcoming Sessions</Text>
                 {upcomingSessions.length === 0 ? (
@@ -339,7 +342,15 @@ export default function KuppiScreen() {
                 ) : (
                     mySessions.map(s => renderSessionCard(s, true))
                 )}
-            </ScrollView>
+            </Animated.ScrollView>
+
+            {/* FAB */}
+            <TouchableOpacity
+                style={styles.fab}
+                onPress={() => setCreateModalVisible(true)}
+            >
+                <Ionicons name="add" size={30} color="white" />
+            </TouchableOpacity>
 
             {/* Create Session Modal */}
             <Modal
@@ -611,6 +622,22 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         marginHorizontal: 20,
     },
+    fab: {
+        position: 'absolute',
+        bottom: 24,
+        right: 24,
+        backgroundColor: COLORS.RED,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
+    },
     createButtonText: {
         color: "white",
         fontWeight: "bold",
@@ -618,6 +645,7 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
     scrollContent: {
+        paddingTop: 180, // Space for sticky header
         paddingBottom: 40,
         paddingHorizontal: 20, // Align text and cards with page margins
     },

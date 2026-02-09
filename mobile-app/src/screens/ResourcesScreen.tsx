@@ -12,6 +12,7 @@ import {
     Dimensions,
     ScrollView,
     Platform,
+    Animated,
 } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -56,7 +57,11 @@ const getMimeType = (fileName: string) => {
     }
 };
 
-export default function ResourcesScreen() {
+interface ResourcesScreenProps {
+    scrollY: Animated.Value;
+}
+
+export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
     const [resources, setResources] = useState<Resource[]>([]);
     const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
     const [loading, setLoading] = useState(true);
@@ -328,7 +333,7 @@ export default function ResourcesScreen() {
             {loading ? (
                 <ActivityIndicator size="large" color={BRAND_RED} style={{ marginTop: 20 }} />
             ) : (
-                <FlatList
+                <Animated.FlatList
                     data={filteredResources}
                     renderItem={renderResourceItem}
                     keyExtractor={(item) => item._id}
@@ -336,6 +341,11 @@ export default function ResourcesScreen() {
                     columnWrapperStyle={styles.columnWrapper}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
+                    onScroll={Animated.event(
+                        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                        { useNativeDriver: true }
+                    )}
+                    scrollEventThrottle={16}
                     ListEmptyComponent={
                         <Text style={styles.emptyText}>No resources found.</Text>
                     }
@@ -527,6 +537,7 @@ const styles = StyleSheet.create({
     },
 
     listContent: {
+        paddingTop: 180, // Space for sticky header
         paddingHorizontal: 12,
         paddingBottom: 80,
     },

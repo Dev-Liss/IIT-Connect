@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
     View,
     Text,
@@ -7,7 +7,11 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Alert,
+    Animated, // Added
+    Platform,
+    StatusBar,
 } from "react-native";
+// ... imports (keep existing) -- Removing this comment line
 import { Ionicons } from "@expo/vector-icons";
 import { API_BASE_URL } from "../config/api";
 import ClassCard from "../components/ClassCard";
@@ -15,12 +19,7 @@ import TodayClassCard from "../components/TodayClassCard";
 import KuppiScreen from "./KuppiScreen";
 import ResourcesScreen from "./ResourcesScreen";
 import AcademicNavBar from "../components/AcademicNavBar";
-
-// Mock user - in real app, get from AuthContext
-const user = {
-    name: "John Doe",
-    tutGroup: "CS-2A",
-};
+import ModalDropdown from "react-native-modal-dropdown";
 
 interface TimetableEntry {
     _id: string;
@@ -49,9 +48,6 @@ const HOURS = [
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const SLOT_HEIGHT = 80; // Height for 1 hour slot
-
-import ModalDropdown from "react-native-modal-dropdown";
-
 const TUTORIAL_GROUPS = ["CS-2A", "CS-2B", "CS-2C"];
 
 export default function TimetableScreen() {
@@ -60,10 +56,82 @@ export default function TimetableScreen() {
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<"weekly" | "today">("weekly");
     const [activeTab, setActiveTab] = useState("Timetable");
-    const [selectedGroup, setSelectedGroup] = useState(TUTORIAL_GROUPS[0]);
+    const [selectedGroup, setSelectedGroup] = useState("CS-2A");
 
     const todayIndex = new Date().getDay();
     const currentDay = DAYS[todayIndex - 1] || "";
+
+    // Animation Logic
+    const scrollY = useRef(new Animated.Value(0)).current;
+    const headerTranslateY = useRef(new Animated.Value(0)).current;
+
+    // Track scroll direction for smart hide/show
+    const lastScrollY = useRef(0);
+    const isHeaderHidden = useRef(false);
+
+    useEffect(() => {
+        const listenerId = scrollY.addListener(({ value }) => {
+            const currentY = value;
+            const diff = currentY - lastScrollY.current;
+            lastScrollY.current = currentY; // Update lastScrollY first
+
+            // Ignore bounce/scroll-to-top glitch or negative values
+            if (currentY <= 0) {
+                // If at very top, ensure header is shown
+                if (isHeaderHidden.current) {
+                    Animated.timing(headerTranslateY, {
+                        toValue: 0,
+                        duration: 200,
+                        useNativeDriver: true,
+                    }).start();
+                    isHeaderHidden.current = false;
+                }
+                return;
+            }
+
+            // Scroll Down -> Hide
+            // diff > 0 means scrolling down.
+            // Hide if we are past a threshold (e.g. 60px) and not already hidden.
+            if (diff > 0 && currentY > 60 && !isHeaderHidden.current) {
+                // "Hide" means translate UP by 120px (negative Y)
+                Animated.timing(headerTranslateY, {
+                    toValue: -120,
+                    duration: 300,
+                    useNativeDriver: true,
+                }).start();
+                isHeaderHidden.current = true;
+            }
+            // Scroll Up -> Show
+            // diff < 0 means scrolling up. 
+            else if (diff < -5 && isHeaderHidden.current) {
+                Animated.timing(headerTranslateY, {
+                    toValue: 0,
+                    duration: 250,
+                    useNativeDriver: true,
+                }).start();
+                isHeaderHidden.current = false;
+            }
+        });
+
+        return () => {
+            scrollY.removeListener(listenerId);
+        };
+    }, [scrollY]);
+
+    // Header Height Calculation
+    // Header (50) + NavBar (50) + Margins (~30) = ~130. 
+    // We want to hide the whole block.
+    // Constants for Layout
+    const STATUS_BAR_HEIGHT = 50;
+    const HEADER_TITLE_HEIGHT = 60; // 50 height + 10 margin
+    const TOTAL_HEADER_HEIGHT = 180; // Hardcoded space + padding
+    const SCROLL_DISTANCE = HEADER_TITLE_HEIGHT; // 60
+
+    // Use SCROLL_DISTANCE instead of HEADER_HEIGHT
+    const HEADER_HEIGHT = SCROLL_DISTANCE; // Alias for safety during transition
+
+    // Fixed or Auto-Hide Header
+    // We use headerTranslateY to animate position
 
     useEffect(() => {
         if (view === "weekly") {
@@ -73,6 +141,7 @@ export default function TimetableScreen() {
         }
     }, [view, selectedGroup]);
 
+    // ... fetch functions (keep)
     const fetchTimetable = async (group: string) => {
         setLoading(true);
         try {
@@ -115,6 +184,7 @@ export default function TimetableScreen() {
         }
     };
 
+    // ... styles helper (keep)
     const getPositionStyle = (startTime: string, endTime: string) => {
         const startHour = parseInt(startTime.split(":")[0]);
         const startMin = parseInt(startTime.split(":")[1]);
@@ -135,7 +205,7 @@ export default function TimetableScreen() {
 
         return daysClasses.map((entry) => {
             const style = getPositionStyle(entry.startTime, entry.endTime);
-            return (
+            return ( // ... keep existing render 
                 <View
                     key={entry._id}
                     style={{
@@ -151,7 +221,7 @@ export default function TimetableScreen() {
                         startTime={entry.startTime}
                         location={entry.location}
                         color={entry.color}
-                        height={style.height - 4} // adjust for margin
+                        height={style.height - 4}
                     />
                 </View>
             );
@@ -160,86 +230,109 @@ export default function TimetableScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <View style={styles.titleContainer}>
-                    <Text style={styles.headerTitle}>
-                        {activeTab === "Kuppi"
-                            ? "Kuppi Sessions"
-                            : activeTab === "Resources"
-                                ? "Resource Library"
-                                : "My Timetable"}
-                    </Text>
+            {/* Status Bar Background - Stays Fixed */}
+            <View style={[styles.statusBarBackground, { height: STATUS_BAR_HEIGHT }]} />
+
+            {/* Animated Header Block - Now Fixed */}
+            <Animated.View
+                style={[
+                    styles.animatedHeaderContainer,
+                    {
+                        top: STATUS_BAR_HEIGHT,
+                        transform: [{ translateY: headerTranslateY }]
+                    }
+                ]}
+            >
+                {/* Header */}
+                <View style={styles.header}>
+                    <View style={styles.titleContainer}>
+                        <Text style={styles.headerTitle}>
+                            {activeTab === "Kuppi"
+                                ? "Kuppi Sessions"
+                                : activeTab === "Resources"
+                                    ? "Resource Library"
+                                    : "My Timetable"}
+                        </Text>
+                    </View>
+                    {activeTab === "Timetable" ? (
+                        <TouchableOpacity
+                            style={styles.calendarButton}
+                            onPress={() => setView(view === "weekly" ? "today" : "weekly")}
+                        >
+                            <Ionicons
+                                name={view === "weekly" ? "list-outline" : "grid-outline"}
+                                size={24}
+                                color="#555"
+                            />
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={{ width: 40 }} />
+                    )}
                 </View>
-                {activeTab === "Timetable" ? (
-                    <TouchableOpacity
-                        style={styles.calendarButton}
-                        onPress={() => setView(view === "weekly" ? "today" : "weekly")}
-                    >
-                        <Ionicons
-                            name={view === "weekly" ? "list-outline" : "grid-outline"}
-                            size={24} // Ensure icon size matches text line height roughly or is centered
-                            color="#555"
-                        />
-                    </TouchableOpacity>
-                ) : (
-                    <View style={{ width: 40 }} /> // Placeholder to keep title aligned if needed, or remove if Title should be left-aligned. User said "Standardize the main heading... TitleContainer style...". Usually Title is left aligned. I'll leave the right side empty or use a placeholder if they want center title. But standard iOS/Android headers are usually Title Left, Actions Right. I'll assume Title Left.
-                )}
-            </View>
 
-            {/* Tabs */}
-            <AcademicNavBar activeTab={activeTab} onTabPress={setActiveTab} />
+                {/* Tabs */}
+                <AcademicNavBar activeTab={activeTab} onTabPress={setActiveTab} />
+            </Animated.View>
 
-            {/* Content */}
+            {/* Content - Wrapper paddingTop is 0 to allow scroll under header. */}
             <View style={{ flex: 1 }}>
                 {activeTab === "Timetable" ? (
                     <>
-                        <View style={styles.filterContainer}>
-                            <View style={styles.pickerWrapper}>
-                                <ModalDropdown
-                                    options={TUTORIAL_GROUPS}
-                                    defaultValue={selectedGroup}
-                                    onSelect={(index: number, value: string) => setSelectedGroup(value)}
-                                    style={styles.dropdownButton}
-                                    textStyle={styles.dropdownButtonText}
-                                    dropdownStyle={styles.dropdownList}
-                                    dropdownTextStyle={styles.dropdownListText}
-                                    dropdownTextHighlightStyle={styles.dropdownHighlightText}
-                                >
-                                    <View style={styles.dropdownContainer}>
-                                        <Text style={styles.badgeText}>Tutorial Group: {selectedGroup}</Text>
-                                        <Ionicons name="chevron-down" size={12} color="#f9252b" style={{ marginLeft: 4 }} />
-                                    </View>
-                                </ModalDropdown>
-                            </View>
-                        </View>
                         {loading ? (
                             <ActivityIndicator
                                 size="large"
                                 color="#f9252b"
-                                style={{ marginTop: 50 }}
+                                style={{ marginTop: TOTAL_HEADER_HEIGHT + 50 }}
                             />
                         ) : view === "weekly" ? (
                             // WEEKLY GRID VIEW
                             <View style={styles.gridContainer}>
-                                {/* Header Row (Days) */}
-                                <View style={styles.headerRow}>
-                                    <View style={styles.timeColumnHeader} />
-                                    {DAYS.map((day) => (
-                                        <View key={day} style={styles.dayHeader}>
-                                            <Text
-                                                style={[
-                                                    styles.dayText,
-                                                    day === currentDay && styles.currentDayText,
-                                                ]}
+                                <Animated.ScrollView
+                                    contentContainerStyle={{ paddingTop: TOTAL_HEADER_HEIGHT, paddingBottom: 80 }}
+                                    onScroll={Animated.event(
+                                        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                                        { useNativeDriver: true }
+                                    )}
+                                    scrollEventThrottle={16}
+                                >
+                                    {/* Moved Filter Inside ScrollView */}
+                                    <View style={[styles.filterContainer, { marginBottom: 10 }]}>
+                                        <View style={styles.pickerWrapper}>
+                                            <ModalDropdown
+                                                options={TUTORIAL_GROUPS}
+                                                defaultValue={selectedGroup}
+                                                onSelect={(index: number, value: string) => setSelectedGroup(value)}
+                                                style={styles.dropdownButton}
+                                                textStyle={styles.dropdownButtonText}
+                                                dropdownStyle={styles.dropdownList}
+                                                dropdownTextStyle={styles.dropdownListText}
+                                                dropdownTextHighlightStyle={styles.dropdownHighlightText}
                                             >
-                                                {day}
-                                            </Text>
+                                                <View style={styles.dropdownContainer}>
+                                                    <Text style={styles.badgeText}>Tutorial Group: {selectedGroup}</Text>
+                                                    <Ionicons name="chevron-down" size={12} color="#f9252b" style={{ marginLeft: 4 }} />
+                                                </View>
+                                            </ModalDropdown>
                                         </View>
-                                    ))}
-                                </View>
+                                    </View>
 
-                                <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+                                    {/* Moved HeaderRow Inside ScrollView */}
+                                    <View style={styles.headerRow}>
+                                        <View style={styles.timeColumnHeader} />
+                                        {DAYS.map((day) => (
+                                            <View key={day} style={styles.dayHeader}>
+                                                <Text
+                                                    style={[
+                                                        styles.dayText,
+                                                        day === currentDay && styles.currentDayText,
+                                                    ]}
+                                                >
+                                                    {day}
+                                                </Text>
+                                            </View>
+                                        ))}
+                                    </View>
+
                                     <View style={{ flexDirection: "row" }}>
                                         {/* Time Column */}
                                         <View style={styles.timeColumn}>
@@ -266,7 +359,7 @@ export default function TimetableScreen() {
                                             </View>
                                         ))}
                                     </View>
-                                </ScrollView>
+                                </Animated.ScrollView>
                             </View>
                         ) : (
                             // TODAY LIST VIEW
@@ -278,7 +371,14 @@ export default function TimetableScreen() {
                                     </Text>
                                 </View>
 
-                                <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+                                <Animated.ScrollView
+                                    contentContainerStyle={{ paddingTop: TOTAL_HEADER_HEIGHT, paddingBottom: 80 }}
+                                    onScroll={Animated.event(
+                                        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                                        { useNativeDriver: true }
+                                    )}
+                                    scrollEventThrottle={16}
+                                >
                                     {todayClasses.length > 0 ? (
                                         todayClasses.map((entry) => (
                                             <TodayClassCard
@@ -295,27 +395,27 @@ export default function TimetableScreen() {
                                             <Text style={styles.emptyText}>No classes today 🎉</Text>
                                         </View>
                                     )}
-                                </ScrollView>
+                                </Animated.ScrollView>
                             </View>
                         )
                         }
                     </>
                 ) : activeTab === "Kuppi" ? (
-                    <KuppiScreen />
+                    <KuppiScreen scrollY={scrollY} />
                 ) : (
-                    <ResourcesScreen />
+                    <ResourcesScreen scrollY={scrollY} />
                 )}
-            </View>
+            </View >
 
             {/* Bottom Nav Placeholder (Visual Only) */}
-            <View style={styles.bottomNav}>
+            < View style={styles.bottomNav} >
                 <BottomTabIcon name="home-outline" label="Home" />
                 <BottomTabIcon name="book" label="Academic" active />
                 <BottomTabIcon name="grid-outline" label="More" />
                 <BottomTabIcon name="chatbubble-outline" label="Message" />
                 <BottomTabIcon name="person-outline" label="Profile" />
-            </View>
-        </View>
+            </View >
+        </View >
     );
 }
 
@@ -344,7 +444,30 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#fff",
-        paddingTop: 50, // Status bar spacing
+        // paddingTop: 50, -- Removed, handled by Animated.View top
+        paddingTop: 0,
+    },
+    statusBarBackground: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
+        zIndex: 2000,
+        elevation: 10,
+    },
+    animatedHeaderContainer: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        backgroundColor: '#fff',
+        elevation: 4, // Shadow for depth
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        paddingBottom: 10, // Add bottom padding for better spacing
     },
     header: {
         flexDirection: "row",
@@ -355,7 +478,7 @@ const styles = StyleSheet.create({
         height: 50, // Fixed height
     },
     titleContainer: {
-        // flex: 1, // Let title take available space
+        flex: 1, // Ensure title is centered relative to full width
         justifyContent: 'center',
     },
     headerTitle: {
@@ -551,4 +674,3 @@ const styles = StyleSheet.create({
         // But user said "absolute OR specifically padded container". Fixed height container is safer for layout.
     },
 });
-
