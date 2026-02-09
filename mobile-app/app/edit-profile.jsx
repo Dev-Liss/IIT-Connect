@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
     Text,
@@ -12,34 +12,137 @@ import {
     Alert,
     Modal,
     FlatList,
-    TouchableWithoutFeedback
+    TouchableWithoutFeedback,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
+// 1. IMPORT AUTH AND API CONFIG
+// Ensure these paths are correct based on your file structure
+import { useAuth } from "../src/context/AuthContext";
+import { API_BASE_URL as API_URL } from "../src/config/api";
+
 // --- DATA FOR DROPDOWNS ---
 const LEVELS = ["L4", "L5", "L6", "L7"];
-// Generates ["G1", "G2", ... "G30"]
 const GROUPS = Array.from({ length: 30 }, (_, i) => `G${i + 1}`);
 
 export default function EditProfileScreen() {
     const router = useRouter();
+    const { user } = useAuth();
 
     // --- STATE VARIABLES ---
-    const [firstName, setFirstName] = useState("Yasindu");
-    const [lastName, setLastName] = useState("Janapriya");
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
-    // Read-only fields
-    const [email] = useState("yasindu.20231866@iit.ac.lk");
-    const [role] = useState("Student");
+    // Form Fields
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
+    const [email, setEmail] = useState("");
+    const [role, setRole] = useState("");
 
     // Dropdown States
-    const [level, setLevel] = useState("L5");
-    const [group, setGroup] = useState("G24");
+    const [level, setLevel] = useState("L4");
+    const [group, setGroup] = useState("G1");
+
+    // Profile Images
+    const [profilePicture, setProfilePicture] = useState("");
+    const [coverPicture, setCoverPicture] = useState("");
 
     // Modal Control
     const [modalVisible, setModalVisible] = useState(false);
-    const [modalType, setModalType] = useState(null); // 'level' or 'group'
+    const [modalType, setModalType] = useState(null);
+
+    // Helper to get the correct User ID safely
+    // auth.js sends 'id', but database uses '_id'. We check both.
+    const userId = user?.id || user?._id;
+
+    // --- 2. FETCH REAL DATA ON LOAD ---
+    useEffect(() => {
+        const fetchUserData = async () => {
+            if (!userId) {
+                console.log("❌ No User ID found. User object:", user);
+                setLoading(false);
+                return;
+            }
+
+            try {
+                console.log(`📡 Fetching data for ID: ${userId}`);
+                const response = await fetch(`${API_URL}/users/profile/${userId}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Split Username into First/Last Name
+                    const nameParts = (data.username || "").split(" ");
+                    setFirstName(nameParts[0] || "");
+                    setLastName(nameParts.slice(1).join(" ") || "");
+
+                    // Set Basic Fields
+                    setEmail(data.email || "");
+                    setRole(data.role || "Student");
+                    setProfilePicture(data.profilePicture);
+                    setCoverPicture(data.coverPicture);
+
+                    // Parse Batch (e.g. "L5 G24")
+                    if (data.batch) {
+                        const parts = data.batch.split(" ");
+                        if (parts.length >= 2) {
+                            setLevel(parts[0]);
+                            setGroup(parts[1]);
+                        }
+                    }
+                } else {
+                    console.error("❌ Profile Load Error:", data);
+                    Alert.alert("Error", "Could not load profile data");
+                }
+            } catch (error) {
+                console.error("❌ Network Error:", error);
+                Alert.alert("Network Error", "Check your server connection");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
+    }, [user]);
+
+    // --- 3. SAVE DATA TO BACKEND ---
+    const handleSave = async () => {
+        if (!userId) {
+            Alert.alert("Error", "User not identified");
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const updatedData = {
+                username: `${firstName} ${lastName}`.trim(),
+                batch: `${level} ${group}`,
+            };
+
+            const response = await fetch(`${API_URL}/users/profile/${userId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedData),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Alert.alert("Success", "Profile updated successfully!");
+                router.back();
+            } else {
+                Alert.alert("Update Failed", data.message || "Something went wrong");
+            }
+        } catch (error) {
+            console.error("Save Error:", error);
+            Alert.alert("Network Error", "Could not connect to server");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     // Open Dropdown
     const openModal = (type) => {
@@ -54,11 +157,14 @@ export default function EditProfileScreen() {
         setModalVisible(false);
     };
 
-    const handleSave = () => {
-        console.log("Saving:", { firstName, lastName, email, level, group, role });
-        Alert.alert("Success", "Profile updated successfully!");
-        router.back();
-    };
+    if (loading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#D32F2F" />
+                <Text style={{ marginTop: 10, color: '#666' }}>Loading Profile...</Text>
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -70,128 +176,131 @@ export default function EditProfileScreen() {
                     <Ionicons name="chevron-back" size={24} color="#333" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Edit Profile</Text>
-                <TouchableOpacity onPress={handleSave}>
-                    <Text style={styles.doneButton}>Done</Text>
+                <TouchableOpacity onPress={handleSave} disabled={saving}>
+                    <Text style={[styles.doneButton, saving && { opacity: 0.5 }]}>
+                        {saving ? "Saving..." : "Done"}
+                    </Text>
                 </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
+            >
+                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-                {/* Cover & Avatar Area */}
-                <View style={styles.mediaSection}>
-                    <View style={styles.coverPlaceholder} />
-                    <View style={styles.avatarContainer}>
-                        <Image
-                            source={{ uri: "https://avataaars.io/?avatarStyle=Circle&topType=ShortHairShortFlat&accessoriesType=Prescription02&hairColor=Black&facialHairType=BeardLight&clotheType=BlazerShirt&eyeType=Happy&eyebrowType=Default&mouthType=Default&skinColor=Light" }}
-                            style={styles.avatar}
-                        />
-                    </View>
-                    <View style={styles.editButtonsRow}>
-                        <TouchableOpacity style={styles.editMediaBtn}>
-                            <Text style={styles.editMediaText}>Edit Profile Picture</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.editMediaBtn}>
-                            <Text style={styles.editMediaText}>Edit cover</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {/* Form Fields */}
-                <View style={styles.formSection}>
-
-                    {/* First Name */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>First Name</Text>
-                        <View style={styles.inputContainer}>
-                            <TextInput
-                                style={styles.input}
-                                value={firstName}
-                                onChangeText={setFirstName}
-                            />
-                            <Ionicons name="pencil-outline" size={18} color="#666" />
+                    {/* Cover & Avatar Area */}
+                    <View style={styles.mediaSection}>
+                        <View style={styles.coverPlaceholder}>
+                            {coverPicture ? (
+                                <Image source={{ uri: coverPicture }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                            ) : null}
                         </View>
-                    </View>
 
-                    {/* Last Name */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Last Name</Text>
-                        <View style={styles.inputContainer}>
-                            <TextInput
-                                style={styles.input}
-                                value={lastName}
-                                onChangeText={setLastName}
+                        <View style={styles.avatarContainer}>
+                            <Image
+                                source={{ uri: profilePicture || "https://avataaars.io/?avatarStyle=Circle&topType=ShortHairShortFlat&accessoriesType=Prescription02&hairColor=Black&facialHairType=BeardLight&clotheType=BlazerShirt&eyeType=Happy&eyebrowType=Default&mouthType=Default&skinColor=Light" }}
+                                style={styles.avatar}
                             />
-                            <Ionicons name="pencil-outline" size={18} color="#666" />
                         </View>
-                    </View>
 
-                    {/* Email (LOCKED) */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Email</Text>
-                        <View style={[styles.inputContainer, styles.readOnlyContainer]}>
-                            <TextInput
-                                style={[styles.input, styles.readOnlyText]}
-                                value={email}
-                                editable={false} // Cannot edit
-                            />
-                            {/* Lock Icon */}
-                            <Ionicons name="lock-closed-outline" size={18} color="#999" />
-                        </View>
-                    </View>
-
-                    {/* Tutorial Group (DROPDOWN) */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Tutorial Group</Text>
-                        <View style={styles.rowContainer}>
-
-                            {/* Level Selector */}
-                            <TouchableOpacity
-                                style={styles.dropdownInput}
-                                onPress={() => openModal('level')}
-                            >
-                                <Text style={styles.inputText}>{level}</Text>
-                                <Ionicons name="chevron-down" size={16} color="#333" />
+                        <View style={styles.editButtonsRow}>
+                            <TouchableOpacity style={styles.editMediaBtn}>
+                                <Text style={styles.editMediaText}>Edit Profile Picture</Text>
                             </TouchableOpacity>
-
-                            {/* Group Selector */}
-                            <TouchableOpacity
-                                style={styles.dropdownInput}
-                                onPress={() => openModal('group')}
-                            >
-                                <Text style={styles.inputText}>{group}</Text>
-                                <Ionicons name="chevron-down" size={16} color="#333" />
+                            <TouchableOpacity style={styles.editMediaBtn}>
+                                <Text style={styles.editMediaText}>Edit cover</Text>
                             </TouchableOpacity>
+                        </View>
+                    </View>
 
-                            <View style={styles.checkSpacer}>
-                                <Ionicons name="checkmark-sharp" size={20} color="#2196F3" />
+                    {/* Form Fields */}
+                    <View style={styles.formSection}>
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>First Name</Text>
+                            <View style={styles.inputContainer}>
+                                <TextInput
+                                    style={styles.input}
+                                    value={firstName}
+                                    onChangeText={setFirstName}
+                                />
+                                <Ionicons name="pencil-outline" size={18} color="#666" />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Last Name</Text>
+                            <View style={styles.inputContainer}>
+                                <TextInput
+                                    style={styles.input}
+                                    value={lastName}
+                                    onChangeText={setLastName}
+                                />
+                                <Ionicons name="pencil-outline" size={18} color="#666" />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Email</Text>
+                            <View style={[styles.inputContainer, styles.readOnlyContainer]}>
+                                <TextInput
+                                    style={[styles.input, styles.readOnlyText]}
+                                    value={email}
+                                    editable={false}
+                                />
+                                <Ionicons name="lock-closed-outline" size={18} color="#999" />
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Tutorial Group</Text>
+                            <View style={styles.rowContainer}>
+                                <TouchableOpacity
+                                    style={styles.dropdownInput}
+                                    onPress={() => openModal('level')}
+                                >
+                                    <Text style={styles.inputText}>{level}</Text>
+                                    <Ionicons name="chevron-down" size={16} color="#333" />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={styles.dropdownInput}
+                                    onPress={() => openModal('group')}
+                                >
+                                    <Text style={styles.inputText}>{group}</Text>
+                                    <Ionicons name="chevron-down" size={16} color="#333" />
+                                </TouchableOpacity>
+
+                                <View style={styles.checkSpacer}>
+                                    <Ionicons name="checkmark-sharp" size={20} color="#2196F3" />
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Role</Text>
+                            <View style={[styles.inputContainer, styles.readOnlyContainer]}>
+                                <TextInput
+                                    style={[styles.input, styles.readOnlyText]}
+                                    value={role}
+                                    editable={false}
+                                />
+                                <Ionicons name="lock-closed-outline" size={18} color="#999" />
                             </View>
                         </View>
                     </View>
 
-                    {/* Role (LOCKED) */}
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Role</Text>
-                        <View style={[styles.inputContainer, styles.readOnlyContainer]}>
-                            <TextInput
-                                style={[styles.input, styles.readOnlyText]}
-                                value={role}
-                                editable={false} // Cannot edit
-                            />
-                            {/* Lock Icon */}
-                            <Ionicons name="lock-closed-outline" size={18} color="#999" />
-                        </View>
-                    </View>
+                    {/* Action Button */}
+                    <TouchableOpacity style={styles.redButton} onPress={handleSave}>
+                        <Text style={styles.redButtonText}>
+                            {saving ? "Saving Changes..." : "Save Changes"}
+                        </Text>
+                    </TouchableOpacity>
 
-                </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
 
-                {/* Action Button */}
-                <TouchableOpacity style={styles.redButton} onPress={handleSave}>
-                    <Text style={styles.redButtonText}>Save Changes</Text>
-                </TouchableOpacity>
-
-            </ScrollView>
-
-            {/* --- CUSTOM DROPDOWN MODAL --- */}
+            {/* --- CUSTOM MODAL --- */}
             <Modal
                 transparent={true}
                 visible={modalVisible}
@@ -200,31 +309,32 @@ export default function EditProfileScreen() {
             >
                 <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
                     <View style={styles.modalOverlay}>
-                        <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>
-                                Select {modalType === 'level' ? 'Level' : 'Group'}
-                            </Text>
-                            <FlatList
-                                data={modalType === 'level' ? LEVELS : GROUPS}
-                                keyExtractor={(item) => item}
-                                style={{ maxHeight: 300 }}
-                                renderItem={({ item }) => (
-                                    <TouchableOpacity
-                                        style={styles.modalItem}
-                                        onPress={() => handleSelect(item)}
-                                    >
-                                        <Text style={styles.modalItemText}>{item}</Text>
-                                        {(modalType === 'level' ? level : group) === item && (
-                                            <Ionicons name="checkmark" size={20} color="#D32F2F" />
-                                        )}
-                                    </TouchableOpacity>
-                                )}
-                            />
-                        </View>
+                        <TouchableWithoutFeedback onPress={() => { }}>
+                            <View style={styles.modalContent}>
+                                <Text style={styles.modalTitle}>
+                                    Select {modalType === 'level' ? 'Level' : 'Group'}
+                                </Text>
+                                <FlatList
+                                    data={modalType === 'level' ? LEVELS : GROUPS}
+                                    keyExtractor={(item) => item}
+                                    style={{ maxHeight: 300 }}
+                                    renderItem={({ item }) => (
+                                        <TouchableOpacity
+                                            style={styles.modalItem}
+                                            onPress={() => handleSelect(item)}
+                                        >
+                                            <Text style={styles.modalItemText}>{item}</Text>
+                                            {(modalType === 'level' ? level : group) === item && (
+                                                <Ionicons name="checkmark" size={20} color="#D32F2F" />
+                                            )}
+                                        </TouchableOpacity>
+                                    )}
+                                />
+                            </View>
+                        </TouchableWithoutFeedback>
                     </View>
                 </TouchableWithoutFeedback>
             </Modal>
-
         </SafeAreaView>
     );
 }
@@ -240,29 +350,27 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        height: 100,
+        height: 60,
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingVertical: 10,
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
+        marginTop: 20,
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: '600',
-        marginTop: 20,
     },
     backButton: {
         padding: 8,
         backgroundColor: '#F5F5F5',
         borderRadius: 20,
-        marginTop: 20,
     },
     doneButton: {
         color: '#D32F2F',
         fontWeight: 'bold',
         fontSize: 16,
-        marginTop: 20,
     },
     mediaSection: {
         alignItems: 'center',
@@ -273,6 +381,7 @@ const styles = StyleSheet.create({
         height: 120,
         backgroundColor: '#E0E0E0',
         marginBottom: -50,
+        overflow: 'hidden',
     },
     avatarContainer: {
         padding: 4,
@@ -285,7 +394,7 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         borderRadius: 50,
-        backgroundColor: '#FF0000',
+        backgroundColor: '#f0f0f0',
     },
     editButtonsRow: {
         flexDirection: 'row',
@@ -332,13 +441,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#000',
     },
-    // New Styles for Read-Only Fields
     readOnlyContainer: {
-        backgroundColor: '#F0F0F0', // Slightly darker gray for disabled feel
+        backgroundColor: '#F0F0F0',
         opacity: 0.8,
     },
     readOnlyText: {
-        color: '#777', // Gray text
+        color: '#777',
     },
     inputText: {
         fontSize: 16,
@@ -357,7 +465,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         paddingVertical: 14,
         borderRadius: 12,
-        width: 90, // Fixed width
+        width: 90,
     },
     checkSpacer: {
         flex: 1,
@@ -381,7 +489,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-    // --- MODAL STYLES ---
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
