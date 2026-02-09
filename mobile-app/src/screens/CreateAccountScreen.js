@@ -8,6 +8,43 @@ export default function CreateAccountScreen({ role, onContinue, onNavigateToLogi
     const [email, setEmail] = useState("");
     const [isChecking, setIsChecking] = useState(false);
 
+    // Validate email format based on role
+    const validateEmailForRole = (email, role) => {
+        if (role === "student" || role === "lecture") {
+            // Extract username part (before @)
+            const username = email.split("@")[0];
+            const hasNumbers = /\d/.test(username);
+
+            if (role === "student" && !hasNumbers) {
+                return {
+                    valid: false,
+                    message: "This is a lecturer email, you cannot sign up as a student"
+                };
+            }
+
+            if (role === "lecture" && hasNumbers) {
+                return {
+                    valid: false,
+                    message: "This is a student email, you cannot sign up as a lecturer"
+                };
+            }
+
+            // Additional validation for lecturer emails: must have format like name.letter@iit.ac.lk
+            if (role === "lecture") {
+                // Check if there's a dot followed by at least one letter before @
+                const lecturerPattern = /^[a-z]+\.[a-z]+$/i;
+                if (!lecturerPattern.test(username)) {
+                    return {
+                        valid: false,
+                        message: "This is not a valid email. Lecturer emails should be in format: name.letter@iit.ac.lk"
+                    };
+                }
+            }
+        }
+
+        return { valid: true };
+    };
+
     const handleContinue = async () => {
         const trimmedEmail = email.trim();
         console.log("=== Email Check Started ===");
@@ -18,6 +55,26 @@ export default function CreateAccountScreen({ role, onContinue, onNavigateToLogi
             if (role === "student" || role === "lecture") {
                 if (!trimmedEmail.toLowerCase().endsWith("@iit.ac.lk")) {
                     Alert.alert("Invalid Email", "Please enter your official IIT email address (@iit.ac.lk) to continue.");
+                    return;
+                }
+
+                // Validate email format matches the role
+                const roleValidation = validateEmailForRole(trimmedEmail.toLowerCase(), role);
+                if (!roleValidation.valid) {
+                    Alert.alert(
+                        "Invalid Email Format",
+                        roleValidation.message,
+                        [
+                            {
+                                text: "Change Role",
+                                onPress: () => {
+                                    if (onBack) {
+                                        onBack();
+                                    }
+                                }
+                            }
+                        ]
+                    );
                     return;
                 }
             }

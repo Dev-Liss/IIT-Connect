@@ -12,6 +12,35 @@ const registerUser = async (req, res) => {
           message: "Students and Lecturers must use an @iit.ac.lk email address.",
         });
       }
+
+      // Validate email format matches the role
+      const emailUsername = email.split("@")[0];
+      const hasNumbers = /\d/.test(emailUsername);
+
+      if (role === "student" && !hasNumbers) {
+        return res.status(400).json({
+          success: false,
+          message: "This is a lecturer email, you cannot sign up as a student",
+        });
+      }
+
+      if (role === "lecture" && hasNumbers) {
+        return res.status(400).json({
+          success: false,
+          message: "This is a student email, you cannot sign up as a lecturer",
+        });
+      }
+
+      // Additional validation for lecturer emails: must have format like name.letter@iit.ac.lk
+      if (role === "lecture") {
+        const lecturerPattern = /^[a-z]+\.[a-z]+$/i;
+        if (!lecturerPattern.test(emailUsername)) {
+          return res.status(400).json({
+            success: false,
+            message: "This is not a valid email. Lecturer emails should be in format: name.letter@iit.ac.lk",
+          });
+        }
+      }
     }
 
     // Check if email already exists
