@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
     scrollContent: {
-        paddingTop: 180, // Space for sticky header
+        paddingTop: 200, // Matched updated header height
         paddingBottom: 40,
         paddingHorizontal: 20, // Align text and cards with page margins
     },

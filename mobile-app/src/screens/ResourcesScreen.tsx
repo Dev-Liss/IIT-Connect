@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
     },
 
     listContent: {
-        paddingTop: 180, // Space for sticky header
+        paddingTop: 200, // Matched updated header height
         paddingHorizontal: 12,
         paddingBottom: 80,
     },

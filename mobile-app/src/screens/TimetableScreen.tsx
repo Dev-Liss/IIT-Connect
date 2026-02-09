@@ -124,7 +124,7 @@ export default function TimetableScreen() {
     // Constants for Layout
     const STATUS_BAR_HEIGHT = 50;
     const HEADER_TITLE_HEIGHT = 60; // 50 height + 10 margin
-    const TOTAL_HEADER_HEIGHT = 180; // Hardcoded space + padding
+    const TOTAL_HEADER_HEIGHT = 200; // Increased spacing for better readability
     const SCROLL_DISTANCE = HEADER_TITLE_HEIGHT; // 60
 
     // Use SCROLL_DISTANCE instead of HEADER_HEIGHT
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        paddingBottom: 10, // Add bottom padding for better spacing
+        paddingBottom: 20, // Increased bottom padding for breathing room
     },
     header: {
         flexDirection: "row",
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
     },
     filterContainer: {
         paddingHorizontal: 20,
-        marginBottom: 10,
+        marginVertical: 10, // Added top and bottom margin
         height: 40, // Fixed height specifically
         justifyContent: 'center',
         zIndex: 10, // Ensure dropdown goes over content
