@@ -16,6 +16,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const postRoutes = require("./routes/posts");
 const storyRoutes = require("./routes/stories");
+const { startStoryCleanupJob } = require("./jobs/storyCleanup");
 
 // Initialize Express App
 const app = express();
@@ -54,6 +55,9 @@ connectDB()
       console.log(
         `📱 Mobile app should connect to: http://YOUR_IP:${PORT}/api`,
       );
+
+      // Start the story cleanup CRON job (deletes expired Cloudinary media)
+      startStoryCleanupJob();
     });
   })
   .catch((err) => {
