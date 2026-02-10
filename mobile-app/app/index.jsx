@@ -13,6 +13,8 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Alert } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ClerkProvider, ClerkLoaded } from '@clerk/clerk-expo';
+import * as SecureStore from 'expo-secure-store';
 
 // Import screens
 import SplashScreen from "../src/screens/SplashScreen";
@@ -32,7 +34,25 @@ import NewPasswordScreen from "../src/screens/NewPasswordScreen";
 import HomeScreen from "../src/screens/HomeScreen";
 import { registerUser } from "../src/services/api";
 
-export default function App() {
+// Clerk token cache
+const tokenCache = {
+    async getToken(key) {
+        try {
+            return SecureStore.getItemAsync(key);
+        } catch (err) {
+            return null;
+        }
+    },
+    async saveToken(key, value) {
+        try {
+            return SecureStore.setItemAsync(key, value);
+        } catch (err) {
+            console.error('SecureStore error:', err);
+        }
+    },
+};
+
+function App() {
     const [currentScreen, setCurrentScreen] = useState("splash");
     const [selectedRole, setSelectedRole] = useState(null);
     const [userEmail, setUserEmail] = useState("");
@@ -150,8 +170,9 @@ export default function App() {
                 <UserDetailsScreen
                     email={userEmail}
                     role={selectedRole}
+                    studentId={studentId}
                     onContinue={(data) => {
-                        setUserData((prev) => ({ ...prev, ...data })); // Merge with existing data (e.g. nationalId)
+                        setUserData((prev) => ({ ...prev, ...data, studentId: studentId })); // Include studentId in userData
                         setCurrentScreen("emailVerification");
                         // TODO: Send verification email via backend
                     }}
@@ -160,57 +181,15 @@ export default function App() {
         }
 
         if (currentScreen === "emailVerification") {
+            console.log("📋 userData at email verification:", JSON.stringify(userData, null, 2));
             return (
                 <EmailVerificationScreen
                     email={userEmail}
                     userData={userData}
                     onVerify={async (code) => {
-                        console.log("Verify button clicked, code:", code);
-
-                        try {
-                            // Register the user in MongoDB
-                            if (userData) {
-                                const registrationData = {
-                                    username: `${userData.firstName || ""} ${userData.lastName || ""}`.trim(),
-                                    email: userEmail,
-                                    password: userData.password,
-                                    role: selectedRole,
-                                };
-
-                                // Add role-specific fields
-                                if (selectedRole === "student" && studentId) {
-                                    registrationData.studentId = studentId;
-                                } else if (selectedRole === "alumni") {
-                                    // For alumni, send nationalId and pastIitId
-                                    if (userData.nationalId) {
-                                        registrationData.nationalId = userData.nationalId;
-                                    }
-                                    if (userData.pastIitId) {
-                                        registrationData.pastIitId = userData.pastIitId;
-                                    }
-                                }
-
-                                console.log("Sending registration data to backend:", registrationData);
-                                const response = await registerUser(registrationData);
-                                console.log("Backend registration successful:", response);
-
-                                // Navigate to success screen only if registration is successful
-                                setCurrentScreen("signupSuccess");
-                            }
-                        } catch (error) {
-                            console.error("Backend registration error:", error);
-
-                            // Check if the error is due to duplicate email
-                            const errorMessage = error.message || "";
-                            if (errorMessage.includes("already exists") || error.emailExists) {
-                                // Show alert and navigate to login screen
-                                alert("An account with this email already exists. Please login instead.");
-                                setCurrentScreen("login");
-                            } else {
-                                // For other errors, show the error message
-                                alert(`Registration failed: ${errorMessage}`);
-                            }
-                        }
+                        console.log("✅ Email verified! User already registered via Clerk.");
+                        // Clerk verification and MongoDB sync already completed in EmailVerificationScreen
+                        setCurrentScreen("signupSuccess");
                     }}
                 />
             );
@@ -290,6 +269,25 @@ export default function App() {
         <SafeAreaProvider>
             {renderScreen()}
         </SafeAreaProvider>
+    );
+}
+
+// Wrap App with ClerkProvider
+export default function RootApp() {
+    const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+    if (!publishableKey) {
+        console.warn('⚠️ Missing Clerk key - Clerk features disabled');
+        // Return app without Clerk if key is missing (development fallback)
+        return <App />;
+    }
+
+    return (
+        <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+            <ClerkLoaded>
+                <App />
+            </ClerkLoaded>
+        </ClerkProvider>
     );
 }
 
