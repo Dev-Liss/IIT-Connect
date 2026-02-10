@@ -6,8 +6,20 @@
  *
  * Endpoints:
  * - POST /api/stories         - Upload a new story
- * - GET  /api/stories         - Get all active stories (last 24h)
+ * - GET  /api/stories         - Get all active stories (last 24h), grouped by user
  * - POST /api/stories/:id/view - Mark a story as viewed
+ * - GET  /api/stories/:id     - Get a single story
+ *
+ * GET / Response Format:
+ * [
+ *   {
+ *     "user": { "_id": "...", "username": "...", "profilePicture": "..." },
+ *     "stories": [{ "_id": "...", "mediaUrl": "...", "viewed": false, "createdAt": "..." }],
+ *     "allViewed": false
+ *   }
+ * ]
+ *
+ * Sort Order: Current User → Unviewed Users → Viewed Users
  */
 
 const express = require("express");
@@ -19,10 +31,8 @@ const { upload, cloudinary } = require("../config/cloudinary");
 // CREATE STORY
 // POST /api/stories
 // ====================================
-// Use upload.single('media') - expects form field named 'media'
 router.post("/", upload.single("media"), async (req, res) => {
   try {
-    // Validate: Ensure a file was uploaded
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -32,26 +42,19 @@ router.post("/", upload.single("media"), async (req, res) => {
 
     console.log("📖 Story file received:", req.file);
 
-    // Extract Cloudinary response data
     const { path: cloudinaryUrl, filename: publicId } = req.file;
-
-    // Determine media type (image or video)
     const mimeType = req.file.mimetype || "";
     const mediaType = mimeType.startsWith("video") ? "video" : "image";
 
-    // Create the new story document
     const newStory = new Story({
-      user: req.body.userId, // Sent from frontend (or could use JWT user)
+      user: req.body.userId,
       mediaUrl: cloudinaryUrl,
       mediaPublicId: publicId,
       mediaType: mediaType,
-      viewers: [], // No viewers initially
+      viewers: [],
     });
 
-    // Save to MongoDB
     await newStory.save();
-
-    // Populate user data for response
     await newStory.populate("user", "username email profilePicture");
 
     console.log("✅ Story created successfully:", newStory._id);
@@ -72,42 +75,34 @@ router.post("/", upload.single("media"), async (req, res) => {
 
 // ====================================
 // GET ALL ACTIVE STORIES (GROUPED BY USER)
-// GET /api/stories
+// GET /api/stories?userId=xxx
 // ====================================
-// Returns all stories from the last 24 hours, GROUPED by user
-// Query param: ?userId=xxx to calculate 'viewed' status
-// Response format:
-// [
-//   {
-//     "user": { "_id": "...", "username": "...", "profilePicture": "..." },
-//     "stories": [{ "_id": "...", "mediaUrl": "...", "viewed": false, "createdAt": "..." }, ...],
-//     "allViewed": false
-//   }
-// ]
+// Returns stories from last 24h grouped by user.
+// Sort: Current user first → Unviewed groups → Viewed groups
 router.get("/", async (req, res) => {
   try {
-    const currentUserId = req.query.userId; // Current user's ID for viewed calculation
+    const currentUserId = req.query.userId;
 
-    // Calculate 24 hours ago
+    // 24 hours ago
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    // Fetch all stories created in the last 24 hours
+    // Fetch all active stories, oldest first for sequential playback
     const stories = await Story.find({
       createdAt: { $gte: twentyFourHoursAgo },
     })
       .populate("user", "username email profilePicture")
-      .sort({ createdAt: 1 }); // Oldest first (for sequential playback order)
+      .sort({ createdAt: 1 });
 
     // Group stories by user
     const groupedStoriesMap = new Map();
 
     stories.forEach((story) => {
-      if (!story.user) return; // Skip if user is null (deleted user)
+      if (!story.user) return; // skip orphaned stories
 
       const userId = story.user._id.toString();
       const storyObj = story.toObject();
 
-      // Check if current user has viewed this story
+      // Calculate viewed status for current user
       storyObj.viewed = currentUserId
         ? story.viewers.some(
             (viewerId) => viewerId.toString() === currentUserId,
@@ -118,17 +113,14 @@ router.get("/", async (req, res) => {
       delete storyObj.viewers;
 
       if (!groupedStoriesMap.has(userId)) {
-        // First story for this user - create new group
         groupedStoriesMap.set(userId, {
           user: story.user.toObject(),
           stories: [storyObj],
           latestStoryTime: new Date(story.createdAt).getTime(),
         });
       } else {
-        // Add story to existing user group
         const group = groupedStoriesMap.get(userId);
         group.stories.push(storyObj);
-        // Track most recent story time for sorting
         const storyTime = new Date(story.createdAt).getTime();
         if (storyTime > group.latestStoryTime) {
           group.latestStoryTime = storyTime;
@@ -136,33 +128,41 @@ router.get("/", async (req, res) => {
       }
     });
 
-    // Convert Map to Array and calculate allViewed
+    // Convert Map → Array, compute allViewed
     const groupedStories = Array.from(groupedStoriesMap.values()).map(
       (group) => {
-        // allViewed is true only if ALL stories in the group are viewed
         const allViewed = group.stories.every((story) => story.viewed === true);
-
         return {
           user: group.user,
           stories: group.stories,
-          allViewed: allViewed,
-          _latestStoryTime: group.latestStoryTime, // For sorting (will be removed)
+          allViewed,
+          _latestStoryTime: group.latestStoryTime,
+          _isCurrentUser:
+            currentUserId && group.user._id.toString() === currentUserId,
         };
       },
     );
 
-    // Sort: Unviewed groups first, then by most recent story
+    // Sort: Current user first → Unviewed → Viewed, then by recency
     groupedStories.sort((a, b) => {
-      // Unviewed stories come first
+      // 1. Current user always first
+      if (a._isCurrentUser && !b._isCurrentUser) return -1;
+      if (!a._isCurrentUser && b._isCurrentUser) return 1;
+
+      // 2. Unviewed groups before viewed groups
       if (a.allViewed !== b.allViewed) {
         return a.allViewed ? 1 : -1;
       }
-      // Then sort by most recent story (newest first)
+
+      // 3. Most recent story first within same category
       return b._latestStoryTime - a._latestStoryTime;
     });
 
-    // Remove internal sorting field from response
-    groupedStories.forEach((group) => delete group._latestStoryTime);
+    // Remove internal sorting fields from response
+    groupedStories.forEach((group) => {
+      delete group._latestStoryTime;
+      delete group._isCurrentUser;
+    });
 
     res.json({
       success: true,
@@ -182,11 +182,10 @@ router.get("/", async (req, res) => {
 // MARK STORY AS VIEWED
 // POST /api/stories/:id/view
 // ====================================
-// Adds current user's ID to the viewers array
 router.post("/:id/view", async (req, res) => {
   try {
     const storyId = req.params.id;
-    const userId = req.body.userId; // User who is viewing
+    const userId = req.body.userId;
 
     if (!userId) {
       return res.status(400).json({
@@ -195,7 +194,6 @@ router.post("/:id/view", async (req, res) => {
       });
     }
 
-    // Find the story
     const story = await Story.findById(storyId);
 
     if (!story) {
@@ -205,13 +203,11 @@ router.post("/:id/view", async (req, res) => {
       });
     }
 
-    // Check if user has already viewed (avoid duplicates)
     const alreadyViewed = story.viewers.some(
       (viewerId) => viewerId.toString() === userId,
     );
 
     if (!alreadyViewed) {
-      // Add user to viewers array using $addToSet (prevents duplicates)
       await Story.findByIdAndUpdate(storyId, {
         $addToSet: { viewers: userId },
       });
@@ -221,7 +217,7 @@ router.post("/:id/view", async (req, res) => {
     res.json({
       success: true,
       message: "Story marked as viewed",
-      alreadyViewed: alreadyViewed,
+      alreadyViewed,
     });
   } catch (error) {
     console.error("❌ Mark Story Viewed Error:", error);

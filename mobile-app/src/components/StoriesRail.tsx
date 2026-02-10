@@ -1,17 +1,20 @@
 /**
  * ====================================
- * STORIES RAIL COMPONENT (v2.0)
+ * STORIES RAIL — Instagram-Style Circular Avatars (v3.0)
  * ====================================
- * Instagram-style stories rail with grouped stories and sequential playback.
  *
- * Features:
- * - Horizontal scrollable stories list
- * - Stories GROUPED by user (one card per user)
- * - "My Story" card shows preview of uploaded content
- * - Red border for unviewed, NO border for viewed
- * - Sequential playback with multiple progress bars
- * - Auto-advance through all stories from a user
- * - Real API integration with backend
+ * Fully rewritten to match Instagram UX:
+ *   • Circular avatars (~70 px) with a colored ring
+ *   • Red ring = unviewed stories, Gray ring = viewed, No ring = "My Story" with 0 stories
+ *   • "My Story" supports two tap targets (center → view, badge → add)
+ *   • Full-screen Story Viewer Modal with tap-left / tap-right navigation
+ *   • Grouped by user — one circle per user
+ *
+ * Components:
+ *   StoryCircle     – reusable avatar + ring
+ *   MyStoryCircle   – specialized with dual tap targets & (+) badge
+ *   StoryViewerModal – full-screen sequential viewer
+ *   StoriesRail     – horizontal ScrollView container (default export)
  */
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -27,6 +30,7 @@ import {
   Alert,
   Dimensions,
   StatusBar,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -34,9 +38,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "../context/AuthContext";
 import { STORY_ENDPOINTS } from "../config/api";
 
-// ====================================
-// TYPES
-// ====================================
+// ─── Types ───────────────────────────────────────────────────
 interface StoryUser {
   _id: string;
   username: string;
@@ -52,179 +54,204 @@ interface Story {
   createdAt: string;
 }
 
-// New grouped story type from backend
 interface StoryGroup {
   user: StoryUser;
   stories: Story[];
   allViewed: boolean;
 }
 
-// ====================================
-// CONSTANTS
-// ====================================
+// ─── Constants ───────────────────────────────────────────────
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const CARD_WIDTH = 90;
-const CARD_HEIGHT = 125;
-const CARD_BORDER_RADIUS = 12;
-const STORY_DISPLAY_DURATION = 5000; // 5 seconds per story
 
-// Default avatar for users without profile picture
-const DEFAULT_AVATAR = "https://via.placeholder.com/100x100?text=User";
+const CIRCLE_SIZE = 70; // avatar circle diameter
+const RING_WIDTH = 3; // colored ring width
+const RING_GAP = 2; // gap between ring and avatar
+const OUTER_SIZE = CIRCLE_SIZE + (RING_WIDTH + RING_GAP) * 2; // total size with ring
+const BADGE_SIZE = 24; // (+) badge size
+const STORY_DURATION = 5000; // 5 s per story
 
-// ====================================
-// MY STORY CARD (Current User)
-// ====================================
-interface MyStoryCardProps {
-  userAvatar?: string;
-  myStories: Story[];
-  allViewed: boolean;
-  onPressAdd: () => void;
-  onPressView: () => void;
-  isUploading: boolean;
-}
+const BRAND_RED = "#f9252b";
+const RING_GRAY = "#e0e0e0";
+const DEFAULT_AVATAR =
+  "https://ui-avatars.com/api/?background=ccc&color=fff&name=User";
 
-const MyStoryCard: React.FC<MyStoryCardProps> = ({
-  userAvatar,
-  myStories,
-  allViewed,
-  onPressAdd,
-  onPressView,
-  isUploading,
-}) => {
-  const hasStories = myStories.length > 0;
-  // Use the most recent story as the preview background
-  const previewImage = hasStories
-    ? myStories[myStories.length - 1].mediaUrl
-    : userAvatar || DEFAULT_AVATAR;
+// Instagram-style gradient colors for unviewed ring
+const GRADIENT_COLORS: [string, string, string, string] = [
+  "#f9ce34",
+  "#ee2a7b",
+  "#6228d7",
+  "#f9ce34",
+];
 
-  const handlePress = () => {
-    if (hasStories) {
-      onPressView();
-    } else {
-      onPressAdd();
-    }
-  };
-
-  // Border logic: red if has stories and not all viewed, no border otherwise
-  const showUnviewedBorder = hasStories && !allViewed;
-
-  return (
-    <TouchableOpacity
-      style={[styles.storyCard, showUnviewedBorder && styles.unviewedBorder]}
-      activeOpacity={0.8}
-      onPress={handlePress}
-      disabled={isUploading}
-    >
-      <View style={styles.addStoryContainer}>
-        {/* Background: Story preview if exists, otherwise avatar */}
-        <Image
-          source={{ uri: previewImage }}
-          style={styles.addStoryBackground}
-          resizeMode="cover"
-        />
-
-        {/* Gradient overlay */}
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.7)"]}
-          style={styles.cardGradient}
-        />
-
-        {/* Plus icon or loading indicator */}
-        <View style={styles.addIconContainer}>
-          {isUploading ? (
-            <View style={styles.addIconCircle}>
-              <ActivityIndicator size="small" color="#fff" />
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.addIconCircle}
-              onPress={onPressAdd}
-              disabled={isUploading}
-            >
-              <Ionicons name="add" size={18} color="#fff" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Story count badge removed from thumbnail - only show in modal */}
-
-        {/* Username */}
-        <Text style={styles.storyUsername} numberOfLines={1}>
-          {isUploading
-            ? "Uploading..."
-            : hasStories
-              ? "Your Story"
-              : "Add Story"}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+// ─── Helper: first unviewed or first story thumbnail ─────────
+const getThumbnail = (stories: Story[], fallbackAvatar?: string): string => {
+  const firstUnviewed = stories.find((s) => !s.viewed);
+  if (firstUnviewed) return firstUnviewed.mediaUrl;
+  if (stories.length > 0) return stories[0].mediaUrl;
+  return fallbackAvatar || DEFAULT_AVATAR;
 };
 
-// ====================================
-// STORY GROUP CARD (Friend's Stories)
-// ====================================
-interface StoryGroupCardProps {
+// =============================================================
+//  StoryCircle — generic friend circle
+// =============================================================
+interface StoryCircleProps {
   group: StoryGroup;
   onPress: () => void;
 }
 
-const StoryGroupCard: React.FC<StoryGroupCardProps> = ({ group, onPress }) => {
-  const avatarUri = group.user?.profilePicture || DEFAULT_AVATAR;
+const StoryCircle: React.FC<StoryCircleProps> = ({ group, onPress }) => {
+  const avatar = group.user?.profilePicture || DEFAULT_AVATAR;
   const username = group.user?.username || "Unknown";
-  // Use the most recent story as the preview
-  const previewImage = group.stories[group.stories.length - 1]?.mediaUrl;
+  const isViewed = group.allViewed;
 
   return (
     <TouchableOpacity
-      style={[
-        styles.storyCard,
-        // Red border for unviewed, NO border for viewed
-        !group.allViewed && styles.unviewedBorder,
-      ]}
+      style={styles.circleWrapper}
       activeOpacity={0.8}
       onPress={onPress}
     >
-      {/* Story thumbnail as background */}
-      <Image
-        source={{ uri: previewImage }}
-        style={StyleSheet.absoluteFillObject}
-        resizeMode="cover"
-      />
-
-      {/* Gradient overlay for text readability */}
-      <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.7)"]}
-        style={styles.cardGradient}
-      />
-
-      {/* Content container */}
-      <View style={styles.storyContentContainer}>
-        {/* User avatar overlay (bottom-left) */}
-        <View style={styles.avatarContainer}>
-          <Image
-            source={{ uri: avatarUri }}
-            style={[
-              styles.userAvatar,
-              !group.allViewed && styles.avatarUnviewedBorder,
-            ]}
-          />
+      {/* Ring */}
+      {isViewed ? (
+        <View style={[styles.ringOuter, styles.ringViewed]}>
+          <View style={styles.ringInnerGap}>
+            <Image source={{ uri: avatar }} style={styles.avatar} />
+          </View>
         </View>
+      ) : (
+        <LinearGradient
+          colors={GRADIENT_COLORS}
+          start={{ x: 0, y: 1 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.ringOuter}
+        >
+          <View style={styles.ringInnerGap}>
+            <Image source={{ uri: avatar }} style={styles.avatar} />
+          </View>
+        </LinearGradient>
+      )}
 
-        {/* Story count badge removed from thumbnail - only show in modal */}
-
-        {/* Username at bottom */}
-        <Text style={styles.storyUsername} numberOfLines={1}>
-          {username}
-        </Text>
-      </View>
+      {/* Username */}
+      <Text style={styles.username} numberOfLines={1}>
+        {username}
+      </Text>
     </TouchableOpacity>
   );
 };
 
-// ====================================
-// STORY VIEWER MODAL (Sequential Playback)
-// ====================================
+// =============================================================
+//  MyStoryCircle — current user's circle with (+) badge
+// =============================================================
+interface MyStoryCircleProps {
+  userAvatar?: string;
+  username: string;
+  hasStories: boolean;
+  allViewed: boolean;
+  onPressView: () => void;
+  onPressAdd: () => void;
+  isUploading: boolean;
+}
+
+const MyStoryCircle: React.FC<MyStoryCircleProps> = ({
+  userAvatar,
+  username,
+  hasStories,
+  allViewed,
+  onPressView,
+  onPressAdd,
+  isUploading,
+}) => {
+  const avatar = userAvatar || DEFAULT_AVATAR;
+
+  // ── State 1: No stories — entire circle taps to add ──
+  if (!hasStories) {
+    return (
+      <TouchableOpacity
+        style={styles.circleWrapper}
+        activeOpacity={0.8}
+        onPress={onPressAdd}
+        disabled={isUploading}
+      >
+        {/* No ring — just avatar */}
+        <View style={styles.ringOuter}>
+          <View style={styles.ringInnerGap}>
+            <Image source={{ uri: avatar }} style={styles.avatar} />
+          </View>
+        </View>
+
+        {/* (+) badge */}
+        <View style={styles.badgeContainer}>
+          {isUploading ? (
+            <View style={styles.badge}>
+              <ActivityIndicator size={10} color="#fff" />
+            </View>
+          ) : (
+            <View style={styles.badge}>
+              <Ionicons name="add" size={16} color="#fff" />
+            </View>
+          )}
+        </View>
+
+        <Text style={styles.username} numberOfLines={1}>
+          {isUploading ? "Posting…" : "Your story"}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
+  // ── State 2: Has stories — center = view, badge = add ──
+  return (
+    <View style={styles.circleWrapper}>
+      {/* Center tap → view */}
+      <TouchableOpacity activeOpacity={0.8} onPress={onPressView}>
+        {allViewed ? (
+          <View style={[styles.ringOuter, styles.ringViewed]}>
+            <View style={styles.ringInnerGap}>
+              <Image source={{ uri: avatar }} style={styles.avatar} />
+            </View>
+          </View>
+        ) : (
+          <LinearGradient
+            colors={GRADIENT_COLORS}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.ringOuter}
+          >
+            <View style={styles.ringInnerGap}>
+              <Image source={{ uri: avatar }} style={styles.avatar} />
+            </View>
+          </LinearGradient>
+        )}
+      </TouchableOpacity>
+
+      {/* Badge tap → add */}
+      <TouchableOpacity
+        style={styles.badgeContainer}
+        activeOpacity={0.7}
+        onPress={onPressAdd}
+        disabled={isUploading}
+        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+      >
+        {isUploading ? (
+          <View style={styles.badge}>
+            <ActivityIndicator size={10} color="#fff" />
+          </View>
+        ) : (
+          <View style={styles.badge}>
+            <Ionicons name="add" size={16} color="#fff" />
+          </View>
+        )}
+      </TouchableOpacity>
+
+      <Text style={styles.username} numberOfLines={1}>
+        {isUploading ? "Posting…" : "Your story"}
+      </Text>
+    </View>
+  );
+};
+
+// =============================================================
+//  StoryViewerModal — full-screen sequential viewer
+// =============================================================
 interface StoryViewerModalProps {
   visible: boolean;
   group: StoryGroup | null;
@@ -243,7 +270,15 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Reset to first story when opening a new group
+  // Stable callback refs to avoid useEffect re-triggers
+  const onCloseRef = useRef(onClose);
+  const onStoryViewedRef = useRef(onStoryViewed);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    onStoryViewedRef.current = onStoryViewed;
+  }, [onClose, onStoryViewed]);
+
+  // Reset index when a new group opens
   useEffect(() => {
     if (visible && group) {
       setCurrentIndex(0);
@@ -251,51 +286,38 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
     }
   }, [visible, group]);
 
-  // Store stable references to callbacks to avoid useEffect re-triggers
-  const onCloseRef = useRef(onClose);
-  const onStoryViewedRef = useRef(onStoryViewed);
-
-  // Keep refs updated with latest callbacks
+  // Timer + progress bar logic
   useEffect(() => {
-    onCloseRef.current = onClose;
-    onStoryViewedRef.current = onStoryViewed;
-  }, [onClose, onStoryViewed]);
+    if (!visible || !group || group.stories.length === 0) return;
 
-  // Handle story timing and auto-advance
-  useEffect(() => {
-    if (visible && group && group.stories.length > 0) {
-      const currentStory = group.stories[currentIndex];
+    const currentStory = group.stories[currentIndex];
+    if (!currentStory) return;
 
-      // Mark story as viewed
-      if (currentStory && !currentStory.viewed) {
-        onStoryViewedRef.current(currentStory._id);
-      }
-
-      // Start progress animation
-      setProgress(0);
-      const progressInterval = 50; // Update every 50ms
-      const steps = STORY_DISPLAY_DURATION / progressInterval;
-      let currentStep = 0;
-
-      progressRef.current = setInterval(() => {
-        currentStep++;
-        setProgress(currentStep / steps);
-      }, progressInterval);
-
-      // Capture group length for closure
-      const storiesLength = group.stories.length;
-
-      // Auto-advance or close timer
-      timerRef.current = setTimeout(() => {
-        if (currentIndex < storiesLength - 1) {
-          // Move to next story
-          setCurrentIndex((prev) => prev + 1);
-        } else {
-          // Close modal after last story
-          onCloseRef.current();
-        }
-      }, STORY_DISPLAY_DURATION);
+    // Mark viewed
+    if (!currentStory.viewed) {
+      onStoryViewedRef.current(currentStory._id);
     }
+
+    // Progress animation
+    setProgress(0);
+    const interval = 50;
+    const steps = STORY_DURATION / interval;
+    let step = 0;
+
+    progressRef.current = setInterval(() => {
+      step++;
+      setProgress(step / steps);
+    }, interval);
+
+    // Auto-advance / close
+    const storiesLength = group.stories.length;
+    timerRef.current = setTimeout(() => {
+      if (currentIndex < storiesLength - 1) {
+        setCurrentIndex((i) => i + 1);
+      } else {
+        onCloseRef.current();
+      }
+    }, STORY_DURATION);
 
     return () => {
       if (timerRef.current) {
@@ -307,46 +329,37 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         progressRef.current = null;
       }
     };
-    // Only depend on stable values - callbacks are accessed via refs
   }, [visible, group, currentIndex]);
 
-  // Handle tap to go next/previous
+  // Tap handler: left half = previous, right half = next
   const handleTap = (event: { nativeEvent: { locationX: number } }) => {
     const tapX = event.nativeEvent.locationX;
-    const screenThird = SCREEN_WIDTH / 3;
+    const half = SCREEN_WIDTH / 2;
 
-    // Clear current timers
+    // Clear running timers
     if (timerRef.current) clearTimeout(timerRef.current);
     if (progressRef.current) clearInterval(progressRef.current);
 
-    if (tapX < screenThird) {
-      // Left third - go to previous story
+    if (tapX < half) {
+      // Left → previous
       if (currentIndex > 0) {
-        setCurrentIndex((prev) => prev - 1);
+        setCurrentIndex((i) => i - 1);
       }
-    } else if (tapX > screenThird * 2) {
-      // Right third - go to next story or close
+    } else {
+      // Right → next or close
       if (group && currentIndex < group.stories.length - 1) {
-        setCurrentIndex((prev) => prev + 1);
+        setCurrentIndex((i) => i + 1);
       } else {
         onClose();
       }
-    } else {
-      // Middle - close
-      onClose();
     }
   };
 
   if (!group || group.stories.length === 0) return null;
 
-  // Ensure currentIndex is within bounds
   const safeIndex = Math.min(currentIndex, group.stories.length - 1);
   const currentStory = group.stories[safeIndex];
-
-  // Extra safety check - if story is undefined, close modal
-  if (!currentStory) {
-    return null;
-  }
+  if (!currentStory) return null;
 
   const avatarUri = group.user?.profilePicture || DEFAULT_AVATAR;
   const username = group.user?.username || "Unknown";
@@ -365,19 +378,19 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
         activeOpacity={1}
         onPress={handleTap}
       >
-        {/* Multiple Progress Bars */}
+        {/* Progress bars */}
         <View style={styles.progressBarContainer}>
-          {group.stories.map((_, index) => (
-            <View key={index} style={styles.progressBarWrapper}>
-              <View style={styles.progressBarBackground}>
+          {group.stories.map((_, idx) => (
+            <View key={idx} style={styles.progressBarWrapper}>
+              <View style={styles.progressBarBg}>
                 <View
                   style={[
-                    styles.progressBar,
+                    styles.progressBarFill,
                     {
                       width:
-                        index < safeIndex
+                        idx < safeIndex
                           ? "100%"
-                          : index === safeIndex
+                          : idx === safeIndex
                             ? `${progress * 100}%`
                             : "0%",
                     },
@@ -388,7 +401,7 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
           ))}
         </View>
 
-        {/* Header with user info and story count */}
+        {/* Header */}
         <View style={styles.modalHeader}>
           <Image source={{ uri: avatarUri }} style={styles.modalAvatar} />
           <View style={styles.modalUserInfo}>
@@ -404,7 +417,7 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Story Image */}
+        {/* Full-screen image */}
         <Image
           source={{ uri: currentStory.mediaUrl }}
           style={styles.modalImage}
@@ -415,14 +428,12 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   );
 };
 
-// ====================================
-// MAIN COMPONENT
-// ====================================
+// =============================================================
+//  StoriesRail — main exported component
+// =============================================================
 const StoriesRail: React.FC = () => {
-  // Auth context for current user
   const { user } = useAuth();
 
-  // State
   const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
   const [myStoryGroup, setMyStoryGroup] = useState<StoryGroup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -430,9 +441,7 @@ const StoriesRail: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState<StoryGroup | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  // ====================================
-  // FETCH STORIES
-  // ====================================
+  // ── Fetch stories ──────────────────────────────────────────
   const fetchStories = useCallback(async () => {
     try {
       const url = user
@@ -444,8 +453,6 @@ const StoriesRail: React.FC = () => {
 
       if (data.success) {
         const groups: StoryGroup[] = data.data;
-
-        // Separate current user's stories from others
         const myGroup = groups.find((g) => g.user?._id === user?.id) || null;
         const otherGroups = groups.filter((g) => g.user?._id !== user?.id);
 
@@ -463,17 +470,14 @@ const StoriesRail: React.FC = () => {
     fetchStories();
   }, [fetchStories]);
 
-  // ====================================
-  // UPLOAD STORY
-  // ====================================
-  const handleAddStory = async () => {
+  // ── Upload story ───────────────────────────────────────────
+  const handlePostStory = async () => {
     if (!user) {
       Alert.alert("Login Required", "Please login to add a story.");
       return;
     }
 
     try {
-      // Request permission
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -485,21 +489,18 @@ const StoriesRail: React.FC = () => {
         return;
       }
 
-      // Launch image picker - disabled editing to preserve original aspect ratio
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 0.8,
       });
 
-      if (result.canceled) {
-        return;
-      }
+      if (result.canceled) return;
 
       const selectedImage = result.assets[0];
       setIsUploading(true);
 
-      // Prepare form data
+      // Build multipart form
       const formData = new FormData();
       formData.append("userId", user.id);
       formData.append("media", {
@@ -508,9 +509,6 @@ const StoriesRail: React.FC = () => {
         name: `story_${Date.now()}.jpg`,
       } as unknown as Blob);
 
-      // Upload to backend
-      // Note: Don't set Content-Type header manually for multipart/form-data
-      // Let fetch auto-generate it with the correct boundary
       const response = await fetch(STORY_ENDPOINTS.CREATE, {
         method: "POST",
         body: formData,
@@ -520,7 +518,6 @@ const StoriesRail: React.FC = () => {
 
       if (data.success) {
         console.log("✅ Story uploaded successfully");
-        // Refresh stories list
         fetchStories();
       } else {
         Alert.alert("Upload Failed", data.message || "Failed to upload story");
@@ -533,9 +530,7 @@ const StoriesRail: React.FC = () => {
     }
   };
 
-  // ====================================
-  // VIEW STORIES
-  // ====================================
+  // ── View stories ───────────────────────────────────────────
   const handleViewStories = (group: StoryGroup) => {
     setSelectedGroup(group);
     setIsModalVisible(true);
@@ -552,86 +547,64 @@ const StoriesRail: React.FC = () => {
     async (storyId: string) => {
       if (!user) return;
 
-      try {
-        // Fire and forget - don't await to prevent blocking
-        fetch(STORY_ENDPOINTS.MARK_VIEWED(storyId), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ userId: user.id }),
-        }).catch((error) => {
-          console.error("❌ Failed to mark story as viewed:", error);
-        });
+      // Fire-and-forget API call
+      fetch(STORY_ENDPOINTS.MARK_VIEWED(storyId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      }).catch((err) => console.error("❌ Failed to mark viewed:", err));
 
-        // Update local state to mark as viewed - preserve all story data
-        setStoryGroups((prevGroups) =>
-          prevGroups.map((group) => {
-            // Update stories with viewed status
-            const updatedStories = group.stories.map((s) =>
-              s._id === storyId ? { ...s, viewed: true } : s,
-            );
-            // Recalculate allViewed based on updated stories
-            const allViewed = updatedStories.every((s) => s.viewed);
-            return {
-              ...group,
-              stories: updatedStories,
-              allViewed,
-            };
-          }),
-        );
+      // Optimistic local update
+      const updateStories = (stories: Story[]) =>
+        stories.map((s) => (s._id === storyId ? { ...s, viewed: true } : s));
 
-        // Also update myStoryGroup if viewing own stories
-        setMyStoryGroup((prevMyGroup) => {
-          if (!prevMyGroup) return null;
-          const updatedStories = prevMyGroup.stories.map((s) =>
-            s._id === storyId ? { ...s, viewed: true } : s,
-          );
-          const allViewed = updatedStories.every((s) => s.viewed);
+      const recalcAllViewed = (stories: Story[]) =>
+        stories.every((s) => s.viewed);
+
+      setStoryGroups((prev) =>
+        prev.map((g) => {
+          const updated = updateStories(g.stories);
           return {
-            ...prevMyGroup,
-            stories: updatedStories,
-            allViewed,
+            ...g,
+            stories: updated,
+            allViewed: recalcAllViewed(updated),
           };
-        });
+        }),
+      );
 
-        // Update the selected group as well to keep modal in sync
-        setSelectedGroup((prevSelected) => {
-          if (!prevSelected) return null;
-          const updatedStories = prevSelected.stories.map((s) =>
-            s._id === storyId ? { ...s, viewed: true } : s,
-          );
-          const allViewed = updatedStories.every((s) => s.viewed);
-          return {
-            ...prevSelected,
-            stories: updatedStories,
-            allViewed,
-          };
-        });
-      } catch (error) {
-        console.error("❌ Failed to mark story as viewed:", error);
-      }
+      setMyStoryGroup((prev) => {
+        if (!prev) return null;
+        const updated = updateStories(prev.stories);
+        return {
+          ...prev,
+          stories: updated,
+          allViewed: recalcAllViewed(updated),
+        };
+      });
+
+      setSelectedGroup((prev) => {
+        if (!prev) return null;
+        const updated = updateStories(prev.stories);
+        return {
+          ...prev,
+          stories: updated,
+          allViewed: recalcAllViewed(updated),
+        };
+      });
     },
     [user],
   );
 
   const handleCloseModal = useCallback(() => {
     setIsModalVisible(false);
-    // Don't set selectedGroup to null immediately - let the modal animate out
-    // The state is already updated locally, no need to refetch
-    // Only clear selectedGroup after a brief delay
-    setTimeout(() => {
-      setSelectedGroup(null);
-    }, 100);
+    setTimeout(() => setSelectedGroup(null), 150);
   }, []);
 
-  // ====================================
-  // RENDER
-  // ====================================
+  // ── Render ─────────────────────────────────────────────────
   if (isLoading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="small" color="#f9252b" />
+        <ActivityIndicator size="small" color={BRAND_RED} />
       </View>
     );
   }
@@ -643,19 +616,20 @@ const StoriesRail: React.FC = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* My Story Card (First) */}
-        <MyStoryCard
+        {/* My Story (always first) */}
+        <MyStoryCircle
           userAvatar={user?.profilePicture}
-          myStories={myStoryGroup?.stories || []}
+          username={user?.username || "You"}
+          hasStories={(myStoryGroup?.stories.length ?? 0) > 0}
           allViewed={myStoryGroup?.allViewed ?? true}
-          onPressAdd={handleAddStory}
           onPressView={handleViewMyStories}
+          onPressAdd={handlePostStory}
           isUploading={isUploading}
         />
 
-        {/* Other Users' Story Groups */}
+        {/* Friend stories */}
         {storyGroups.map((group) => (
-          <StoryGroupCard
+          <StoryCircle
             key={group.user._id}
             group={group}
             onPress={() => handleViewStories(group)}
@@ -663,7 +637,7 @@ const StoriesRail: React.FC = () => {
         ))}
       </ScrollView>
 
-      {/* Story Viewer Modal */}
+      {/* Viewer modal */}
       <StoryViewerModal
         visible={isModalVisible}
         group={selectedGroup}
@@ -674,129 +648,90 @@ const StoriesRail: React.FC = () => {
   );
 };
 
-// ====================================
-// STYLES
-// ====================================
+// =============================================================
+//  Styles
+// =============================================================
 const styles = StyleSheet.create({
+  /* ── Container ─────────────────────────────────── */
   container: {
     backgroundColor: "#fff",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#efefef",
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#dbdbdb",
   },
   loadingContainer: {
-    minHeight: CARD_HEIGHT + 24,
+    minHeight: OUTER_SIZE + 30,
     justifyContent: "center",
     alignItems: "center",
   },
   scrollContent: {
-    paddingHorizontal: 12,
-    gap: 10,
+    paddingHorizontal: 10,
+    gap: 14,
   },
 
-  // Story Card Base
-  storyCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    borderRadius: CARD_BORDER_RADIUS,
-    overflow: "hidden",
+  /* ── Circle wrapper ────────────────────────────── */
+  circleWrapper: {
+    alignItems: "center",
+    width: OUTER_SIZE + 4,
   },
 
-  // Unviewed border (red) - viewed stories have NO border
-  unviewedBorder: {
-    borderWidth: 3,
-    borderColor: "#f9252b",
-  },
-
-  // Story Content Container (for proper z-index layering)
-  storyContentContainer: {
-    flex: 1,
-    justifyContent: "flex-end",
-    zIndex: 2,
-  },
-
-  // Gradient Overlay
-  cardGradient: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: CARD_BORDER_RADIUS - 2,
-    zIndex: 1,
-  },
-
-  // Avatar (Bottom-left corner)
-  avatarContainer: {
-    position: "absolute",
-    bottom: 22,
-    left: 4,
-  },
-  userAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: "#fff",
-  },
-  avatarUnviewedBorder: {
-    borderColor: "#f9252b",
-  },
-
-  // Story count badge
-  storyCountBadge: {
-    position: "absolute",
-    top: 6,
-    right: 6,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    zIndex: 3,
-  },
-  storyCountText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "700",
-  },
-
-  // Username Text
-  storyUsername: {
-    color: "#fff",
-    fontSize: 9,
-    fontWeight: "600",
-    paddingHorizontal: 4,
-    paddingBottom: 6,
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-
-  // Add Story Card
-  addStoryContainer: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "#262626",
-    borderRadius: CARD_BORDER_RADIUS,
-  },
-  addStoryBackground: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: CARD_BORDER_RADIUS,
-    opacity: 0.6,
-  },
-  addIconContainer: {
-    position: "absolute",
-    bottom: 22,
-    left: 4,
-  },
-  addIconCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#f9252b",
+  /* ── Ring ───────────────────────────────────────── */
+  ringOuter: {
+    width: OUTER_SIZE,
+    height: OUTER_SIZE,
+    borderRadius: OUTER_SIZE / 2,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1.5,
+  },
+  ringViewed: {
+    borderWidth: RING_WIDTH,
+    borderColor: RING_GRAY,
+  },
+  ringInnerGap: {
+    width: CIRCLE_SIZE + RING_GAP * 2,
+    height: CIRCLE_SIZE + RING_GAP * 2,
+    borderRadius: (CIRCLE_SIZE + RING_GAP * 2) / 2,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  /* ── Avatar ────────────────────────────────────── */
+  avatar: {
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: CIRCLE_SIZE / 2,
+    backgroundColor: "#efefef",
+  },
+
+  /* ── Username label ────────────────────────────── */
+  username: {
+    marginTop: 4,
+    fontSize: 11,
+    color: "#262626",
+    textAlign: "center",
+    width: OUTER_SIZE + 4,
+  },
+
+  /* ── (+) Badge ─────────────────────────────────── */
+  badgeContainer: {
+    position: "absolute",
+    bottom: 20, // sits above the username label
+    right: 2,
+    zIndex: 10,
+  },
+  badge: {
+    width: BADGE_SIZE,
+    height: BADGE_SIZE,
+    borderRadius: BADGE_SIZE / 2,
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
     borderColor: "#fff",
   },
 
-  // Modal Styles
+  /* ── Modal ─────────────────────────────────────── */
   modalContainer: {
     flex: 1,
     backgroundColor: "#000",
@@ -805,7 +740,7 @@ const styles = StyleSheet.create({
   },
   progressBarContainer: {
     position: "absolute",
-    top: 50,
+    top: Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) + 10 : 54,
     left: 8,
     right: 8,
     flexDirection: "row",
@@ -815,20 +750,20 @@ const styles = StyleSheet.create({
   progressBarWrapper: {
     flex: 1,
   },
-  progressBarBackground: {
-    height: 3,
+  progressBarBg: {
+    height: 2.5,
     backgroundColor: "rgba(255,255,255,0.3)",
     borderRadius: 2,
     overflow: "hidden",
   },
-  progressBar: {
+  progressBarFill: {
     height: "100%",
     backgroundColor: "#fff",
     borderRadius: 2,
   },
   modalHeader: {
     position: "absolute",
-    top: 60,
+    top: Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) + 20 : 64,
     left: 12,
     right: 12,
     flexDirection: "row",
@@ -850,12 +785,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontWeight: "600",
-    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowColor: "rgba(0,0,0,0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
   modalStoryCount: {
-    color: "rgba(255, 255, 255, 0.7)",
+    color: "rgba(255,255,255,0.7)",
     fontSize: 12,
     marginTop: 2,
   },
