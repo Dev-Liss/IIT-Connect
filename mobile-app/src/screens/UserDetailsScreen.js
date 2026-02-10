@@ -2,14 +2,19 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useSignUp, useAuth } from "@clerk/clerk-expo";
 
-export default function UserDetailsScreen({ email, role, onContinue }) {
+export default function UserDetailsScreen({ email, role, studentId, onContinue }) {
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const { signUp } = useSignUp();
+    const { signOut } = useAuth();
 
     const validatePassword = (password) => {
         const minLength = 8;
@@ -40,7 +45,7 @@ export default function UserDetailsScreen({ email, role, onContinue }) {
         return { valid: true };
     };
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         // Check if all fields are filled
         if (!firstName.trim() || !lastName.trim() || !password || !confirmPassword) {
             Alert.alert("Error", "Please fill in all fields");
@@ -60,9 +65,91 @@ export default function UserDetailsScreen({ email, role, onContinue }) {
             return;
         }
 
-        // All validations passed, proceed
-        if (onContinue) {
-            onContinue({ firstName, lastName, password, email, role });
+        // All validations passed - Create Clerk account and send OTP
+        setIsLoading(true);
+
+        try {
+            console.log("🔐 Creating Clerk account for:", email);
+
+            // Sign out first if there's an active session
+            try {
+                await signOut();
+                console.log("🚪 Signed out from previous session");
+            } catch (signOutError) {
+                // Ignore sign-out errors (user might not be signed in)
+                console.log("ℹ️ No active session to sign out from");
+            }
+
+            // Small delay to ensure session is cleared
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Create Clerk account
+            await signUp.create({
+                emailAddress: email,
+                password: password,
+            });
+
+            // Trigger email verification (this sends the OTP)
+            await signUp.prepareEmailAddressVerification({
+                strategy: "email_code"
+            });
+
+            console.log("✅ Clerk account created! OTP email sent to:", email);
+
+            setIsLoading(false);
+
+            // Pass data to next screen (OTP verification)
+            onContinue({
+                firstName,
+                lastName,
+                password,
+                email,
+                role,
+                studentId
+            });
+
+        } catch (error) {
+            setIsLoading(false);
+            console.error("❌ Clerk signup error:", error);
+            console.error("Error details:", JSON.stringify(error, null, 2));
+
+            // Handle Clerk errors
+            if (error.errors && error.errors.length > 0) {
+                const clerkError = error.errors[0];
+                console.error("Clerk error code:", clerkError.code);
+                console.error("Clerk error message:", clerkError.message);
+
+                if (clerkError.code === "form_identifier_exists") {
+                    Alert.alert(
+                        "Account Already Exists",
+                        "This email is already registered in Clerk. If you deleted it recently, please wait a few minutes and try again, or use a different email."
+                    );
+                } else if (clerkError.code === "session_exists") {
+                    Alert.alert(
+                        "Please Try Again",
+                        "You're already signed in. The app will now sign you out and try again. Please press Continue again."
+                    );
+                } else if (clerkError.code === "form_password_pwned") {
+                    Alert.alert(
+                        "Weak Password",
+                        "This password has been found in a data breach. Please choose a different password."
+                    );
+                } else if (clerkError.code === "network_error" || clerkError.code === "clerk_network_error") {
+                    Alert.alert(
+                        "Connection Error",
+                        "Unable to connect to authentication server. Please check your internet connection and try again."
+                    );
+                } else {
+                    Alert.alert("Signup Error", clerkError.message || clerkError.longMessage || "Failed to create account");
+                }
+            } else if (error.message && error.message.includes("network")) {
+                Alert.alert(
+                    "Connection Error",
+                    "Unable to connect to the server. Please check your internet connection and try again."
+                );
+            } else {
+                Alert.alert("Error", error.message || "Failed to create account. Please try again.");
+            }
         }
     };
 
