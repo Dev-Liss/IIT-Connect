@@ -12,8 +12,13 @@ const KuppiSchema = new mongoose.Schema({
         trim: true,
     },
     date: {
-        type: String, // Storing as string for simplicity as per UI (e.g. "Friday, 10:00 AM") or ISO date string
+        type: String, // Kept for backward compatibility or display formatting
+        // No longer strictly required if dateTime is present, but let's keep it required unless we make a full migration
         required: [true, "Date is required"],
+    },
+    dateTime: {
+        type: Date,
+        required: [true, "DateTime is required for expiration logic"],
     },
     time: {
         type: String,

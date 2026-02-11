@@ -11,7 +11,9 @@ import {
     RefreshControl,
     Linking,
     Animated, // Add Animated
+    Platform,
 } from "react-native";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { KUPPI_ENDPOINTS } from "../config/api";
@@ -44,6 +46,7 @@ export interface KuppiSession {
     createdAt: string;
     sessionMode: "Online" | "Physical";
     meetingLink?: string;
+    dateTime: string; // ISO Date string from backend
 }
 
 interface KuppiScreenProps {
@@ -55,6 +58,11 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
     const [sessions, setSessions] = useState<KuppiSession[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [currentTime, setCurrentTime] = useState(new Date()); // For live updates
+
+    // Date Picker State
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [datePickerMode, setDatePickerMode] = useState<'date' | 'time'>('date');
 
     // Modal States
     const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -65,8 +73,9 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
     const [formData, setFormData] = useState({
         title: "",
         subject: "",
-        date: "",
-        time: "",
+        date: "", // Display string
+        time: "", // Display string
+        dateTime: new Date(), // Actual Date object
         location: "",
         maxAttendees: "",
         about: "",
@@ -82,6 +91,11 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
     useFocusEffect(
         React.useCallback(() => {
             fetchSessions();
+            // Update time every minute to trigger re-renders for expiration
+            const interval = setInterval(() => {
+                setCurrentTime(new Date());
+            }, 60000); // 1 minute
+            return () => clearInterval(interval);
         }, [])
     );
 
@@ -103,8 +117,14 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
     }, []);
 
     const handleCreateSession = async () => {
-        if (!formData.title || !formData.subject || !formData.date) {
+        if (!formData.title || !formData.subject) {
             Alert.alert("Error", "Please fill in all required fields");
+            return;
+        }
+
+        // Validate Date is in future
+        if (formData.dateTime <= new Date()) {
+            Alert.alert("Error", "Cannot create a session in the past!");
             return;
         }
 
@@ -126,6 +146,7 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                 // organizer: CURRENT_USER_ID, -- Handled by backend from token
                 sessionMode: formData.sessionMode,
                 meetingLink: formData.meetingLink,
+                dateTime: formData.dateTime.toISOString(), // Send ISO string
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -135,6 +156,7 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                 subject: "",
                 date: "",
                 time: "",
+                dateTime: new Date(),
                 location: "",
                 maxAttendees: "",
                 about: "",
@@ -249,6 +271,23 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                     {session.date}, {session.time} • {session.sessionMode === 'Online' ? 'Online' : session.location}
                 </Text>
 
+                {/* Live Now Badge Logic */}
+                {(() => {
+                    if (session.dateTime) {
+                        const start = new Date(session.dateTime);
+                        // Assuming 2 hour duration for "Live Now" status
+                        const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+                        if (currentTime >= start && currentTime < end) {
+                            return (
+                                <View style={styles.liveBadge}>
+                                    <Text style={styles.liveText}>● LIVE NOW</Text>
+                                </View>
+                            );
+                        }
+                    }
+                    return null;
+                })()}
+
                 <View style={styles.attendeesContainer}>
                     <View style={styles.avatarRow}>
                         {[1, 2, 3].map((_, i) => (
@@ -296,23 +335,68 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
     const upcomingSessions = sessions.filter(s => {
         if (isOrganizer(s)) return false;
 
-        // Date check
-        // If s.date is "Friday" we can't easily check. 
-        // Assuming strict future check is requested, filter if we can parse it.
-        // If not parseable, maybe show it? The requirement says "ONLY if... date is in the future".
-        // Let's try simple Date parse.
-        const sessionDate = new Date(s.date);
-        const now = new Date();
-        // If Invalid Date (NaN), deciding to SHOW it for safety unless strict format enforced, 
-        // BUT strict requirement "ONLY if". 
-        // If I hide "Friday", it disappears. That might be bad.
-        // I'll check if it's a valid date. If not, I'll include it (assume future/recurrent).
-        // If valid, check if > now.
-        if (!isNaN(sessionDate.getTime())) {
-            return sessionDate > now;
+        // Date check using dateTime from backend (preferred) or date string parsing
+        let sessionDate: Date;
+        if (s.dateTime) {
+            sessionDate = new Date(s.dateTime);
+        } else {
+            // Fallback for old data without dateTime
+            sessionDate = new Date(s.date);
         }
-        return true; // Keep if date format is non-standard (e.g. "Every Monday")
+
+        if (!isNaN(sessionDate.getTime())) {
+            // Filter: Show if it's in the future OR if it's "Live Now" (within last 2 hours)
+            // But user said: "The moment the scheduled time passes, they should be removed from that list automatically."
+            // Wait, "Sessions should only be visible in 'Upcoming' if they haven't happened yet."
+            // But typically "Upcoming" usually transitions to "Live/Ongoing". 
+            // If I remove them EXACTLY at start time, user won't see "Live Now" badge in "Upcoming" list!
+            // "Upcoming Sessions" list usually contains current/future.
+            // Requirement 4: "If a session is happening right now, show a 'Live Now' badge" implies it should be IN the list.
+            // Requirement 3: "a filter that compares... dateTime with new Date()... so a session disappears... moment it expires".
+            // "Expire" usually means end time. 
+            // So logic: Show if session has NOT ended yet. 
+            // Assuming 2 hrs duration: Show if now < startTime + 2hrs.
+
+            // However, user stated logic: "Update the GET /upcoming route to fetch only sessions where dateTime is greater than new Date()."
+            // That strict logic means: if now > startTime, it's GONE. 
+            // Contradiction? "If a session is happening right now, show a 'Live Now' badge".
+            // If it's gone from the list, how can we show the badge?
+            // Interpret "Visible in Upcoming" as "Visible in the list titled Upcoming".
+            // If the user wants "Live Now" badge, the session MUST be in the return list.
+            // So "Expires" likely means "Finished".
+            // I will use `now < startTime + 2 hours` for visibility.
+            const twoHoursAfterStart = new Date(sessionDate.getTime() + 2 * 60 * 60 * 1000);
+            return twoHoursAfterStart > currentTime;
+
+            // Strict interpretation of "dateTime greater than new Date()" (User point 1) would hide it at start.
+            // I will err on side of "Live Now" requirement and use a grace period (e.g. duration).
+        }
+        return true;
     });
+
+    const onDateChange = (event: any, selectedDate?: Date) => {
+        const currentDate = selectedDate || formData.dateTime;
+        if (Platform.OS === 'android') {
+            setShowDatePicker(false);
+        }
+
+        if (selectedDate) {
+            const dateStr = selectedDate.toLocaleDateString();
+            const timeStr = selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            setFormData({
+                ...formData,
+                dateTime: selectedDate,
+                date: dateStr,
+                time: timeStr
+            });
+        }
+    };
+
+    const showMode = (currentMode: 'date' | 'time') => {
+        setShowDatePicker(true);
+        setDatePickerMode(currentMode);
+    };
 
     return (
         <View style={styles.container}>
@@ -401,25 +485,39 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                             <View style={styles.row}>
                                 <View style={styles.halfInput}>
                                     <Text style={styles.label}>Date</Text>
-                                    <TextInput
+                                    <TouchableOpacity
                                         style={styles.input}
-                                        placeholder="e.g. Friday"
-                                        placeholderTextColor="#888"
-                                        value={formData.date}
-                                        onChangeText={(text) => setFormData({ ...formData, date: text })}
-                                    />
+                                        onPress={() => showMode('date')}
+                                    >
+                                        <Text style={{ color: formData.date ? COLORS.TEXT_DARK : '#888', marginTop: 10 }}>
+                                            {formData.date || "Select Date"}
+                                        </Text>
+                                    </TouchableOpacity>
                                 </View>
                                 <View style={styles.halfInput}>
                                     <Text style={styles.label}>Time</Text>
-                                    <TextInput
+                                    <TouchableOpacity
                                         style={styles.input}
-                                        placeholder="e.g. 10:00 AM"
-                                        placeholderTextColor="#888"
-                                        value={formData.time}
-                                        onChangeText={(text) => setFormData({ ...formData, time: text })}
-                                    />
+                                        onPress={() => showMode('time')}
+                                    >
+                                        <Text style={{ color: formData.time ? COLORS.TEXT_DARK : '#888', marginTop: 10 }}>
+                                            {formData.time || "Select Time"}
+                                        </Text>
+                                    </TouchableOpacity>
                                 </View>
                             </View>
+
+                            {showDatePicker && (
+                                <DateTimePicker
+                                    testID="dateTimePicker"
+                                    value={formData.dateTime}
+                                    mode={datePickerMode}
+                                    is24Hour={false}
+                                    display="default"
+                                    onChange={onDateChange}
+                                    minimumDate={new Date()} // Prevent past dates in picker
+                                />
+                            )}
 
                             {formData.sessionMode === 'Physical' ? (
                                 <>
@@ -735,7 +833,20 @@ const styles = StyleSheet.create({
     timeText: {
         color: COLORS.GREY,
         fontSize: 14,
-        marginBottom: 16,
+        marginBottom: 8, // reduced margin to fit badge
+    },
+    liveBadge: {
+        backgroundColor: "#FF0000",
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 4,
+        alignSelf: 'flex-start',
+        marginBottom: 10,
+    },
+    liveText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
     attendeesContainer: {
         flexDirection: "row",
