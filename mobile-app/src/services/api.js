@@ -9,16 +9,49 @@
 const API_BASE_URL = "http://192.168.1.74:5000/api";
 
 /**
- * Register a new user
- * @param {Object} userData - User registration data
- * @param {string} userData.username - Full name (firstName + lastName)
- * @param {string} userData.email - Email address
- * @param {string} userData.password - Password
- * @param {string} userData.studentId - Student ID or employee ID
- * @param {string} userData.role - User role (student, lecture, alumni)
+ * Sync user profile to MongoDB after Clerk authentication
+ * @param {Object} profileData - User profile data
+ * @param {string} profileData.clerkId - Clerk user ID
+ * @param {string} profileData.email - Email address
+ * @param {string} profileData.role - User role (student, lecture, alumni)
+ * @param {string} profileData.username - Full name
+ * @param {string} profileData.studentId - Student ID (optional)
+ * @param {string} profileData.nationalId - National ID for alumni (optional)
+ * @param {string} profileData.pastIitId - Past IIT ID for alumni (optional)
  * @returns {Promise<Object>} API response
  */
+export const syncUserProfile = async (profileData) => {
+    try {
+        console.log("📤 Syncing profile to backend:", profileData);
+
+        const response = await fetch(`${API_BASE_URL}/auth/sync-profile`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(profileData),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Profile sync failed");
+        }
+
+        console.log("✅ Profile synced successfully");
+        return data;
+    } catch (error) {
+        console.error("❌ Profile sync error:", error);
+        throw error;
+    }
+};
+
+/**
+ * Register user (Legacy - kept for backwards compatibility)
+ * @deprecated Use Clerk signup + syncUserProfile instead
+ */
 export const registerUser = async (userData) => {
+    console.warn("⚠️ registerUser is deprecated. Use Clerk signup + syncUserProfile");
     try {
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: "POST",
@@ -31,9 +64,7 @@ export const registerUser = async (userData) => {
         const data = await response.json();
 
         if (!response.ok) {
-            // Create error with proper message
             const error = new Error(data.message || "Registration failed");
-            // Add emailExists flag if present
             if (data.emailExists) {
                 error.emailExists = true;
             }
