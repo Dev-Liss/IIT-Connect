@@ -16,7 +16,7 @@ const Event = require("../models/event");
 router.get("/", async (req, res) => {
     try {
         const events = await Event.find({ isPublished: true })
-            .sort({ eventDate: 1 })
+            .sort({ createdAt: -1 })
             .populate("organizer", "username");
 
         res.json({
