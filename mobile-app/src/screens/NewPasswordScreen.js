@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useSignIn } from "@clerk/clerk-expo";
 
 export default function NewPasswordScreen({ email, onPasswordSet, onBack }) {
     const [password, setPassword] = useState("");
@@ -9,6 +10,8 @@ export default function NewPasswordScreen({ email, onPasswordSet, onBack }) {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const { signIn, setActive } = useSignIn();
 
     const validatePassword = (password) => {
         const minLength = 8;
@@ -62,45 +65,66 @@ export default function NewPasswordScreen({ email, onPasswordSet, onBack }) {
         setIsSubmitting(true);
 
         try {
-            // Call backend to update password
-            // TODO: Use actual OTP code from previous screen
-            const response = await fetch("http://192.168.1.74:5000/api/auth/reset-password", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    email: email,
-                    newPassword: password,
-                    otpCode: "12345", // Simulated OTP for now
-                }),
+            console.log("🔐 Resetting password...");
+
+            // Reset the password with Clerk
+            const result = await signIn.resetPassword({
+                password: password,
             });
 
-            const data = await response.json();
+            console.log("✅ Password reset successful!");
 
-            if (response.ok && data.success) {
-                Alert.alert(
-                    "Success",
-                    "Your password has been reset successfully!",
-                    [
-                        {
-                            text: "OK",
-                            onPress: () => {
-                                if (onPasswordSet) {
-                                    onPasswordSet();
-                                }
+            // Set the session as active
+            await setActive({ session: result.createdSessionId });
+
+            setIsSubmitting(false);
+
+            Alert.alert(
+                "Success",
+                "Your password has been reset successfully!",
+                [
+                    {
+                        text: "OK",
+                        onPress: () => {
+                            if (onPasswordSet) {
+                                onPasswordSet();
                             }
                         }
-                    ]
+                    }
+                ]
+            );
+
+        } catch (error) {
+            setIsSubmitting(false);
+            console.error("❌ Password reset error:", error);
+            console.error("Error details:", JSON.stringify(error, null, 2));
+
+            // Handle Clerk errors
+            if (error.errors && error.errors.length > 0) {
+                const clerkError = error.errors[0];
+                console.error("Clerk error code:", clerkError.code);
+
+                if (clerkError.code === "form_password_pwned") {
+                    Alert.alert(
+                        "Weak Password",
+                        "This password has been found in a data breach. Please choose a different password."
+                    );
+                } else if (clerkError.code === "form_password_length_too_short") {
+                    Alert.alert(
+                        "Password Too Short",
+                        "Password must be at least 8 characters long."
+                    );
+                } else {
+                    Alert.alert("Error", clerkError.message || "Failed to reset password. Please try again.");
+                }
+            } else if (error.message && error.message.includes("network")) {
+                Alert.alert(
+                    "Connection Error",
+                    "Unable to connect to the server. Please check your internet connection and try again."
                 );
             } else {
-                Alert.alert("Error", data.message || "Failed to reset password");
+                Alert.alert("Error", error.message || "Failed to reset password. Please try again.");
             }
-        } catch (error) {
-            console.error("Password reset error:", error);
-            Alert.alert("Error", "Network error. Please check your connection and try again.");
-        } finally {
-            setIsSubmitting(false);
         }
     };
 

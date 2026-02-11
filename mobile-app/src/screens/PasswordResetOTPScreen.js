@@ -2,11 +2,14 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useSignIn } from "@clerk/clerk-expo";
 
 export default function PasswordResetOTPScreen({ email, onVerify, onBack }) {
     const [verificationCode, setVerificationCode] = useState("");
     const [isVerifying, setIsVerifying] = useState(false);
     const [resendTimer, setResendTimer] = useState(180); // 3 minutes in seconds
+
+    const { signIn } = useSignIn();
 
     // Countdown timer for resend
     useEffect(() => {
@@ -22,15 +25,28 @@ export default function PasswordResetOTPScreen({ email, onVerify, onBack }) {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const handleResend = () => {
-        if (resendTimer === 0) {
+    const handleResend = async () => {
+        if (resendTimer > 0) return;
+
+        try {
+            console.log("📧 Resending password reset code...");
+
+            // Resend the reset code
+            await signIn.prepareFirstFactor({
+                strategy: "reset_password_email_code",
+            });
+
+            console.log("✅ Code resent to:", email);
             setResendTimer(180);
             Alert.alert("Code Resent", "A new verification code has been sent to your email.");
-            // TODO: Call API to resend code
+
+        } catch (error) {
+            console.error("❌ Resend error:", error);
+            Alert.alert("Error", "Failed to resend code. Please try again.");
         }
     };
 
-    const handleVerify = () => {
+    const handleVerify = async () => {
         const trimmedCode = verificationCode.trim();
 
         // Validate code
@@ -39,8 +55,8 @@ export default function PasswordResetOTPScreen({ email, onVerify, onBack }) {
             return;
         }
 
-        if (trimmedCode.length !== 5) {
-            Alert.alert("Invalid Code", "Verification code must be 5 digits");
+        if (trimmedCode.length !== 6) {
+            Alert.alert("Invalid Code", "Verification code must be 6 digits");
             return;
         }
 
@@ -49,16 +65,47 @@ export default function PasswordResetOTPScreen({ email, onVerify, onBack }) {
             return;
         }
 
-        // TODO: Verify code with backend
         setIsVerifying(true);
 
-        // Simulate verification
-        setTimeout(() => {
+        try {
+            console.log("🔐 Verifying reset code...");
+
+            // Verify the code with Clerk
+            const result = await signIn.attemptFirstFactor({
+                strategy: "reset_password_email_code",
+                code: trimmedCode,
+            });
+
+            console.log("✅ Code verified successfully!");
+
             setIsVerifying(false);
+
+            // Proceed to new password screen
             if (onVerify) {
                 onVerify(trimmedCode);
             }
-        }, 1000);
+
+        } catch (error) {
+            setIsVerifying(false);
+            console.error("❌ Verification error:", error);
+            console.error("Error details:", JSON.stringify(error, null, 2));
+
+            // Handle Clerk errors
+            if (error.errors && error.errors.length > 0) {
+                const clerkError = error.errors[0];
+                console.error("Clerk error code:", clerkError.code);
+
+                if (clerkError.code === "form_code_incorrect") {
+                    Alert.alert("Incorrect Code", "The verification code you entered is incorrect. Please try again.");
+                } else if (clerkError.code === "verification_expired") {
+                    Alert.alert("Code Expired", "The verification code has expired. Please request a new one.");
+                } else {
+                    Alert.alert("Error", clerkError.message || "Failed to verify code. Please try again.");
+                }
+            } else {
+                Alert.alert("Error", error.message || "Failed to verify code. Please try again.");
+            }
+        }
     };
 
     return (
@@ -102,7 +149,7 @@ export default function PasswordResetOTPScreen({ email, onVerify, onBack }) {
 
                     {/* Description */}
                     <Text style={styles.description}>
-                        We've sent 5 digits verification code{'\n'}to your email
+                        We've sent a 6-digit verification code{'\n'}to your email
                     </Text>
 
                     {/* Verification Code Input */}
@@ -116,7 +163,7 @@ export default function PasswordResetOTPScreen({ email, onVerify, onBack }) {
                             value={verificationCode}
                             onChangeText={setVerificationCode}
                             keyboardType="numeric"
-                            maxLength={5}
+                            maxLength={6}
                         />
                         <TouchableOpacity onPress={handleResend} disabled={resendTimer > 0}>
                             <Text style={[styles.resendText, resendTimer === 0 && styles.resendActive]}>
