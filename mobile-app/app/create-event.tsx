@@ -3,6 +3,7 @@
  * IIT CONNECT - CREATE EVENT SCREEN
  * ====================================
  * Form for creating new campus events
+ * Uses native date/time pickers
  */
 
 import React, { useState } from "react";
@@ -20,28 +21,82 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { EVENTS_ENDPOINTS } from "../src/config/api";
 
 export default function CreateEventScreen() {
     const [title, setTitle] = useState("");
-    const [date, setDate] = useState("");
-    const [time, setTime] = useState("");
+    const [date, setDate] = useState(new Date());
+    const [startTime, setStartTime] = useState(new Date());
+    const [endTime, setEndTime] = useState(new Date(Date.now() + 2 * 60 * 60 * 1000)); // +2 hours
     const [location, setLocation] = useState("");
     const [description, setDescription] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
+    // Picker visibility states
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+    const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+
+    // Track if user has selected values
+    const [dateSelected, setDateSelected] = useState(false);
+    const [startTimeSelected, setStartTimeSelected] = useState(false);
+    const [endTimeSelected, setEndTimeSelected] = useState(false);
+
+    // Format date for display
+    const formatDate = (d: Date) => {
+        return d.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+    };
+
+    // Format time for display
+    const formatTime = (d: Date) => {
+        return d.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+        });
+    };
+
+    // Handlers
+    const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+        setShowDatePicker(Platform.OS === "ios");
+        if (selectedDate) {
+            setDate(selectedDate);
+            setDateSelected(true);
+        }
+    };
+
+    const onStartTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+        setShowStartTimePicker(Platform.OS === "ios");
+        if (selectedTime) {
+            setStartTime(selectedTime);
+            setStartTimeSelected(true);
+        }
+    };
+
+    const onEndTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+        setShowEndTimePicker(Platform.OS === "ios");
+        if (selectedTime) {
+            setEndTime(selectedTime);
+            setEndTimeSelected(true);
+        }
+    };
+
     const handleSubmit = async () => {
-        // Validation
         if (!title.trim()) {
             Alert.alert("Error", "Please enter an event title");
             return;
         }
-        if (!date.trim()) {
-            Alert.alert("Error", "Please enter a date");
+        if (!dateSelected) {
+            Alert.alert("Error", "Please select a date");
             return;
         }
-        if (!time.trim()) {
-            Alert.alert("Error", "Please enter a time");
+        if (!startTimeSelected) {
+            Alert.alert("Error", "Please select a start time");
             return;
         }
         if (!location.trim()) {
@@ -55,11 +110,6 @@ export default function CreateEventScreen() {
 
         setIsLoading(true);
         try {
-            // Parse time range (e.g., "9:00 AM - 11:00 AM")
-            const timeParts = time.split("-").map((t) => t.trim());
-            const startTime = timeParts[0] || time.trim();
-            const endTime = timeParts[1] || "";
-
             const response = await fetch(EVENTS_ENDPOINTS.CREATE, {
                 method: "POST",
                 headers: {
@@ -68,9 +118,9 @@ export default function CreateEventScreen() {
                 body: JSON.stringify({
                     title: title.trim(),
                     description: description.trim(),
-                    eventDate: date.trim(),
-                    startTime: startTime,
-                    endTime: endTime,
+                    eventDate: formatDate(date),
+                    startTime: formatTime(startTime),
+                    endTime: endTimeSelected ? formatTime(endTime) : "",
                     location: location.trim(),
                     category: "academic",
                     organizer: "Admin",
@@ -84,13 +134,12 @@ export default function CreateEventScreen() {
                     {
                         text: "OK",
                         onPress: () => {
-                            // Clear form
                             setTitle("");
-                            setDate("");
-                            setTime("");
                             setLocation("");
                             setDescription("");
-                            // Navigate to events page
+                            setDateSelected(false);
+                            setStartTimeSelected(false);
+                            setEndTimeSelected(false);
                             router.replace("/events");
                         },
                     },
@@ -138,25 +187,66 @@ export default function CreateEventScreen() {
                         maxLength={100}
                     />
 
-                    {/* Date */}
+                    {/* Date Picker */}
                     <Text style={styles.label}>Date *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g., December 5, 2024"
-                        placeholderTextColor="#999"
-                        value={date}
-                        onChangeText={setDate}
-                    />
+                    <TouchableOpacity
+                        style={styles.pickerButton}
+                        onPress={() => setShowDatePicker(true)}
+                    >
+                        <Ionicons name="calendar-outline" size={20} color="#666" />
+                        <Text style={[styles.pickerText, dateSelected && styles.pickerTextSelected]}>
+                            {dateSelected ? formatDate(date) : "Select a date"}
+                        </Text>
+                    </TouchableOpacity>
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={date}
+                            mode="date"
+                            display="default"
+                            onChange={onDateChange}
+                            minimumDate={new Date()}
+                        />
+                    )}
 
-                    {/* Time */}
-                    <Text style={styles.label}>Time *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="e.g., 9:00 AM - 11:00 AM"
-                        placeholderTextColor="#999"
-                        value={time}
-                        onChangeText={setTime}
-                    />
+                    {/* Start Time Picker */}
+                    <Text style={styles.label}>Start Time *</Text>
+                    <TouchableOpacity
+                        style={styles.pickerButton}
+                        onPress={() => setShowStartTimePicker(true)}
+                    >
+                        <Ionicons name="time-outline" size={20} color="#666" />
+                        <Text style={[styles.pickerText, startTimeSelected && styles.pickerTextSelected]}>
+                            {startTimeSelected ? formatTime(startTime) : "Select start time"}
+                        </Text>
+                    </TouchableOpacity>
+                    {showStartTimePicker && (
+                        <DateTimePicker
+                            value={startTime}
+                            mode="time"
+                            display="default"
+                            onChange={onStartTimeChange}
+                        />
+                    )}
+
+                    {/* End Time Picker */}
+                    <Text style={styles.label}>End Time</Text>
+                    <TouchableOpacity
+                        style={styles.pickerButton}
+                        onPress={() => setShowEndTimePicker(true)}
+                    >
+                        <Ionicons name="time-outline" size={20} color="#666" />
+                        <Text style={[styles.pickerText, endTimeSelected && styles.pickerTextSelected]}>
+                            {endTimeSelected ? formatTime(endTime) : "Select end time (optional)"}
+                        </Text>
+                    </TouchableOpacity>
+                    {showEndTimePicker && (
+                        <DateTimePicker
+                            value={endTime}
+                            mode="time"
+                            display="default"
+                            onChange={onEndTimeChange}
+                        />
+                    )}
 
                     {/* Location */}
                     <Text style={styles.label}>Location *</Text>
@@ -193,7 +283,6 @@ export default function CreateEventScreen() {
                         </Text>
                     </TouchableOpacity>
 
-                    {/* Bottom spacing */}
                     <View style={{ height: 40 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -261,6 +350,24 @@ const styles = StyleSheet.create({
     textArea: {
         height: 150,
         textAlignVertical: "top",
+    },
+    pickerButton: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 15,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: "#e0e0e0",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+    },
+    pickerText: {
+        fontSize: 16,
+        color: "#999",
+    },
+    pickerTextSelected: {
+        color: "#000",
     },
     submitButton: {
         backgroundColor: "#e63946",
