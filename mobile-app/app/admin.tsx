@@ -52,7 +52,10 @@ export default function AdminPanelScreen() {
                 </TouchableOpacity>
 
                 {/* Create Event */}
-                <TouchableOpacity style={styles.optionCard}>
+                <TouchableOpacity
+                    style={styles.optionCard}
+                    onPress={() => router.push("/create-event")}
+                >
                     <View style={[styles.iconContainer, styles.iconBlue]}>
                         <Ionicons name="calendar" size={28} color="#fff" />
                     </View>
