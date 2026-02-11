@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useSignUp } from "@clerk/clerk-expo";
+import { syncUserProfile } from "../services/api";
 
 export default function EmailVerificationScreen({ email, userData, onVerify }) {
     const [code, setCode] = useState("");
     const [timer, setTimer] = useState(180); // 3 minutes in seconds
     const [canResend, setCanResend] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const { signUp, setActive } = useSignUp();
 
     useEffect(() => {
         if (timer > 0) {
@@ -29,32 +34,117 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
         return `${mins}:${secs.toString().padStart(2, "0")}`;
     };
 
-    const [isLoading, setIsLoading] = useState(false);
-
     const handleVerify = async () => {
-        if (code.length === 5) {
-            if (onVerify) {
-                setIsLoading(true);
-                try {
-                    await onVerify(code);
-                } catch (error) {
-                    console.error("Verification screen error:", error);
-                } finally {
-                    setIsLoading(false);
+        if (code.length !== 6) {
+            Alert.alert("Invalid Code", "Please enter the 6-digit verification code");
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            console.log("🔐 Verifying OTP code...");
+
+            // Verify the email with Clerk
+            const completeSignUp = await signUp.attemptEmailAddressVerification({
+                code: code,
+            });
+
+            if (completeSignUp.status === "complete") {
+                console.log("✅ Email verified successfully!");
+
+                // Set the session as active
+                await setActive({ session: completeSignUp.createdSessionId });
+
+                // Get the Clerk user ID
+                const clerkId = completeSignUp.createdUserId;
+
+                console.log("📤 Syncing profile to MongoDB...");
+
+                // Prepare sync data
+                const syncData = {
+                    clerkId: clerkId,
+                    email: userData.email,
+                    username: `${userData.firstName} ${userData.lastName}`,
+                    role: userData.role,
+                };
+
+                // Add role-specific fields
+                if (userData.role === "student" && userData.studentId) {
+                    syncData.studentId = userData.studentId;
+                } else if (userData.role === "alumni") {
+                    if (userData.nationalId) {
+                        syncData.nationalId = userData.nationalId;
+                    }
+                    if (userData.pastIitId) {
+                        syncData.pastIitId = userData.pastIitId;
+                    }
                 }
+
+                console.log("📤 Sync data:", syncData);
+
+                // Sync profile to MongoDB backend
+                await syncUserProfile(syncData);
+
+                console.log("✅ Profile synced to MongoDB!");
+
+                setIsLoading(false);
+
+                // Call the onVerify callback
+                if (onVerify) {
+                    onVerify(code);
+                }
+            } else {
+                setIsLoading(false);
+                Alert.alert("Verification Incomplete", "Please try again.");
             }
-        } else {
-            alert("Please enter the 5-digit verification code");
+
+        } catch (error) {
+            setIsLoading(false);
+            console.error("❌ Verification error:", error);
+
+            if (error.errors && error.errors.length > 0) {
+                const clerkError = error.errors[0];
+
+                if (clerkError.code === "form_code_incorrect") {
+                    Alert.alert("Incorrect Code", "The verification code you entered is incorrect. Please try again.");
+                } else if (clerkError.code === "verification_expired") {
+                    Alert.alert("Code Expired", "The verification code has expired. Please request a new one.");
+                } else {
+                    Alert.alert("Verification Failed", clerkError.message || "Failed to verify code");
+                }
+            } else {
+                Alert.alert("Error", error.message || "Failed to verify code. Please try again.");
+            }
         }
     };
 
-    const handleResend = () => {
-        if (canResend) {
-            // TODO: Call API to resend verification code
+    const handleResend = async () => {
+        if (!canResend) return;
+
+        setIsLoading(true);
+
+        try {
+            console.log("📧 Resending verification code...");
+
+            // Resend verification email
+            await signUp.prepareEmailAddressVerification({
+                strategy: "email_code"
+            });
+
+            console.log("✅ Verification code resent!");
+
             setTimer(180);
             setCanResend(false);
             setCode("");
-            console.log("Resending verification code to:", email);
+            setIsLoading(false);
+
+            Alert.alert("Code Sent", "A new verification code has been sent to your email.");
+
+        } catch (error) {
+            setIsLoading(false);
+            console.error("❌ Resend error:", error);
+            Alert.alert("Error", "Failed to resend code. Please try again.");
         }
     };
 
@@ -92,7 +182,7 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
 
                     {/* Info Text */}
                     <Text style={styles.infoText}>
-                        We've sent 5 digits verification code{"\n"}to your email
+                        We've sent a 6-digit verification code{"\n"}to your email
                     </Text>
 
                     {/* Verification Code Input */}
@@ -101,12 +191,12 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
                         <Ionicons name="mail-outline" size={20} color="#E31E24" style={styles.icon} />
                         <TextInput
                             style={styles.input}
-                            placeholder="Enter 5-digit code"
+                            placeholder="Enter 6-digit code"
                             placeholderTextColor="#999"
                             value={code}
-                            onChangeText={(text) => setCode(text.replace(/[^0-9]/g, "").slice(0, 5))}
+                            onChangeText={(text) => setCode(text.replace(/[^0-9]/g, "").slice(0, 6))}
                             keyboardType="number-pad"
-                            maxLength={5}
+                            maxLength={6}
                             editable={!isLoading}
                         />
                         {!canResend && (
