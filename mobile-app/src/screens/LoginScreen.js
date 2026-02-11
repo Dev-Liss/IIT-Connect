@@ -13,85 +13,126 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useSignIn, useAuth } from "@clerk/clerk-expo";
 
 export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // ⚠️ YOUR SPECIFIC IP IS SET HERE
-  const API_URL = "http://192.168.1.74:5000/api/auth/login";
+  const { signIn, setActive } = useSignIn();
+  const { isSignedIn, signOut } = useAuth();
 
   const handleLogin = async () => {
-    const trimmedEmail = email.trim();
-    // 1. Basic validation
+    const trimmedEmail = email.trim().toLowerCase();
+
+    // Basic validation
     if (!trimmedEmail || !password) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
-    // Suggest IIT email if domain is common or not IIT
-    if (!trimmedEmail.toLowerCase().endsWith("@iit.ac.lk")) {
-      // Since we don't know if the user is a student/lecture or alumni here,
-      // we should warn them but maybe allow if they are alumni?
-      // User said: "doesn't go to the next page until they enter iit mail"
-      // Let's implement a prompt.
-      Alert.alert(
-        "IIT Email Required",
-        "Students and Lecturers must use their official @iit.ac.lk email. Are you an Alumni using a personal mail?",
-        [
-          { text: "No, I'm a Student/Lecture", onPress: () => { }, style: "cancel" },
-          { text: "Yes, I'm an Alumni", onPress: () => performLogin(trimmedEmail) }
-        ]
-      );
-      return;
-    }
+    setIsLoading(true);
 
-    performLogin(trimmedEmail);
-  };
-
-  const performLogin = async (loginEmail) => {
     try {
-      console.log("Sending data to:", API_URL);
+      console.log("🔐 Attempting Clerk sign-in for:", trimmedEmail);
 
-      // 2. The API Call
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: loginEmail,
-          password: password,
-        }),
+      // Sign in with Clerk
+      const signInAttempt = await signIn.create({
+        identifier: trimmedEmail,
+        password: password,
       });
 
-      const data = await response.json();
+      // If sign-in is complete, set the session as active
+      if (signInAttempt.status === "complete") {
+        await setActive({ session: signInAttempt.createdSessionId });
 
-      // 3. Handle Response
-      if (data.success) {
-        Alert.alert("Success", "Welcome back!");
-        console.log("User Info:", data.user);
+        console.log("✅ Login successful for:", trimmedEmail);
+        setIsLoading(false);
+
+        // No success alert - just proceed
         if (onLoginSuccess) {
           onLoginSuccess();
         }
       } else {
-        // Handle specific error cases
-        if (data.userNotFound) {
-          Alert.alert("Account Not Found", "Please sign up");
-        } else if (data.wrongPassword) {
-          Alert.alert("Login Failed", "Password is incorrect");
-        } else {
-          Alert.alert("Login Failed", data.message || "Invalid credentials");
-        }
+        // Handle other statuses if needed
+        setIsLoading(false);
+        Alert.alert("Error", "Login requires additional steps. Please contact support.");
       }
+
     } catch (error) {
-      Alert.alert(
-        "Network Error",
-        "Could not connect to server.\nCheck if your laptop server is running."
-      );
-      console.error(error);
+      setIsLoading(false);
+
+      // Handle Clerk errors
+      if (error.errors && error.errors.length > 0) {
+        const clerkError = error.errors[0];
+
+        if (clerkError.code === "form_identifier_not_found") {
+          // Email doesn't exist - this is an expected error, not a bug
+          console.log("ℹ️ Login attempt with unregistered email:", trimmedEmail);
+          Alert.alert("No Account Found", "No account exists for this email. Please sign up first.");
+        } else if (clerkError.code === "form_password_incorrect") {
+          // Wrong password - this is an expected error, not a bug
+          console.log("ℹ️ Login attempt with incorrect password for:", trimmedEmail);
+          Alert.alert("Incorrect Password", "The password you entered is incorrect. Please try again.");
+        } else if (clerkError.code === "session_exists") {
+          // Already logged in - we need to sign out first and retry
+          console.log("⚠️ Session exists, signing out and retrying login...");
+          try {
+            await signOut();
+            console.log("🚪 Signed out, retrying login...");
+
+            // Retry the login
+            await new Promise(resolve => setTimeout(resolve, 500));
+            const retrySignIn = await signIn.create({
+              identifier: trimmedEmail,
+              password: password,
+            });
+
+            if (retrySignIn.status === "complete") {
+              await setActive({ session: retrySignIn.createdSessionId });
+              console.log("✅ Login successful after retry");
+              if (onLoginSuccess) {
+                onLoginSuccess();
+              }
+            }
+          } catch (retryError) {
+            // Now show proper validation errors
+            if (retryError.errors && retryError.errors.length > 0) {
+              const retryClerkError = retryError.errors[0];
+              if (retryClerkError.code === "form_identifier_not_found") {
+                console.log("ℹ️ Retry: Login attempt with unregistered email");
+                Alert.alert("No Account Found", "No account exists for this email. Please sign up first.");
+              } else if (retryClerkError.code === "form_password_incorrect") {
+                console.log("ℹ️ Retry: Login attempt with incorrect password");
+                Alert.alert("Incorrect Password", "The password you entered is incorrect. Please try again.");
+              } else {
+                console.log("ℹ️ Retry: Login failed with error:", retryClerkError.code);
+                Alert.alert("Login Failed", retryClerkError.message || "Invalid credentials. Please try again.");
+              }
+            } else {
+              console.log("ℹ️ Retry: Login failed with unknown error");
+              Alert.alert("Login Failed", "Unable to login. Please try again.");
+            }
+          }
+        } else if (clerkError.code === "network_error") {
+          Alert.alert(
+            "Connection Error",
+            "Unable to connect to the server. Please check your internet connection and try again."
+          );
+        } else {
+          Alert.alert("Login Failed", clerkError.message || "Invalid credentials. Please try again.");
+        }
+      } else if (error.message && error.message.includes("network")) {
+        Alert.alert(
+          "Network Error",
+          "Could not connect to server. Please check your internet connection."
+        );
+      } else {
+        Alert.alert("Login Failed", error.message || "Invalid credentials. Please try again.");
+      }
     }
   };
 
@@ -188,8 +229,14 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
           </View>
 
           {/* Sign In Button */}
-          <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
-            <Text style={styles.signInButtonText}>Sign in</Text>
+          <TouchableOpacity
+            style={[styles.signInButton, isLoading && styles.signInButtonDisabled]}
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            <Text style={styles.signInButtonText}>
+              {isLoading ? "Signing in..." : "Sign in"}
+            </Text>
           </TouchableOpacity>
 
           {/* Divider Text */}
@@ -323,6 +370,11 @@ const styles = StyleSheet.create({
     color: "#FFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  signInButtonDisabled: {
+    backgroundColor: "#CCC",
+    shadowOpacity: 0,
+    elevation: 0,
   },
   dividerText: {
     textAlign: "center",

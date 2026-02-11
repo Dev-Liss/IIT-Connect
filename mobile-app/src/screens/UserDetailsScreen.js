@@ -110,26 +110,25 @@ export default function UserDetailsScreen({ email, role, studentId, onContinue }
 
         } catch (error) {
             setIsLoading(false);
-            console.error("❌ Clerk signup error:", error);
-            console.error("Error details:", JSON.stringify(error, null, 2));
 
             // Handle Clerk errors
             if (error.errors && error.errors.length > 0) {
                 const clerkError = error.errors[0];
-                console.error("Clerk error code:", clerkError.code);
-                console.error("Clerk error message:", clerkError.message);
 
                 if (clerkError.code === "form_identifier_exists") {
+                    console.log("ℹ️ Signup attempt with existing email");
                     Alert.alert(
                         "Account Already Exists",
                         "This email is already registered in Clerk. If you deleted it recently, please wait a few minutes and try again, or use a different email."
                     );
                 } else if (clerkError.code === "session_exists") {
+                    console.log("ℹ️ Signup attempt while session exists");
                     Alert.alert(
                         "Please Try Again",
                         "You're already signed in. The app will now sign you out and try again. Please press Continue again."
                     );
                 } else if (clerkError.code === "form_password_pwned") {
+                    console.log("ℹ️ Signup attempt with pwned password");
                     Alert.alert(
                         "Weak Password",
                         "This password has been found in a data breach. Please choose a different password."
