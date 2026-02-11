@@ -295,6 +295,9 @@ export default function EventsAnnouncementsScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerTop}>
+                    <TouchableOpacity style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="#000" />
+                    </TouchableOpacity>
                     <Text style={styles.headerTitle}>Events & Announcements</Text>
                     <TouchableOpacity style={styles.bellButton}>
                         <Ionicons name="notifications-outline" size={24} color="#333" />
@@ -425,7 +428,17 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
     },
+    backButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#f0f0f0",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 10,
+    },
     headerTitle: {
+        flex: 1,
         fontSize: 22,
         fontWeight: "bold",
         color: "#000000",
