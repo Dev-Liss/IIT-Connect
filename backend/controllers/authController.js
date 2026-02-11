@@ -14,6 +14,9 @@ const User = require("../models/user");
  * Called from mobile app after successful Clerk authentication
  */
 const syncUserProfile = async (req, res) => {
+  console.log("🔵 ========== SYNC PROFILE REQUEST RECEIVED ==========");
+  console.log("📥 Request body:", JSON.stringify(req.body, null, 2));
+
   try {
     const { clerkId, email, role, studentId, nationalId, pastIitId, username } = req.body;
 
@@ -81,13 +84,26 @@ const syncUserProfile = async (req, res) => {
       }
     }
 
-    // Create or update user profile in MongoDB
-    // upsert: true creates if doesn't exist, new: true returns updated doc
-    const user = await User.findOneAndUpdate(
-      { clerkId },
-      userData,
-      { upsert: true, new: true, runValidators: true }
-    );
+    // Check if user exists by email (in case Clerk user was deleted and recreated)
+    let user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (user && user.clerkId !== clerkId) {
+      // User exists with same email but different clerkId
+      // This happens when Clerk user was deleted and a new one created
+      console.log(`🔄 Updating existing user ${user.email} with new clerkId`);
+      user.clerkId = clerkId;
+    }
+
+    if (!user) {
+      // Create new user
+      user = new User(userData);
+    } else {
+      // Update existing user
+      Object.assign(user, userData);
+    }
+
+    // Save the user
+    await user.save();
 
     console.log("✅ User profile synced:", user.email);
 
