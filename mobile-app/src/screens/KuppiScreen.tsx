@@ -47,6 +47,8 @@ export interface KuppiSession {
     sessionMode: "Online" | "Physical";
     meetingLink?: string;
     dateTime: string; // ISO Date string from backend
+    startTime?: string;
+    endTime?: string;
 }
 
 interface KuppiScreenProps {
@@ -62,7 +64,8 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
 
     // Date Picker State
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [showTimePicker, setShowTimePicker] = useState(false);
+    const [showStartTimePicker, setShowStartTimePicker] = useState(false);
+    const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
     // Modal States
     const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -73,9 +76,9 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
     const [formData, setFormData] = useState({
         title: "",
         subject: "",
-        date: "", // Display string
-        time: "", // Display string
-        dateTime: new Date(), // Actual Date object
+        date: new Date(), // Base Date
+        startTime: new Date(), // Full Date object
+        endTime: new Date(new Date().getTime() + 60 * 60 * 1000), // Default 1 hr later
         location: "",
         maxAttendees: "",
         about: "",
@@ -122,9 +125,15 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
             return;
         }
 
-        // Validate Date is in future
-        if (formData.dateTime <= new Date()) {
+        // Validate Date is in future (startTime)
+        if (formData.startTime <= new Date()) {
             Alert.alert("Error", "Cannot create a session in the past!");
+            return;
+        }
+
+        // Validate End Time > Start Time
+        if (formData.endTime <= formData.startTime) {
+            Alert.alert("Error", "End time must be after start time");
             return;
         }
 
@@ -142,21 +151,28 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
             const token = await AsyncStorage.getItem('token');
             await axios.post(KUPPI_ENDPOINTS.CREATE, {
                 ...formData,
-                maxAttendees: parseInt(formData.maxAttendees) || 10,
-                // organizer: CURRENT_USER_ID, -- Handled by backend from token
+                maxAttendees: parseInt(formData.maxAttendees as string) || 10,
                 sessionMode: formData.sessionMode,
                 meetingLink: formData.meetingLink,
-                dateTime: formData.dateTime.toISOString(), // Send ISO string
+                // Send explicit start and end times
+                startTime: formData.startTime.toISOString(),
+                endTime: formData.endTime.toISOString(),
+                // maintain date/time/dateTime for consistency if backend uses them
+                dateTime: formData.startTime.toISOString(),
+                date: formData.startTime.toLocaleDateString(),
+                time: formData.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setCreateModalVisible(false);
+            // Reset form
+            const now = new Date();
             setFormData({
                 title: "",
                 subject: "",
-                date: "",
-                time: "",
-                dateTime: new Date(),
+                date: now,
+                startTime: now,
+                endTime: new Date(now.getTime() + 60 * 60 * 1000),
                 location: "",
                 maxAttendees: "",
                 about: "",
@@ -268,22 +284,34 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                 </View>
 
                 <Text style={styles.timeText}>
-                    {session.date}, {session.time} • {session.sessionMode === 'Online' ? 'Online' : session.location}
+                    {session.date}, {
+                        session.startTime && session.endTime
+                            ? `${new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                            : session.time
+                    } • {session.sessionMode === 'Online' ? 'Online' : session.location}
                 </Text>
 
                 {/* Live Now Badge Logic */}
                 {(() => {
-                    if (session.dateTime) {
-                        const start = new Date(session.dateTime);
-                        // Assuming 2 hour duration for "Live Now" status
-                        const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
-                        if (currentTime >= start && currentTime < end) {
-                            return (
-                                <View style={styles.liveBadge}>
-                                    <Text style={styles.liveText}>● LIVE NOW</Text>
-                                </View>
-                            );
-                        }
+                    let start: Date, end: Date;
+
+                    if (session.startTime && session.endTime) {
+                        start = new Date(session.startTime);
+                        end = new Date(session.endTime);
+                    } else if (session.dateTime) {
+                        // Fallback for old sessions
+                        start = new Date(session.dateTime);
+                        end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+                    } else {
+                        return null;
+                    }
+
+                    if (currentTime >= start && currentTime < end) {
+                        return (
+                            <View style={styles.liveBadge}>
+                                <Text style={styles.liveText}>● LIVE NOW</Text>
+                            </View>
+                        );
                     }
                     return null;
                 })()}
@@ -331,75 +359,79 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
 
     // Upcoming Sessions: 
     // 1. Organizer is NOT currentUserId
-    // 2. Session date is in the future
+    // 2. Session has not ended yet (endTime > now)
     const upcomingSessions = sessions.filter(s => {
         if (isOrganizer(s)) return false;
 
-        // Date check using dateTime from backend (preferred) or date string parsing
-        let sessionDate: Date;
-        if (s.dateTime) {
-            sessionDate = new Date(s.dateTime);
+        let sessionEnd: Date;
+        if (s.endTime) {
+            sessionEnd = new Date(s.endTime);
+        } else if (s.dateTime) {
+            // Fallback
+            const start = new Date(s.dateTime);
+            sessionEnd = new Date(start.getTime() + 2 * 60 * 60 * 1000);
         } else {
-            // Fallback for old data without dateTime
-            sessionDate = new Date(s.date);
+            sessionEnd = new Date(s.date); // rough fallback
         }
 
-        if (!isNaN(sessionDate.getTime())) {
-            // Filter: Show if it's in the future OR if it's "Live Now" (within last 2 hours)
-            // But user said: "The moment the scheduled time passes, they should be removed from that list automatically."
-            // Wait, "Sessions should only be visible in 'Upcoming' if they haven't happened yet."
-            // But typically "Upcoming" usually transitions to "Live/Ongoing". 
-            // If I remove them EXACTLY at start time, user won't see "Live Now" badge in "Upcoming" list!
-            // "Upcoming Sessions" list usually contains current/future.
-            // Requirement 4: "If a session is happening right now, show a 'Live Now' badge" implies it should be IN the list.
-            // Requirement 3: "a filter that compares... dateTime with new Date()... so a session disappears... moment it expires".
-            // "Expire" usually means end time. 
-            // So logic: Show if session has NOT ended yet. 
-            // Assuming 2 hrs duration: Show if now < startTime + 2hrs.
-
-            // However, user stated logic: "Update the GET /upcoming route to fetch only sessions where dateTime is greater than new Date()."
-            // That strict logic means: if now > startTime, it's GONE. 
-            // Contradiction? "If a session is happening right now, show a 'Live Now' badge".
-            // If it's gone from the list, how can we show the badge?
-            // Interpret "Visible in Upcoming" as "Visible in the list titled Upcoming".
-            // If the user wants "Live Now" badge, the session MUST be in the return list.
-            // So "Expires" likely means "Finished".
-            // I will use `now < startTime + 2 hours` for visibility.
-            const twoHoursAfterStart = new Date(sessionDate.getTime() + 2 * 60 * 60 * 1000);
-            return twoHoursAfterStart > currentTime;
-
-            // Strict interpretation of "dateTime greater than new Date()" (User point 1) would hide it at start.
-            // I will err on side of "Live Now" requirement and use a grace period (e.g. duration).
+        if (!isNaN(sessionEnd.getTime())) {
+            // "Expired: Automatically move sessions out of 'Upcoming' once the endTime has passed."
+            return sessionEnd > currentTime;
         }
         return true;
     });
 
+    // Date Picker Handlers
     const onDateChange = (event: any, selectedDate?: Date) => {
-        if (Platform.OS === 'android') {
-            setShowDatePicker(false);
-        }
-
+        if (Platform.OS === 'android') setShowDatePicker(false);
         if (selectedDate) {
+            // Update all dates to this new day, keeping their time
+            const updateDatePart = (base: Date, newDate: Date) => {
+                const d = new Date(base);
+                d.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+                return d;
+            };
+
             setFormData({
                 ...formData,
-                dateTime: selectedDate,
-                date: selectedDate.toLocaleDateString(),
-                time: selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                date: selectedDate,
+                startTime: updateDatePart(formData.startTime, selectedDate),
+                endTime: updateDatePart(formData.endTime, selectedDate),
             });
         }
     };
 
-    const onTimeChange = (event: any, selectedDate?: Date) => {
-        if (Platform.OS === 'android') {
-            setShowTimePicker(false);
-        }
+    const onStartTimeChange = (event: any, selectedTime?: Date) => {
+        if (Platform.OS === 'android') setShowStartTimePicker(false);
+        if (selectedTime) {
+            // Update time part of startTime
+            const newStart = new Date(formData.startTime);
+            newStart.setHours(selectedTime.getHours(), selectedTime.getMinutes());
 
-        if (selectedDate) {
+            // Auto-adjust end time if it becomes before start time? 
+            // Better to just let user pick or auto-shift end time to start + 1hr
+            let newEnd = new Date(formData.endTime);
+            if (newEnd <= newStart) {
+                newEnd = new Date(newStart.getTime() + 60 * 60 * 1000);
+            }
+
             setFormData({
                 ...formData,
-                dateTime: selectedDate,
-                date: selectedDate.toLocaleDateString(),
-                time: selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                startTime: newStart,
+                endTime: newEnd,
+            });
+        }
+    };
+
+    const onEndTimeChange = (event: any, selectedTime?: Date) => {
+        if (Platform.OS === 'android') setShowEndTimePicker(false);
+        if (selectedTime) {
+            const newEnd = new Date(formData.endTime);
+            newEnd.setHours(selectedTime.getHours(), selectedTime.getMinutes());
+
+            setFormData({
+                ...formData,
+                endTime: newEnd,
             });
         }
     };
@@ -489,31 +521,39 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                             </View>
 
                             <View style={styles.row}>
-                                <View style={styles.halfInput}>
+                                <View style={{ flex: 1, marginRight: 10 }}>
                                     <Text style={styles.label}>Date</Text>
                                     <TouchableOpacity
                                         style={styles.dateTimeInput}
                                         onPress={() => setShowDatePicker(true)}
                                     >
-                                        <Text style={[
-                                            styles.dateTimeText,
-                                            !formData.date && styles.dateTimePlaceholder
-                                        ]}>
-                                            {formData.date || "Select Date"}
+                                        <Text style={styles.dateTimeText}>
+                                            {formData.date.toLocaleDateString()}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            <View style={styles.row}>
+                                <View style={styles.halfInput}>
+                                    <Text style={styles.label}>Start Time</Text>
+                                    <TouchableOpacity
+                                        style={styles.dateTimeInput}
+                                        onPress={() => setShowStartTimePicker(true)}
+                                    >
+                                        <Text style={styles.dateTimeText}>
+                                            {formData.startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
                                 <View style={styles.halfInput}>
-                                    <Text style={styles.label}>Time</Text>
+                                    <Text style={styles.label}>End Time</Text>
                                     <TouchableOpacity
                                         style={styles.dateTimeInput}
-                                        onPress={() => setShowTimePicker(true)}
+                                        onPress={() => setShowEndTimePicker(true)}
                                     >
-                                        <Text style={[
-                                            styles.dateTimeText,
-                                            !formData.time && styles.dateTimePlaceholder
-                                        ]}>
-                                            {formData.time || "Select Time"}
+                                        <Text style={styles.dateTimeText}>
+                                            {formData.endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
@@ -523,7 +563,7 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                             {Platform.OS === 'android' && showDatePicker && (
                                 <DateTimePicker
                                     testID="dateTimePicker"
-                                    value={formData.dateTime}
+                                    value={formData.date}
                                     mode="date"
                                     display="calendar"
                                     onChange={onDateChange}
@@ -532,13 +572,24 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                     accentColor={COLORS.RED}
                                 />
                             )}
-                            {Platform.OS === 'android' && showTimePicker && (
+                            {Platform.OS === 'android' && showStartTimePicker && (
                                 <DateTimePicker
-                                    testID="timePicker"
-                                    value={formData.dateTime}
+                                    testID="startTimePicker"
+                                    value={formData.startTime}
                                     mode="time"
                                     display="clock"
-                                    onChange={onTimeChange}
+                                    onChange={onStartTimeChange}
+                                    // @ts-ignore
+                                    accentColor={COLORS.RED}
+                                />
+                            )}
+                            {Platform.OS === 'android' && showEndTimePicker && (
+                                <DateTimePicker
+                                    testID="endTimePicker"
+                                    value={formData.endTime}
+                                    mode="time"
+                                    display="clock"
+                                    onChange={onEndTimeChange}
                                     // @ts-ignore
                                     accentColor={COLORS.RED}
                                 />
@@ -563,7 +614,7 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                                 </TouchableOpacity>
                                             </View>
                                             <DateTimePicker
-                                                value={formData.dateTime}
+                                                value={formData.date}
                                                 mode="date"
                                                 display="inline"
                                                 onChange={onDateChange}
@@ -579,29 +630,63 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                 </Modal>
                             )}
 
-                            {/* iOS Time Picker Modal */}
-                            {Platform.OS === 'ios' && showTimePicker && (
+                            {/* iOS Start Time Picker Modal */}
+                            {Platform.OS === 'ios' && showStartTimePicker && (
                                 <Modal
                                     transparent={true}
                                     animationType="fade"
-                                    visible={showTimePicker}
-                                    onRequestClose={() => setShowTimePicker(false)}
+                                    visible={showStartTimePicker}
+                                    onRequestClose={() => setShowStartTimePicker(false)}
                                 >
                                     <View style={styles.modalOverlay}>
                                         <View style={{ backgroundColor: 'white', padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
                                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
-                                                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                                                <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
                                                     <Text style={{ color: COLORS.RED, fontSize: 16 }}>Cancel</Text>
                                                 </TouchableOpacity>
-                                                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                                                <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
                                                     <Text style={{ color: COLORS.RED, fontWeight: 'bold', fontSize: 16 }}>Done</Text>
                                                 </TouchableOpacity>
                                             </View>
                                             <DateTimePicker
-                                                value={formData.dateTime}
+                                                value={formData.startTime}
                                                 mode="time"
                                                 display="spinner"
-                                                onChange={onTimeChange}
+                                                onChange={onStartTimeChange}
+                                                style={{ height: 200 }}
+                                                themeVariant="light"
+                                                textColor="black"
+                                                // @ts-ignore
+                                                accentColor={COLORS.RED}
+                                            />
+                                        </View>
+                                    </View>
+                                </Modal>
+                            )}
+
+                            {/* iOS End Time Picker Modal */}
+                            {Platform.OS === 'ios' && showEndTimePicker && (
+                                <Modal
+                                    transparent={true}
+                                    animationType="fade"
+                                    visible={showEndTimePicker}
+                                    onRequestClose={() => setShowEndTimePicker(false)}
+                                >
+                                    <View style={styles.modalOverlay}>
+                                        <View style={{ backgroundColor: 'white', padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+                                                <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
+                                                    <Text style={{ color: COLORS.RED, fontSize: 16 }}>Cancel</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
+                                                    <Text style={{ color: COLORS.RED, fontWeight: 'bold', fontSize: 16 }}>Done</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <DateTimePicker
+                                                value={formData.endTime}
+                                                mode="time"
+                                                display="spinner"
+                                                onChange={onEndTimeChange}
                                                 style={{ height: 200 }}
                                                 themeVariant="light"
                                                 textColor="black"
@@ -712,7 +797,13 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                         <View style={styles.iconCircle}><Ionicons name="calendar-outline" size={20} color={COLORS.GREY} /></View>
                                         <View>
                                             <Text style={styles.detailLabel}>Date & Time</Text>
-                                            <Text style={styles.detailValue}>{selectedSession.date}, {selectedSession.time}</Text>
+                                            <Text style={styles.detailValue}>
+                                                {selectedSession.date}, {
+                                                    selectedSession.startTime && selectedSession.endTime
+                                                        ? `${new Date(selectedSession.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(selectedSession.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                                                        : selectedSession.time
+                                                }
+                                            </Text>
                                         </View>
                                     </View>
 

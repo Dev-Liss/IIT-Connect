@@ -15,13 +15,14 @@ const { protect } = require("../middleware/authMiddleware");
 router.get("/", async (req, res) => {
     try {
         // Filter for upcoming sessions or ongoing sessions (started within last 2 hours)
-        const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+        // Filter for sessions that haven't ended yet (endTime > now)
+        const now = new Date();
         const sessions = await Kuppi.find({
-            dateTime: { $gt: twoHoursAgo }
+            endTime: { $gt: now }
         })
             .populate("organizer", "username studentId")
             .populate("attendees", "username")
-            .sort({ dateTime: 1 }); // Sort by nearest date ascending
+            .sort({ startTime: 1 }); // Sort by start time ascending
         res.json(sessions);
     } catch (err) {
         console.error(err.message);
@@ -51,41 +52,26 @@ router.get("/my-sessions", protect, async (req, res) => {
 router.post("/create", protect, async (req, res) => {
     console.log("Received Create Request Body:", req.body);
     try {
-        const { title, subject, location, maxAttendees, about, sessionMode, meetingLink, dateTime } = req.body;
+        const { title, subject, location, maxAttendees, about, sessionMode, meetingLink, startTime, endTime } = req.body;
 
-        // Parse dateTime if it's a string, or expect ISO string from frontend
-        const sessionDate = new Date(dateTime);
+        const start = new Date(startTime);
+        const end = new Date(endTime);
 
-        // Derive date and time strings for legacy support / UI display if not provided explicitly, 
-        // or just override them to ensure consistency with dateTime.
-        // Format: "YYYY-MM-DD", "HH:mm" or similar based on locale? 
-        // The existing frontend was sending free text. Let's make it structured or consistent string.
-        // Actually, if we use toLocaleDateString, it might be server locale dependent.
-        // Let's use simple ISO splitting or just store what frontend sends if they send date/time strings too.
-        // But to be safe and consistent, let's derive:
-        // formatting to "Weekday, DD Month" and time to "HH:MM AM/PM" would be nice but complex without library.
-        // For now, let's trust frontend sent `date` and `time` strings correctly OR rely on `dateTime`.
-
-        // However, I must ensure `dateTime` is saved.
-
-        // If frontend sends `date` and `time` (human readable), I'll use those. 
-        // If not, I'll default to ISO string parts.
-
-        let dateStr = req.body.date;
-        let timeStr = req.body.time;
-
-        if (!dateStr || !timeStr) {
-            // Fallback if not provided
-            dateStr = sessionDate.toLocaleDateString();
-            timeStr = sessionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (end <= start) {
+            return res.status(400).json({ msg: "End time must be after start time" });
         }
+
+        // Derive date string for display
+        const dateStr = start.toLocaleDateString();
 
         const newKuppi = new Kuppi({
             title,
             subject,
             date: dateStr,
-            time: timeStr,
-            dateTime: sessionDate, // Important field
+            // time: timeStr, // Removed from schema requirement
+            startTime: start,
+            endTime: end,
+            dateTime: start, // kept for backward compatibility
             location,
             maxAttendees,
             about,

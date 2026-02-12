@@ -20,10 +20,23 @@ const KuppiSchema = new mongoose.Schema({
         type: Date,
         required: [true, "DateTime is required for expiration logic"],
     },
-    time: {
-        type: String,
-        required: [true, "Time is required"],
+    startTime: {
+        type: Date,
+        required: [true, "Start time is required"],
     },
+    endTime: {
+        type: Date,
+        required: [true, "End time is required"],
+        validate: {
+            validator: function (value) {
+                // this.startTime might be undefined validation runs before casting or if parallel
+                // But usually this works.
+                return this.startTime < value;
+            },
+            message: "End time must be after start time",
+        },
+    },
+    // time: { type: String }, // Optional: specific display string if needed, but startTime/endTime cover it
     location: {
         type: String,
         // Location is required only if sessionMode is Physical. handled in validation or frontend usually, 
