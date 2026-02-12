@@ -1,27 +1,51 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { validateAlumni } from "../services/api";
 
 export default function AlumniDetailsScreen({ email, onContinue }) {
     const [pastIitId, setPastIitId] = useState("");
     const [nationalId, setNationalId] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleContinue = () => {
-        if (!pastIitId.trim() || !nationalId.trim()) {
+    const handleContinue = async () => {
+        const trimmedPastId = pastIitId.trim();
+        const trimmedNationalId = nationalId.trim();
+
+        if (!trimmedPastId || !trimmedNationalId) {
             Alert.alert("Error", "Please fill in all fields");
             return;
         }
 
-        const alumniData = {
-            email,
-            pastIitId,
-            nationalId,
-            role: "alumni",
-        };
+        setIsLoading(true);
 
-        if (onContinue) {
-            onContinue(alumniData);
+        try {
+            // Validate credentials against backend database
+            const result = await validateAlumni(trimmedNationalId, trimmedPastId);
+
+            if (result.success) {
+                console.log(`✅ Alumni validated: ${result.alumniName}`);
+
+                const alumniData = {
+                    email,
+                    pastIitId: trimmedPastId,
+                    nationalId: trimmedNationalId,
+                    role: "alumni",
+                    officialName: result.alumniName, // Keep official name for reference
+                };
+
+                if (onContinue) {
+                    onContinue(alumniData);
+                }
+            }
+        } catch (error) {
+            Alert.alert(
+                "Validation Failed",
+                error.message || "Invalid alumni credentials. Please check your IDs and try again."
+            );
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -85,8 +109,16 @@ export default function AlumniDetailsScreen({ email, onContinue }) {
                     </View>
 
                     {/* Continue Button */}
-                    <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-                        <Text style={styles.continueButtonText}>Continue</Text>
+                    <TouchableOpacity
+                        style={[styles.continueButton, isLoading && styles.continueButtonDisabled]}
+                        onPress={handleContinue}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="#FFF" />
+                        ) : (
+                            <Text style={styles.continueButtonText}>Continue</Text>
+                        )}
                     </TouchableOpacity>
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -172,5 +204,10 @@ const styles = StyleSheet.create({
         color: "#FFF",
         fontSize: 16,
         fontWeight: "bold",
+    },
+    continueButtonDisabled: {
+        backgroundColor: "#CCC",
+        shadowOpacity: 0,
+        elevation: 0,
     },
 });

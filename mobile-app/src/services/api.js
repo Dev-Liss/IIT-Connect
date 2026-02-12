@@ -157,3 +157,33 @@ export const checkEmailExists = async (email) => {
         throw error;
     }
 };
+
+/**
+ * Validate Alumni credentials against backend JSON database
+ * @param {string} nationalId - Alumni National ID
+ * @param {string} iitId - Alumni Past IIT ID
+ * @returns {Promise<Object>} API response
+ */
+export const validateAlumni = async (nationalId, iitId) => {
+    try {
+        console.log("🔍 Validating alumni credentials...");
+        const response = await fetch(`${API_BASE_URL}/auth/validate-alumni`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ nationalId, iitId }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Validation failed");
+        }
+
+        return data;
+    } catch (error) {
+        console.error("❌ Alumni validation API error:", error);
+        throw error;
+    }
+};

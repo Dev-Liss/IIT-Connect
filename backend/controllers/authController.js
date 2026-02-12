@@ -168,7 +168,55 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+const fs = require("fs");
+const path = require("path");
+
+/**
+ * Validate Alumni credentials against JSON database
+ */
+const validateAlumniCredentials = async (req, res) => {
+  const { nationalId, iitId } = req.body;
+
+  if (!nationalId || !iitId) {
+    return res.status(400).json({
+      success: false,
+      message: "National ID and IIT ID are required",
+    });
+  }
+
+  try {
+    // Load alumni records from JSON file
+    const dataPath = path.join(__dirname, "../data/alumni_records.json");
+    const alumniRecords = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+
+    // Find record matching BOTH national ID and IIT ID
+    const validAlumni = alumniRecords.find(
+      (record) => record.nationalId === nationalId && record.iitId === iitId
+    );
+
+    if (validAlumni) {
+      return res.status(200).json({
+        success: true,
+        message: "Alumni credentials validated successfully",
+        alumniName: validAlumni.name,
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid alumni credentials. Please check your IDs and try again.",
+      });
+    }
+  } catch (error) {
+    console.error("❌ Alumni validation error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error accessing alumni database",
+    });
+  }
+};
+
 module.exports = {
   syncUserProfile,
   getUserProfile,
+  validateAlumniCredentials,
 };

@@ -15,6 +15,7 @@ const router = express.Router();
 const {
     syncUserProfile,
     getUserProfile,
+    validateAlumniCredentials,
 } = require("../controllers/authController");
 const { requireAuth } = require("../middleware/clerkAuth");
 
@@ -24,6 +25,13 @@ const { requireAuth } = require("../middleware/clerkAuth");
 // Called after Clerk signup/login to save profile data to MongoDB
 // ====================================
 router.post("/sync-profile", syncUserProfile);
+
+// ====================================
+// VALIDATE ALUMNI CREDENTIALS ROUTE
+// POST /api/auth/validate-alumni
+// Checks if national ID and IIT ID match a record in the JSON database
+// ====================================
+router.post("/validate-alumni", validateAlumniCredentials);
 
 // ====================================
 // GET USER PROFILE ROUTE
