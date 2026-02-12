@@ -185,11 +185,26 @@ const validateAlumniCredentials = async (req, res) => {
   }
 
   try {
-    // Load alumni records from JSON file
+    // Step 1: Check if these IDs are already registered in MongoDB
+    const existingAlumni = await User.findOne({
+      role: "alumni",
+      alumniId: nationalId,
+      pastIitId: iitId,
+    });
+
+    if (existingAlumni) {
+      return res.status(400).json({
+        success: false,
+        message: "An alumni account already exists for these credentials. Please login instead.",
+        accountExists: true,
+      });
+    }
+
+    // Step 2: Load alumni records from JSON file
     const dataPath = path.join(__dirname, "../data/alumni_records.json");
     const alumniRecords = JSON.parse(fs.readFileSync(dataPath, "utf8"));
 
-    // Find record matching BOTH national ID and IIT ID
+    // Step 3: Find record matching BOTH national ID and IIT ID
     const validAlumni = alumniRecords.find(
       (record) => record.nationalId === nationalId && record.iitId === iitId
     );
@@ -207,7 +222,7 @@ const validateAlumniCredentials = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error("❌ Alumni validation error:", error);
+    console.log("ℹ️ Alumni validation error:", error.message);
     res.status(500).json({
       success: false,
       message: "Error accessing alumni database",
