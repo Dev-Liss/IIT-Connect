@@ -21,6 +21,19 @@ export default function StudentIdDetailsScreen({ email, role, onContinue }) {
             return;
         }
 
+        // Cross-validation with email numeric part
+        // Example: std.20232409@iit.ac.lk -> 20232409
+        const emailIdMatch = email.split("@")[0].match(/\d+/);
+        const emailId = emailIdMatch ? emailIdMatch[0] : null;
+
+        if (emailId && trimmedStudentId !== emailId) {
+            Alert.alert(
+                "Invalid ID",
+                `The ID you entered (${trimmedStudentId}) does not match the ID in your email (${emailId}).`
+            );
+            return;
+        }
+
         // All validations passed, proceed
         if (onContinue) {
             onContinue(trimmedStudentId);
