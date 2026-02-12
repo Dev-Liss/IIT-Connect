@@ -90,7 +90,7 @@ router.post("/create", protect, async (req, res) => {
 });
 
 // @route   POST /api/kuppi/join/:id
-// @desc    Join a kuppi session
+// @desc    Toggle join/leave a kuppi session
 // @access  Private
 router.post("/join/:id", async (req, res) => {
     try {
@@ -106,19 +106,24 @@ router.post("/join/:id", async (req, res) => {
         }
 
         // Check if already joined
-        if (kuppi.attendees.includes(userId)) {
-            return res.status(400).json({ msg: "Already joined this session" });
+        const isJoined = kuppi.attendees.includes(userId);
+
+        if (isJoined) {
+            // LEAVE logic
+            kuppi.attendees = kuppi.attendees.filter(id => id.toString() !== userId.toString());
+            await kuppi.save();
+            return res.json({ msg: "Left session", kuppi });
+        } else {
+            // JOIN logic
+            // Check max attendees
+            if (kuppi.attendees.length >= kuppi.maxAttendees) {
+                return res.status(400).json({ msg: "Session is full" });
+            }
+
+            kuppi.attendees.push(userId);
+            await kuppi.save();
+            return res.json({ msg: "Joined session", kuppi });
         }
-
-        // Check max attendees
-        if (kuppi.attendees.length >= kuppi.maxAttendees) {
-            return res.status(400).json({ msg: "Session is full" });
-        }
-
-        kuppi.attendees.push(userId);
-        await kuppi.save();
-
-        res.json(kuppi);
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server Error");

@@ -195,28 +195,18 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
             Alert.alert("Error", "You must be logged in to join.");
             return;
         }
+
+        const isAlreadyJoined = hasJoined(session);
+        const action = isAlreadyJoined ? "leave" : "join";
+
         try {
             const token = await AsyncStorage.getItem('token');
-            // Endpoint handles adding user via token or body. sending body just in case if backend legacy
-            // But main thing is updated backend uses param id and token user.
-            // Backend route: router.post("/join/:id", ... which uses req.user or req.body.userId)
-            // Wait, I didn't update "join" route in backend to use "protect". 
-            // The user didn't ask me to update "join" route in backend, only "create" and "my-sessions".
-            // But I should probably send userId in body as fallback if I didn't protect it, 
-            // OR best practice: use token. 
-            // Existing backend join: router.post("/join/:id", ...) checks req.user ? req.user.id : req.body.userId.
-            // So if I don't use protect middleware on join route, req.user is undefined.
-            // So I MUST send userId in body.
-
-            await axios.post(KUPPI_ENDPOINTS.JOIN(session._id), { userId: user.id }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            // Update local state immediately
+            // Optimistic update
             const updatedSessions = sessions.map(s => {
                 if (s._id === session._id) {
-                    const isAlreadyIn = s.attendees.some(a => (typeof a === 'string' ? a === user.id : a._id === user.id));
-                    if (!isAlreadyIn) {
+                    if (isAlreadyJoined) {
+                        return { ...s, attendees: s.attendees.filter(a => (typeof a === 'string' ? a !== user.id : a._id !== user.id)) };
+                    } else {
                         return { ...s, attendees: [...s.attendees, user.id] };
                     }
                 }
@@ -225,16 +215,28 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
             setSessions(updatedSessions);
 
             if (selectedSession && selectedSession._id === session._id) {
+                const updatedAttendees = isAlreadyJoined
+                    ? selectedSession.attendees.filter(a => (typeof a === 'string' ? a !== user.id : a._id !== user.id))
+                    : [...selectedSession.attendees, user.id];
+
                 setSelectedSession({
                     ...selectedSession,
-                    attendees: [...selectedSession.attendees, user.id]
+                    attendees: updatedAttendees
                 });
             }
 
-            Alert.alert("Success", "You have joined the session!");
+            // Call Backend
+            await axios.post(KUPPI_ENDPOINTS.JOIN(session._id), { userId: user.id }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            // Optional: Show success message or silent toast
+            // Alert.alert("Success", `You have ${action}d the session!`);
         } catch (error: any) {
-            console.error("Error joining session:", error);
-            Alert.alert("Error", error.response?.data?.msg || "Failed to join session");
+            console.error(`Error ${action}ing session:`, error);
+            Alert.alert("Error", error.response?.data?.msg || `Failed to ${action} session`);
+            // Revert on failure (optional, but good practice)
+            fetchSessions();
         }
     };
 
@@ -324,30 +326,15 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                         <Text style={styles.attendeeCount}>+{session.attendees.length}</Text>
                     </View>
 
-                    {isMySession ? (
-                        <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={() => {
-                                setSelectedSession(session);
-                                setDetailsModalVisible(true);
-                            }}
-                        >
-                            <Text style={styles.actionButtonText}>View</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        !joined ? (
-                            <TouchableOpacity
-                                style={styles.joinButtonSmall}
-                                onPress={() => handleJoinSession(session)}
-                            >
-                                <Text style={styles.joinButtonText}>Join</Text>
-                            </TouchableOpacity>
-                        ) : (
-                            <TouchableOpacity style={[styles.joinButtonSmall, { backgroundColor: COLORS.GREEN }]} disabled>
-                                <Text style={styles.joinButtonText}>Joined</Text>
-                            </TouchableOpacity>
-                        )
-                    )}
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => {
+                            setSelectedSession(session);
+                            setDetailsModalVisible(true);
+                        }}
+                    >
+                        <Text style={styles.actionButtonText}>View</Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         );
@@ -733,7 +720,7 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                 onChangeText={(text) => setFormData({ ...formData, maxAttendees: text })}
                             />
 
-                            <Text style={styles.label}>About this session</Text>
+                            <Text style={styles.label}>About this session (Optional)</Text>
                             <TextInput
                                 style={[styles.input, styles.textArea]}
                                 placeholder="Description..."
@@ -856,19 +843,16 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                 {!hasJoined(selectedSession) ? (
                                     <TouchableOpacity
                                         style={styles.confirmJoinButton}
-                                        onPress={() => {
-                                            handleJoinSession(selectedSession);
-                                            setDetailsModalVisible(false);
-                                        }}
+                                        onPress={() => handleJoinSession(selectedSession)}
                                     >
-                                        <Text style={styles.confirmJoinText}>Confirm Join</Text>
+                                        <Text style={styles.confirmJoinText}>Join Session</Text>
                                     </TouchableOpacity>
                                 ) : (
                                     <TouchableOpacity
                                         style={[styles.confirmJoinButton, { backgroundColor: COLORS.GREEN }]}
-                                        disabled
+                                        onPress={() => handleJoinSession(selectedSession)}
                                     >
-                                        <Text style={styles.confirmJoinText}>Already Joined</Text>
+                                        <Text style={styles.confirmJoinText}>Joined</Text>
                                     </TouchableOpacity>
                                 )}
                             </>

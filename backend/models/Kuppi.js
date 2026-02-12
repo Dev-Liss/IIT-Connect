@@ -62,7 +62,7 @@ const KuppiSchema = new mongoose.Schema({
     },
     about: {
         type: String,
-        required: [true, "Description is required"],
+        required: false, // Made optional
     },
     organizer: {
         type: mongoose.Schema.Types.ObjectId,
