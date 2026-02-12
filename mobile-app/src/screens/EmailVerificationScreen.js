@@ -101,7 +101,7 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
 
         } catch (error) {
             setIsLoading(false);
-            console.error("❌ Verification error:", error);
+            console.log("ℹ️ Verification attempt finished:", error.message);
 
             if (error.errors && error.errors.length > 0) {
                 const clerkError = error.errors[0];

@@ -112,13 +112,12 @@ export default function CreateAccountScreen({ role, onContinue, onNavigateToLogi
                 if (onContinue) {
                     onContinue(trimmedEmail);
                 } else {
-                    console.error("onContinue callback is not defined!");
+                    console.log("ℹ️ onContinue callback is not defined");
                 }
             } catch (error) {
                 setIsChecking(false);
-                console.error("Email check error:", error);
-                console.error("Error details:", error.message);
-                Alert.alert("Error", "Could not verify email. Please try again.\n\nError: " + error.message);
+                console.log("ℹ️ Email check finished:", error.message);
+                Alert.alert("Error", "Could not verify email. Please try again.");
             }
         } else {
             Alert.alert("Error", "Please enter your email address");

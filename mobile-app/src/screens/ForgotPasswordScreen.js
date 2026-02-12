@@ -70,14 +70,12 @@ export default function ForgotPasswordScreen({ onBack, onCodeSent }) {
 
         } catch (error) {
             setIsSending(false);
-            console.error("❌ Password reset error:", error);
-            console.error("Error details:", JSON.stringify(error, null, 2));
+            console.log("ℹ️ Password reset attempt finished:", error.message);
 
             // Handle Clerk errors
             if (error.errors && error.errors.length > 0) {
                 const clerkError = error.errors[0];
-                console.error("Clerk error code:", clerkError.code);
-                console.error("Clerk error message:", clerkError.message);
+                console.log("ℹ️ Clerk error code:", clerkError.code);
 
                 if (clerkError.code === "form_identifier_not_found") {
                     Alert.alert(

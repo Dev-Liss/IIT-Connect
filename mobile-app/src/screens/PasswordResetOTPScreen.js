@@ -41,7 +41,7 @@ export default function PasswordResetOTPScreen({ email, onVerify, onBack }) {
             Alert.alert("Code Resent", "A new verification code has been sent to your email.");
 
         } catch (error) {
-            console.error("❌ Resend error:", error);
+            console.log("ℹ️ Resend error:", error.message);
             Alert.alert("Error", "Failed to resend code. Please try again.");
         }
     };
@@ -87,13 +87,12 @@ export default function PasswordResetOTPScreen({ email, onVerify, onBack }) {
 
         } catch (error) {
             setIsVerifying(false);
-            console.error("❌ Verification error:", error);
-            console.error("Error details:", JSON.stringify(error, null, 2));
+            console.log("ℹ️ Verification attempt finished:", error.message);
 
             // Handle Clerk errors
             if (error.errors && error.errors.length > 0) {
                 const clerkError = error.errors[0];
-                console.error("Clerk error code:", clerkError.code);
+                console.log("ℹ️ Clerk error code:", clerkError.code);
 
                 if (clerkError.code === "form_code_incorrect") {
                     Alert.alert("Incorrect Code", "The verification code you entered is incorrect. Please try again.");

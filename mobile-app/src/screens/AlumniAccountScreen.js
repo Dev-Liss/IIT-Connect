@@ -45,7 +45,7 @@ export default function AlumniAccountScreen({ onContinue, onNavigateToLogin, onB
                 onContinue(trimmedEmail);
             } catch (error) {
                 setIsChecking(false);
-                console.error("Email check error:", error);
+                console.log("ℹ️ Email check finished:", error.message);
                 Alert.alert("Error", "Could not verify email. Please try again.");
             }
         } else {

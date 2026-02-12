@@ -96,13 +96,12 @@ export default function NewPasswordScreen({ email, onPasswordSet, onBack }) {
 
         } catch (error) {
             setIsSubmitting(false);
-            console.error("❌ Password reset error:", error);
-            console.error("Error details:", JSON.stringify(error, null, 2));
+            console.log("ℹ️ Password reset attempt finished:", error.message);
 
             // Handle Clerk errors
             if (error.errors && error.errors.length > 0) {
                 const clerkError = error.errors[0];
-                console.error("Clerk error code:", clerkError.code);
+                console.log("ℹ️ Clerk error code:", clerkError.code);
 
                 if (clerkError.code === "form_password_pwned") {
                     Alert.alert(

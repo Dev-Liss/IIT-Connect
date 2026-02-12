@@ -41,7 +41,7 @@ export const syncUserProfile = async (profileData) => {
         console.log("✅ Profile synced successfully");
         return data;
     } catch (error) {
-        console.error("❌ Profile sync error:", error);
+        console.log("ℹ️ Profile sync finished:", error.message);
         throw error;
     }
 };
@@ -73,7 +73,7 @@ export const registerUser = async (userData) => {
 
         return data;
     } catch (error) {
-        console.error("Register API Error:", error);
+        console.log("ℹ️ Register API finished:", error.message);
         throw error;
     }
 };
@@ -102,7 +102,7 @@ export const loginUser = async (email, password) => {
 
         return data;
     } catch (error) {
-        console.error("Login API Error:", error);
+        console.log("ℹ️ Login API finished:", error.message);
         throw error;
     }
 };
@@ -117,7 +117,7 @@ export const checkHealth = async () => {
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error("Health Check Error:", error);
+        console.log("ℹ️ Health Check finished:", error.message);
         throw error;
     }
 };
@@ -152,8 +152,7 @@ export const checkEmailExists = async (email) => {
 
         return data;
     } catch (error) {
-        console.error("Check Email API Error:", error);
-        console.error("Error stack:", error.stack);
+        console.log("ℹ️ Email check finished:", error.message);
         throw error;
     }
 };
@@ -183,7 +182,7 @@ export const validateAlumni = async (nationalId, iitId) => {
 
         return data;
     } catch (error) {
-        console.error("❌ Alumni validation API error:", error);
+        console.log("ℹ️ Alumni validation attempt finished:", error.message);
         throw error;
     }
 };
