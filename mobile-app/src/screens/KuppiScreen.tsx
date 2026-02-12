@@ -62,7 +62,7 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
 
     // Date Picker State
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [datePickerMode, setDatePickerMode] = useState<'date' | 'time'>('date');
+    const [showTimePicker, setShowTimePicker] = useState(false);
 
     // Modal States
     const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -375,27 +375,33 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
     });
 
     const onDateChange = (event: any, selectedDate?: Date) => {
-        const currentDate = selectedDate || formData.dateTime;
         if (Platform.OS === 'android') {
             setShowDatePicker(false);
         }
 
         if (selectedDate) {
-            const dateStr = selectedDate.toLocaleDateString();
-            const timeStr = selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
             setFormData({
                 ...formData,
                 dateTime: selectedDate,
-                date: dateStr,
-                time: timeStr
+                date: selectedDate.toLocaleDateString(),
+                time: selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             });
         }
     };
 
-    const showMode = (currentMode: 'date' | 'time') => {
-        setShowDatePicker(true);
-        setDatePickerMode(currentMode);
+    const onTimeChange = (event: any, selectedDate?: Date) => {
+        if (Platform.OS === 'android') {
+            setShowTimePicker(false);
+        }
+
+        if (selectedDate) {
+            setFormData({
+                ...formData,
+                dateTime: selectedDate,
+                date: selectedDate.toLocaleDateString(),
+                time: selectedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+        }
     };
 
     return (
@@ -486,10 +492,13 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                 <View style={styles.halfInput}>
                                     <Text style={styles.label}>Date</Text>
                                     <TouchableOpacity
-                                        style={styles.input}
-                                        onPress={() => showMode('date')}
+                                        style={styles.dateTimeInput}
+                                        onPress={() => setShowDatePicker(true)}
                                     >
-                                        <Text style={{ color: formData.date ? COLORS.TEXT_DARK : '#888', marginTop: 10 }}>
+                                        <Text style={[
+                                            styles.dateTimeText,
+                                            !formData.date && styles.dateTimePlaceholder
+                                        ]}>
                                             {formData.date || "Select Date"}
                                         </Text>
                                     </TouchableOpacity>
@@ -497,26 +506,111 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                 <View style={styles.halfInput}>
                                     <Text style={styles.label}>Time</Text>
                                     <TouchableOpacity
-                                        style={styles.input}
-                                        onPress={() => showMode('time')}
+                                        style={styles.dateTimeInput}
+                                        onPress={() => setShowTimePicker(true)}
                                     >
-                                        <Text style={{ color: formData.time ? COLORS.TEXT_DARK : '#888', marginTop: 10 }}>
+                                        <Text style={[
+                                            styles.dateTimeText,
+                                            !formData.time && styles.dateTimePlaceholder
+                                        ]}>
                                             {formData.time || "Select Time"}
                                         </Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
 
-                            {showDatePicker && (
+                            {/* Android Pickers */}
+                            {Platform.OS === 'android' && showDatePicker && (
                                 <DateTimePicker
                                     testID="dateTimePicker"
                                     value={formData.dateTime}
-                                    mode={datePickerMode}
-                                    is24Hour={false}
-                                    display="default"
+                                    mode="date"
+                                    display="calendar"
                                     onChange={onDateChange}
-                                    minimumDate={new Date()} // Prevent past dates in picker
+                                    minimumDate={new Date()}
+                                    // @ts-ignore
+                                    accentColor={COLORS.RED}
                                 />
+                            )}
+                            {Platform.OS === 'android' && showTimePicker && (
+                                <DateTimePicker
+                                    testID="timePicker"
+                                    value={formData.dateTime}
+                                    mode="time"
+                                    display="clock"
+                                    onChange={onTimeChange}
+                                    // @ts-ignore
+                                    accentColor={COLORS.RED}
+                                />
+                            )}
+
+                            {/* iOS Date Picker Modal */}
+                            {Platform.OS === 'ios' && showDatePicker && (
+                                <Modal
+                                    transparent={true}
+                                    animationType="fade"
+                                    visible={showDatePicker}
+                                    onRequestClose={() => setShowDatePicker(false)}
+                                >
+                                    <View style={styles.modalOverlay}>
+                                        <View style={{ backgroundColor: 'white', padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+                                                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                                                    <Text style={{ color: COLORS.RED, fontSize: 16 }}>Cancel</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                                                    <Text style={{ color: COLORS.RED, fontWeight: 'bold', fontSize: 16 }}>Done</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <DateTimePicker
+                                                value={formData.dateTime}
+                                                mode="date"
+                                                display="inline"
+                                                onChange={onDateChange}
+                                                minimumDate={new Date()}
+                                                style={{ height: 320 }}
+                                                themeVariant="light"
+                                                textColor="black"
+                                                // @ts-ignore
+                                                accentColor={COLORS.RED}
+                                            />
+                                        </View>
+                                    </View>
+                                </Modal>
+                            )}
+
+                            {/* iOS Time Picker Modal */}
+                            {Platform.OS === 'ios' && showTimePicker && (
+                                <Modal
+                                    transparent={true}
+                                    animationType="fade"
+                                    visible={showTimePicker}
+                                    onRequestClose={() => setShowTimePicker(false)}
+                                >
+                                    <View style={styles.modalOverlay}>
+                                        <View style={{ backgroundColor: 'white', padding: 20, borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+                                                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                                                    <Text style={{ color: COLORS.RED, fontSize: 16 }}>Cancel</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                                                    <Text style={{ color: COLORS.RED, fontWeight: 'bold', fontSize: 16 }}>Done</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <DateTimePicker
+                                                value={formData.dateTime}
+                                                mode="time"
+                                                display="spinner"
+                                                onChange={onTimeChange}
+                                                style={{ height: 200 }}
+                                                themeVariant="light"
+                                                textColor="black"
+                                                // @ts-ignore
+                                                accentColor={COLORS.RED}
+                                            />
+                                        </View>
+                                    </View>
+                                </Modal>
                             )}
 
                             {formData.sessionMode === 'Physical' ? (
@@ -1060,5 +1154,25 @@ const styles = StyleSheet.create({
     modeButtonTextActive: {
         color: 'white',
         fontWeight: 'bold',
+    },
+    dateTimeInput: {
+        backgroundColor: "#2C2C2C", // Darker Gray
+        borderRadius: 12,
+        paddingVertical: 16,
+        paddingHorizontal: 12,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: "#444",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    dateTimeText: {
+        color: "#f9252b", // Bright Red for visibility
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    dateTimePlaceholder: {
+        color: "#888", // Light enough to read
+        fontWeight: "normal",
     },
 });
