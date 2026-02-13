@@ -19,7 +19,8 @@ const ResourceSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: [true, 'Description is required']
+        required: false,
+        default: ''
     },
     fileUrl: {
         type: String,

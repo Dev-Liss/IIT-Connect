@@ -140,8 +140,8 @@ export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
     };
 
     const handleUpload = async () => {
-        if (!uploadTitle || !uploadCourseCode || !uploadModule || !uploadDescription || !selectedFile) {
-            Alert.alert('Missing Fields', 'Please fill all fields and select a file.');
+        if (!uploadTitle || !uploadCourseCode || !uploadModule || !selectedFile) {
+            Alert.alert('Missing Fields', 'Please fill all required fields and select a file.');
             return;
         }
 
@@ -414,7 +414,7 @@ export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
                             onChangeText={setUploadModule}
                         />
 
-                        <Text style={styles.label}>Description *</Text>
+                        <Text style={styles.label}>Description</Text>
                         <TextInput
                             style={[styles.input, styles.textArea]}
                             placeholder="Describe the content of this resource..."
@@ -508,10 +508,12 @@ export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
                                 </View>
                             </View>
 
-                            <View style={styles.descriptionCard}>
-                                <Text style={styles.descriptionTitle}>Description</Text>
-                                <Text style={styles.descriptionText}>{selectedResource.description}</Text>
-                            </View>
+                            {selectedResource.description ? (
+                                <View style={styles.descriptionCard}>
+                                    <Text style={styles.descriptionTitle}>Description</Text>
+                                    <Text style={styles.descriptionText}>{selectedResource.description}</Text>
+                                </View>
+                            ) : null}
 
                             <TouchableOpacity style={styles.largeDownloadBtn} onPress={handleDownload}>
                                 <Ionicons name="download-outline" size={24} color="#fff" style={{ marginRight: 8 }} />
