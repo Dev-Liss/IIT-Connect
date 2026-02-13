@@ -38,13 +38,11 @@ export interface KuppiSession {
     subject: string;
     date: string;
     time: string;
-    location: string;
     maxAttendees: number;
     about: string;
     organizer: { _id: string; username: string } | string;
     attendees: (string | { _id: string })[];
     createdAt: string;
-    sessionMode: "Online" | "Physical";
     meetingLink?: string;
     dateTime: string; // ISO Date string from backend
     startTime?: string;
@@ -79,10 +77,8 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
         date: new Date(), // Base Date
         startTime: new Date(), // Full Date object
         endTime: new Date(new Date().getTime() + 60 * 60 * 1000), // Default 1 hr later
-        location: "",
         maxAttendees: "",
         about: "",
-        sessionMode: "Physical" as "Online" | "Physical",
         meetingLink: "",
     });
 
@@ -126,7 +122,9 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
         }
 
         // Validate Date is in future (startTime)
-        if (formData.startTime <= new Date()) {
+        // Allow a 15-minute buffer for "just starting" sessions created while running late or taking time to fill form
+        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+        if (formData.startTime < fifteenMinutesAgo) {
             Alert.alert("Error", "Cannot create a session in the past!");
             return;
         }
@@ -137,12 +135,8 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
             return;
         }
 
-        if (formData.sessionMode === "Online" && !formData.meetingLink) {
-            Alert.alert("Error", "Please provide a meeting link for online sessions");
-            return;
-        }
-        if (formData.sessionMode === "Physical" && !formData.location) {
-            Alert.alert("Error", "Please provide a location for physical sessions");
+        if (!formData.meetingLink) {
+            Alert.alert("Error", "Please provide a meeting link");
             return;
         }
 
@@ -152,7 +146,6 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
             await axios.post(KUPPI_ENDPOINTS.CREATE, {
                 ...formData,
                 maxAttendees: parseInt(formData.maxAttendees as string) || 10,
-                sessionMode: formData.sessionMode,
                 meetingLink: formData.meetingLink,
                 // Send explicit start and end times
                 startTime: formData.startTime.toISOString(),
@@ -173,10 +166,8 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                 date: now,
                 startTime: now,
                 endTime: new Date(now.getTime() + 60 * 60 * 1000),
-                location: "",
                 maxAttendees: "",
                 about: "",
-                sessionMode: "Physical",
                 meetingLink: "",
             });
             fetchSessions(); // Refresh list
@@ -190,53 +181,44 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
         }
     };
 
-    const handleJoinSession = async (session: KuppiSession) => {
-        if (!user) {
-            Alert.alert("Error", "You must be logged in to join.");
-            return;
-        }
-
-        const isAlreadyJoined = hasJoined(session);
-        const action = isAlreadyJoined ? "leave" : "join";
-
+    const handleJoinSession = async (session: KuppiSession, openLink: boolean = false) => {
         try {
-            const token = await AsyncStorage.getItem('token');
-            // Optimistic update
-            const updatedSessions = sessions.map(s => {
-                if (s._id === session._id) {
-                    if (isAlreadyJoined) {
-                        return { ...s, attendees: s.attendees.filter(a => (typeof a === 'string' ? a !== user.id : a._id !== user.id)) };
-                    } else {
-                        return { ...s, attendees: [...s.attendees, user.id] };
-                    }
-                }
-                return s;
-            });
-            setSessions(updatedSessions);
+            const token = await AsyncStorage.getItem("userToken");
+            const userData = await AsyncStorage.getItem("userData");
+            if (!token || !userData) {
+                Alert.alert("Error", "Please login first");
+                return;
+            }
 
-            if (selectedSession && selectedSession._id === session._id) {
-                const updatedAttendees = isAlreadyJoined
-                    ? selectedSession.attendees.filter(a => (typeof a === 'string' ? a !== user.id : a._id !== user.id))
-                    : [...selectedSession.attendees, user.id];
+            const parsedUser = JSON.parse(userData);
+            const userId = parsedUser._id || parsedUser.id;
 
-                setSelectedSession({
-                    ...selectedSession,
-                    attendees: updatedAttendees
+            // If openLink is true, we immediately open the URL regardless of API success/fail
+            if (openLink && session.meetingLink) {
+                Linking.openURL(session.meetingLink).catch(err => {
+                    Alert.alert("Error", "Could not open meeting link.");
                 });
             }
 
-            // Call Backend
-            await axios.post(KUPPI_ENDPOINTS.JOIN(session._id), { userId: user.id }, {
+            // Call API to record attendance
+            const response = await axios.post(`${KUPPI_ENDPOINTS.JOIN(session._id)}`, { userId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            // Optional: Show success message or silent toast
-            // Alert.alert("Success", `You have ${action}d the session!`);
+            // Update local state with new session data (including updated attendees list)
+            if (response.data.kuppi) {
+                const updatedSession = response.data.kuppi;
+                setSessions(prevSessions => prevSessions.map(sess => sess._id === updatedSession._id ? updatedSession : sess));
+                if (selectedSession && selectedSession._id === updatedSession._id) {
+                    setSelectedSession(updatedSession);
+                }
+            }
         } catch (error: any) {
-            console.error(`Error ${action}ing session:`, error);
-            Alert.alert("Error", error.response?.data?.msg || `Failed to ${action} session`);
-            // Revert on failure (optional, but good practice)
-            fetchSessions();
+            console.error("Error joining session:", error);
+            if (!openLink) {
+                // Only alert on failure if it wasn't a "click link" action (which succeeds in opening link anyway)
+                Alert.alert("Error", error.response?.data?.msg || "Failed to join session");
+            }
         }
     };
 
@@ -273,11 +255,6 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                     <View style={styles.subjectTag}>
                         <Text style={styles.subjectText}>{session.subject}</Text>
                     </View>
-                    {/* Fix: If I am organizer, I don't see joined badge usually, but if I am organizer, I am automatically joined.
-                        User requested: "If a user is already in the attendees array of an upcoming session, change the 'Join' button to a green 'Joined' badge". 
-                        This refers to UPCOMING sessions (where I am NOT organizer).
-                        So check joined && !isMySession is correct for upcoming.
-                    */}
                     {joined && !isMySession && (
                         <View style={styles.joinedBadge}>
                             <Text style={styles.joinedText}>✓ Joined</Text>
@@ -286,37 +263,43 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                 </View>
 
                 <Text style={styles.timeText}>
-                    {session.date}, {
-                        session.startTime && session.endTime
-                            ? `${new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                            : session.time
-                    } • {session.sessionMode === 'Online' ? 'Online' : session.location}
+                    {(() => {
+                        if (session.startTime && session.endTime) {
+                            const start = new Date(session.startTime);
+                            const day = start.toLocaleDateString('en-US', { weekday: 'short' });
+                            return `${day}, ${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(session.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • Online`;
+                        } else {
+                            return `${session.date}, ${session.time} • Online`;
+                        }
+                    })()}
                 </Text>
 
                 {/* Live Now Badge Logic */}
-                {(() => {
-                    let start: Date, end: Date;
+                {
+                    (() => {
+                        let start: Date, end: Date;
 
-                    if (session.startTime && session.endTime) {
-                        start = new Date(session.startTime);
-                        end = new Date(session.endTime);
-                    } else if (session.dateTime) {
-                        // Fallback for old sessions
-                        start = new Date(session.dateTime);
-                        end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
-                    } else {
+                        if (session.startTime && session.endTime) {
+                            start = new Date(session.startTime);
+                            end = new Date(session.endTime);
+                        } else if (session.dateTime) {
+                            // Fallback for old sessions
+                            start = new Date(session.dateTime);
+                            end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+                        } else {
+                            return null;
+                        }
+
+                        if (currentTime >= start && currentTime < end) {
+                            return (
+                                <View style={styles.liveBadge}>
+                                    <Text style={styles.liveText}>● LIVE NOW</Text>
+                                </View>
+                            );
+                        }
                         return null;
-                    }
-
-                    if (currentTime >= start && currentTime < end) {
-                        return (
-                            <View style={styles.liveBadge}>
-                                <Text style={styles.liveText}>● LIVE NOW</Text>
-                            </View>
-                        );
-                    }
-                    return null;
-                })()}
+                    })()
+                }
 
                 <View style={styles.attendeesContainer}>
                     <View style={styles.avatarRow}>
@@ -335,8 +318,9 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                     >
                         <Text style={styles.actionButtonText}>View</Text>
                     </TouchableOpacity>
+
                 </View>
-            </View>
+            </View >
         );
     };
 
@@ -454,7 +438,7 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
             </Animated.ScrollView>
 
             {/* FAB */}
-            <TouchableOpacity
+            < TouchableOpacity
                 style={styles.fab}
                 onPress={() => setCreateModalVisible(true)}
             >
@@ -490,22 +474,6 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                 value={formData.subject}
                                 onChangeText={(text) => setFormData({ ...formData, subject: text })}
                             />
-
-                            <Text style={styles.label}>Session Mode</Text>
-                            <View style={styles.row}>
-                                <TouchableOpacity
-                                    style={[styles.modeButton, formData.sessionMode === 'Physical' && styles.modeButtonActive]}
-                                    onPress={() => setFormData({ ...formData, sessionMode: 'Physical' })}
-                                >
-                                    <Text style={[styles.modeButtonText, formData.sessionMode === 'Physical' && styles.modeButtonTextActive]}>Physical</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.modeButton, formData.sessionMode === 'Online' && styles.modeButtonActive]}
-                                    onPress={() => setFormData({ ...formData, sessionMode: 'Online' })}
-                                >
-                                    <Text style={[styles.modeButtonText, formData.sessionMode === 'Online' && styles.modeButtonTextActive]}>Online</Text>
-                                </TouchableOpacity>
-                            </View>
 
                             <View style={styles.row}>
                                 <View style={{ flex: 1, marginRight: 10 }}>
@@ -685,30 +653,15 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                 </Modal>
                             )}
 
-                            {formData.sessionMode === 'Physical' ? (
-                                <>
-                                    <Text style={styles.label}>Location</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="e.g., Library Room 4A"
-                                        placeholderTextColor="#888"
-                                        value={formData.location}
-                                        onChangeText={(text) => setFormData({ ...formData, location: text })}
-                                    />
-                                </>
-                            ) : (
-                                <>
-                                    <Text style={styles.label}>Meeting Link</Text>
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="e.g., https://zoom.us/j/..."
-                                        placeholderTextColor="#888"
-                                        value={formData.meetingLink}
-                                        onChangeText={(text) => setFormData({ ...formData, meetingLink: text })}
-                                        autoCapitalize="none"
-                                    />
-                                </>
-                            )}
+                            <Text style={styles.label}>Meeting Link</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="e.g., https://zoom.us/j/..."
+                                placeholderTextColor="#888"
+                                value={formData.meetingLink}
+                                onChangeText={(text) => setFormData({ ...formData, meetingLink: text })}
+                                autoCapitalize="none"
+                            />
 
                             <Text style={styles.label}>Max Attendees</Text>
                             <TextInput
@@ -797,19 +750,21 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                     <View style={styles.detailRow}>
                                         <View style={styles.iconCircle}>
                                             <Ionicons
-                                                name={selectedSession.sessionMode === 'Online' ? "link-outline" : "location-outline"}
+                                                name="link-outline"
                                                 size={20}
                                                 color={COLORS.GREY}
                                             />
                                         </View>
                                         <View>
-                                            <Text style={styles.detailLabel}>{selectedSession.sessionMode === 'Online' ? "Meeting Link" : "Location"}</Text>
+                                            <Text style={styles.detailLabel}>Meeting Link</Text>
                                             <Text style={styles.detailValue}>
-                                                {selectedSession.sessionMode === 'Online' ? (selectedSession.meetingLink || "No link provided") : selectedSession.location}
+                                                {selectedSession.meetingLink ? "Tap to Join Session" : "No link provided"}
                                             </Text>
-                                            {selectedSession.sessionMode === 'Online' && selectedSession.meetingLink && (
-                                                <TouchableOpacity onPress={() => Linking.openURL(selectedSession.meetingLink!)}>
-                                                    <Text style={{ color: COLORS.RED, marginTop: 5, fontWeight: 'bold' }}>Open Link</Text>
+                                            {selectedSession.meetingLink && (
+                                                <TouchableOpacity onPress={() => handleJoinSession(selectedSession, true)}>
+                                                    <Text style={{ color: COLORS.RED, marginTop: 5, fontWeight: 'bold', fontSize: 16 }}>
+                                                        {selectedSession.meetingLink}
+                                                    </Text>
                                                 </TouchableOpacity>
                                             )}
                                         </View>
@@ -839,29 +794,13 @@ export default function KuppiScreen({ scrollY }: KuppiScreenProps) {
                                     <Text style={styles.aboutText}>{selectedSession.about}</Text>
 
                                 </ScrollView>
-
-                                {!hasJoined(selectedSession) ? (
-                                    <TouchableOpacity
-                                        style={styles.confirmJoinButton}
-                                        onPress={() => handleJoinSession(selectedSession)}
-                                    >
-                                        <Text style={styles.confirmJoinText}>Join Session</Text>
-                                    </TouchableOpacity>
-                                ) : (
-                                    <TouchableOpacity
-                                        style={[styles.confirmJoinButton, { backgroundColor: COLORS.GREEN }]}
-                                        onPress={() => handleJoinSession(selectedSession)}
-                                    >
-                                        <Text style={styles.confirmJoinText}>Joined</Text>
-                                    </TouchableOpacity>
-                                )}
                             </>
                         )}
                     </View>
                 </View>
-            </Modal>
+            </Modal >
 
-        </View>
+        </View >
     );
 }
 
@@ -1242,7 +1181,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     dateTimeText: {
-        color: "#f9252b", // Bright Red for visibility
+        color: "#ffffff", // White for high contrast on dark box
         fontSize: 16,
         fontWeight: "bold",
     },

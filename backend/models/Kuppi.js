@@ -37,23 +37,9 @@ const KuppiSchema = new mongoose.Schema({
         },
     },
     // time: { type: String }, // Optional: specific display string if needed, but startTime/endTime cover it
-    location: {
-        type: String,
-        // Location is required only if sessionMode is Physical. handled in validation or frontend usually, 
-        // but for simplicity currently keeping fully required or loose. 
-        // User asked: "If 'Physical' is selected... show 'Location'". 
-        // Let's make it not strictly required in schema or check context. 
-        // Actually, let's keep it proper:
-        required: function () { return this.sessionMode === 'Physical'; }
-    },
-    sessionMode: {
-        type: String,
-        enum: ['Online', 'Physical'],
-        default: 'Physical'
-    },
     meetingLink: {
         type: String,
-        required: function () { return this.sessionMode === 'Online'; }
+        required: [true, "Meeting link is required for online sessions"],
     },
     maxAttendees: {
         type: Number,

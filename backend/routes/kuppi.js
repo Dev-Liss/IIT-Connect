@@ -17,6 +17,10 @@ router.get("/", async (req, res) => {
         // Filter for upcoming sessions or ongoing sessions (started within last 2 hours)
         // Filter for sessions that haven't ended yet (endTime > now)
         const now = new Date();
+
+        // Auto-delete expired sessions (where endTime <= now)
+        await Kuppi.deleteMany({ endTime: { $lte: now } });
+
         const sessions = await Kuppi.find({
             endTime: { $gt: now }
         })
@@ -52,7 +56,7 @@ router.get("/my-sessions", protect, async (req, res) => {
 router.post("/create", protect, async (req, res) => {
     console.log("Received Create Request Body:", req.body);
     try {
-        const { title, subject, location, maxAttendees, about, sessionMode, meetingLink, startTime, endTime } = req.body;
+        const { title, subject, maxAttendees, about, meetingLink, startTime, endTime } = req.body;
 
         const start = new Date(startTime);
         const end = new Date(endTime);
@@ -72,10 +76,8 @@ router.post("/create", protect, async (req, res) => {
             startTime: start,
             endTime: end,
             dateTime: start, // kept for backward compatibility
-            location,
             maxAttendees,
             about,
-            sessionMode,
             meetingLink,
             organizer: req.user.id,
             attendees: [req.user.id], // Organizer is automatically an attendee
@@ -108,13 +110,7 @@ router.post("/join/:id", async (req, res) => {
         // Check if already joined
         const isJoined = kuppi.attendees.includes(userId);
 
-        if (isJoined) {
-            // LEAVE logic
-            kuppi.attendees = kuppi.attendees.filter(id => id.toString() !== userId.toString());
-            await kuppi.save();
-            return res.json({ msg: "Left session", kuppi });
-        } else {
-            // JOIN logic
+        if (!isJoined) {
             // Check max attendees
             if (kuppi.attendees.length >= kuppi.maxAttendees) {
                 return res.status(400).json({ msg: "Session is full" });
@@ -122,8 +118,14 @@ router.post("/join/:id", async (req, res) => {
 
             kuppi.attendees.push(userId);
             await kuppi.save();
-            return res.json({ msg: "Joined session", kuppi });
         }
+
+        // Return session data (whether newly joined or already joined)
+        const updatedKuppi = await Kuppi.findById(req.params.id)
+            .populate("organizer", "username studentId")
+            .populate("attendees", "username");
+
+        return res.json({ msg: "Attendance recorded", kuppi: updatedKuppi });
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server Error");
