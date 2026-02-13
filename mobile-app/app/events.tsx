@@ -390,7 +390,10 @@ export default function EventsAnnouncementsScreen() {
                     <Ionicons name="book-outline" size={24} color="#666" />
                     <Text style={styles.navText}>Academic</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.navItemCenter}>
+                <TouchableOpacity
+                    style={styles.navItemCenter}
+                    onPress={() => router.push("/more")}
+                >
                     <View style={styles.navCenterButton}>
                         <Ionicons name="grid" size={24} color="#fff" />
                     </View>
