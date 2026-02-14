@@ -20,8 +20,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Alert,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
+import { useAuth } from "../context/AuthContext";
+import { POST_ENDPOINTS } from "../config/api";
 
 // Get screen width for dynamic image sizing
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -59,7 +62,13 @@ export default function PostCard({
   onComment,
   onShare,
 }: PostCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
+  const { user } = useAuth();
+
+  // Initialize state from real data
+  const [isLiked, setIsLiked] = useState(
+    () => post.likes?.some((id) => id === user?.id) ?? false,
+  );
+  const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
 
   // Calculate dynamic image height based on aspect ratio
   // Formula: height = width / aspectRatio
@@ -88,10 +97,42 @@ export default function PostCard({
     return date.toLocaleDateString();
   };
 
-  // Handle like press
-  const handleLike = () => {
+  // Handle like press — Optimistic UI Update
+  const handleLike = async () => {
+    if (!user) return;
+
+    // 1. Save previous state for rollback
+    const prevLiked = isLiked;
+    const prevCount = likeCount;
+
+    // 2. Instantly update the UI (optimistic)
     setIsLiked(!isLiked);
-    if (onLike) onLike(post._id);
+    setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+
+    try {
+      // 3. Send the PUT request to the backend
+      const response = await fetch(POST_ENDPOINTS.TOGGLE_LIKE(post._id), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to toggle like");
+      }
+
+      // Optionally sync with server truth
+      setIsLiked(data.liked);
+      setLikeCount(data.likes.length);
+    } catch (error) {
+      // 4. Revert UI on failure
+      setIsLiked(prevLiked);
+      setLikeCount(prevCount);
+      Alert.alert("Error", "Could not update like. Please try again.");
+      console.error("❌ Like toggle failed:", error);
+    }
   };
 
   return (
@@ -148,9 +189,9 @@ export default function PostCard({
       </View>
 
       {/* ========== LIKES COUNT ========== */}
-      {post.likes && post.likes.length > 0 && (
+      {likeCount > 0 && (
         <Text style={styles.likesCount}>
-          {post.likes.length} {post.likes.length === 1 ? "like" : "likes"}
+          {likeCount} {likeCount === 1 ? "like" : "likes"}
         </Text>
       )}
 

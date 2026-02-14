@@ -150,4 +150,63 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// ====================================
+// TOGGLE LIKE
+// PUT /api/posts/:id/like
+// ====================================
+router.put("/:id/like", async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "userId is required",
+      });
+    }
+
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    // Check if the user has already liked the post
+    const alreadyLiked = post.likes.some(
+      (id) => id.toString() === userId.toString(),
+    );
+
+    if (alreadyLiked) {
+      // Unlike — remove userId from the array
+      post.likes = post.likes.filter(
+        (id) => id.toString() !== userId.toString(),
+      );
+    } else {
+      // Like — add userId to the array
+      post.likes.push(userId);
+    }
+
+    await post.save();
+
+    console.log(
+      `${alreadyLiked ? "💔 Unliked" : "❤️ Liked"} post ${post._id} by user ${userId}`,
+    );
+
+    res.json({
+      success: true,
+      likes: post.likes,
+      liked: !alreadyLiked,
+    });
+  } catch (error) {
+    console.error("❌ Toggle Like Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to toggle like",
+    });
+  }
+});
+
 module.exports = router;
