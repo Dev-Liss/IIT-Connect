@@ -56,7 +56,7 @@ router.get("/my-sessions", protect, async (req, res) => {
 router.post("/create", protect, async (req, res) => {
     console.log("Received Create Request Body:", req.body);
     try {
-        const { title, subject, maxAttendees, about, meetingLink, startTime, endTime } = req.body;
+        const { title, subject, about, meetingLink, startTime, endTime } = req.body;
 
         const start = new Date(startTime);
         const end = new Date(endTime);
@@ -76,7 +76,6 @@ router.post("/create", protect, async (req, res) => {
             startTime: start,
             endTime: end,
             dateTime: start, // kept for backward compatibility
-            maxAttendees,
             about,
             meetingLink,
             organizer: req.user.id,
@@ -94,7 +93,9 @@ router.post("/create", protect, async (req, res) => {
 // @route   POST /api/kuppi/join/:id
 // @desc    Toggle join/leave a kuppi session
 // @access  Private
-router.post("/join/:id", async (req, res) => {
+// Route disabled as per new requirements (Direct Join Link only)
+/*
+router.post("/join/:id", protect, async (req, res) => {
     try {
         let userId = req.user ? req.user.id : req.body.userId; // Fallback for testing
         if (!userId) {
@@ -131,5 +132,6 @@ router.post("/join/:id", async (req, res) => {
         res.status(500).send("Server Error");
     }
 });
+*/
 
 module.exports = router;

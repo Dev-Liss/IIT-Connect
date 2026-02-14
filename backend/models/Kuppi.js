@@ -41,11 +41,7 @@ const KuppiSchema = new mongoose.Schema({
         type: String,
         required: [true, "Meeting link is required for online sessions"],
     },
-    maxAttendees: {
-        type: Number,
-        required: [true, "Max attendees is required"],
-        min: [1, "At least 1 attendee required"],
-    },
+
     about: {
         type: String,
         required: false, // Made optional
