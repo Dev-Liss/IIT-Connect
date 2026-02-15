@@ -29,6 +29,18 @@ export default function MoreScreen() {
 
             {/* Options */}
             <View style={styles.optionsContainer}>
+                {/* Anonymous Report */}
+                <TouchableOpacity style={styles.optionCard}>
+                    <View style={styles.iconContainer}>
+                        <Ionicons name="shield-outline" size={28} color="#e63946" />
+                    </View>
+                    <View style={styles.optionText}>
+                        <Text style={styles.optionTitle}>Anonymous Report</Text>
+                        <Text style={styles.optionDescription}>
+                            Report incidents safely and anonymously
+                        </Text>
+                    </View>
+                </TouchableOpacity>
             </View>
 
             {/* Bottom Navigation */}
