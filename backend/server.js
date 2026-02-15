@@ -18,6 +18,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const conversationRoutes = require("./routes/conversation");
 const messageRoutes = require("./routes/message");
+const uploadRoutes = require("./routes/upload");
 
 // Import Socket Handler
 const socketHandler = require("./socket/socketHandler");
@@ -59,6 +60,9 @@ app.use("/api/auth", authRoutes);
 // Messaging routes
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/messages", messageRoutes);
+
+// Media upload routes
+app.use("/api/upload", uploadRoutes);
 
 // ====================================
 // DATABASE CONNECTION & SERVER START

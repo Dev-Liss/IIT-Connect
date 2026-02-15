@@ -9,9 +9,13 @@
  * - conversation: Reference to the Conversation
  * - sender: User who sent the message
  * - content: Message text content
- * - messageType: Type of message (text, image, file, system)
- * - fileUrl: URL for file/image messages
+ * - messageType: Type of message (text, image, video, audio, document, file, system)
+ * - fileUrl: URL for media/file messages
  * - fileName: Original filename for file messages
+ * - fileSize: Size of the file
+ * - fileMimeType: MIME type of the file
+ * - thumbnailUrl: Thumbnail URL for videos/images
+ * - cloudinaryPublicId: Cloudinary public ID for deletion
  * - readBy: Array of users who have read the message
  * - createdAt/updatedAt: Timestamps
  */
@@ -38,7 +42,7 @@ const MessageSchema = new mongoose.Schema(
         },
         messageType: {
             type: String,
-            enum: ["text", "image", "file", "system"],
+            enum: ["text", "image", "video", "audio", "document", "file", "system"],
             default: "text",
         },
         fileUrl: {
@@ -50,8 +54,27 @@ const MessageSchema = new mongoose.Schema(
             trim: true,
         },
         fileSize: {
+            type: Number,
+            default: 0,
+        },
+        fileMimeType: {
             type: String,
             trim: true,
+        },
+        thumbnailUrl: {
+            type: String,
+            trim: true,
+        },
+        cloudinaryPublicId: {
+            type: String,
+            trim: true,
+        },
+        // Additional metadata for different file types
+        mediaMetadata: {
+            width: Number,
+            height: Number,
+            duration: Number, // For videos/audio in seconds
+            pages: Number, // For PDFs
         },
         readBy: [
             {

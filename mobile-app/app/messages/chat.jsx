@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,17 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import socketService from '../../src/services/socketService';
 import { MESSAGE_ENDPOINTS } from '../../src/config/api';
+import MediaMessage from '../../src/components/MediaMessage';
+import AttachmentPicker from '../../src/components/AttachmentPicker';
+import MediaPreview from '../../src/components/MediaPreview';
+import {
+  pickImage,
+  pickVideo,
+  takePhoto,
+  pickDocument,
+  uploadFile,
+  validateFileSize,
+} from '../../src/services/mediaService';
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -29,6 +41,12 @@ export default function ChatScreen() {
   const [isConnected, setIsConnected] = useState(socketService.getConnectionStatus());
   const flatListRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  // Media attachment states
+  const [showAttachmentPicker, setShowAttachmentPicker] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Load current user and connect to socket
   useEffect(() => {
@@ -186,6 +204,105 @@ export default function ChatScreen() {
     }
   };
 
+  // Handle attachment picker option selection
+  const handleAttachmentSelect = async (type) => {
+    try {
+      let media = null;
+      
+      switch (type) {
+        case 'camera':
+          media = await takePhoto();
+          break;
+        case 'photo':
+          media = await pickImage();
+          break;
+        case 'video':
+          media = await pickVideo();
+          break;
+        case 'document':
+          media = await pickDocument();
+          break;
+      }
+
+      if (media) {
+        // Validate file size
+        const validation = validateFileSize(media);
+        if (!validation.valid) {
+          Alert.alert('File Too Large', validation.message);
+          return;
+        }
+        setSelectedMedia(media);
+      }
+    } catch (error) {
+      console.error('Error selecting media:', error);
+      Alert.alert('Error', error.message || 'Failed to select media');
+    }
+  };
+
+  // Remove selected media
+  const handleRemoveMedia = () => {
+    setSelectedMedia(null);
+    setUploadProgress(0);
+  };
+
+  // Send media message
+  const sendMediaMessage = async () => {
+    if (!selectedMedia || !currentUser || isUploading) return;
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      // Upload to server
+      const uploadResult = await uploadFile(selectedMedia, (progress) => {
+        setUploadProgress(progress);
+      });
+
+      if (uploadResult.success) {
+        // Send message via socket with media data
+        const messageType = selectedMedia.type === 'document' ? 'document' : selectedMedia.type;
+        
+        socketService.sendMessage({
+          conversationId,
+          content: inputText.trim() || '',
+          messageType,
+          fileUrl: uploadResult.file.url,
+          fileName: uploadResult.file.fileName,
+          fileSize: uploadResult.file.fileSize,
+          fileMimeType: uploadResult.file.mimeType,
+          thumbnailUrl: uploadResult.file.thumbnailUrl,
+          cloudinaryPublicId: uploadResult.file.publicId,
+          mediaMetadata: {
+            width: uploadResult.file.width,
+            height: uploadResult.file.height,
+            duration: uploadResult.file.duration,
+          },
+        });
+
+        // Clear media and input
+        setSelectedMedia(null);
+        setInputText('');
+        setUploadProgress(0);
+      } else {
+        throw new Error(uploadResult.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Error sending media:', error);
+      Alert.alert('Upload Failed', error.message || 'Failed to send media');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Combined send function - handles both text and media
+  const handleSend = () => {
+    if (selectedMedia) {
+      sendMediaMessage();
+    } else {
+      sendMessage();
+    }
+  };
+
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -194,6 +311,7 @@ export default function ChatScreen() {
   const renderMessage = ({ item }) => {
     const isMe = item.sender?._id === currentUser?._id || item.sender === currentUser?._id;
     const senderName = item.sender?.username || name || 'User';
+    const hasMedia = item.messageType && item.messageType !== 'text' && item.messageType !== 'system';
 
     return (
       <View style={[styles.messageContainer, isMe ? styles.myMessageContainer : styles.otherMessageContainer]}>
@@ -203,19 +321,18 @@ export default function ChatScreen() {
           </View>
         )}
         <View style={styles.messageWrapper}>
-          <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.otherMessage]}>
-            {item.messageType === 'file' || item.fileUrl ? (
-              <TouchableOpacity style={styles.fileContainer}>
-                <View style={styles.fileIcon}>
-                  <Ionicons name="document-text" size={24} color="#D32F2F" />
-                </View>
-                <View style={styles.fileInfo}>
-                  <Text style={[styles.fileName, isMe && styles.myFileName]}>{item.fileName || 'File'}</Text>
-                </View>
-                <Ionicons name="download-outline" size={20} color={isMe ? '#fff' : '#D32F2F'} />
-              </TouchableOpacity>
-            ) : item.messageType === 'system' ? (
+          <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.otherMessage, hasMedia && styles.mediaBubble]}>
+            {item.messageType === 'system' ? (
               <Text style={styles.systemMessageText}>{item.content}</Text>
+            ) : hasMedia ? (
+              <View>
+                <MediaMessage message={item} isMe={isMe} />
+                {item.content && item.content.trim() !== '' && (
+                  <Text style={[styles.messageText, styles.mediaCaption, isMe ? styles.myMessageText : styles.otherMessageText]}>
+                    {item.content}
+                  </Text>
+                )}
+              </View>
             ) : (
               <Text style={[styles.messageText, isMe ? styles.myMessageText : styles.otherMessageText]}>
                 {item.content}
@@ -290,27 +407,60 @@ export default function ChatScreen() {
           }
         />
 
+        {/* Media Preview */}
+        {selectedMedia && (
+          <MediaPreview
+            media={selectedMedia}
+            onRemove={handleRemoveMedia}
+            isUploading={isUploading}
+            uploadProgress={uploadProgress}
+          />
+        )}
+
         {/* Input Area */}
         <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.attachButton}>
-            <Ionicons name="attach" size={24} color="#666" />
+          <TouchableOpacity 
+            style={styles.attachButton}
+            onPress={() => setShowAttachmentPicker(true)}
+            disabled={isUploading}
+          >
+            <Ionicons name="add-circle" size={28} color={isUploading ? '#ccc' : '#D32F2F'} />
           </TouchableOpacity>
           <TextInput
             style={styles.input}
-            placeholder="Type a message..."
+            placeholder={selectedMedia ? "Add a caption..." : "Type a message..."}
             placeholderTextColor="#999"
             value={inputText}
             onChangeText={handleInputChange}
             multiline
+            editable={!isUploading}
           />
           <TouchableOpacity
-            style={[styles.sendButton, inputText.trim() === '' && styles.sendButtonDisabled]}
-            onPress={sendMessage}
-            disabled={inputText.trim() === '' || !isConnected}
+            style={[
+              styles.sendButton, 
+              (inputText.trim() === '' && !selectedMedia) && styles.sendButtonDisabled
+            ]}
+            onPress={handleSend}
+            disabled={(inputText.trim() === '' && !selectedMedia) || !isConnected || isUploading}
           >
-            <Ionicons name="send" size={20} color={inputText.trim() === '' || !isConnected ? '#ccc' : '#D32F2F'} />
+            {isUploading ? (
+              <ActivityIndicator size="small" color="#D32F2F" />
+            ) : (
+              <Ionicons 
+                name="send" 
+                size={20} 
+                color={(inputText.trim() === '' && !selectedMedia) || !isConnected ? '#ccc' : '#D32F2F'} 
+              />
+            )}
           </TouchableOpacity>
         </View>
+
+        {/* Attachment Picker Modal */}
+        <AttachmentPicker
+          visible={showAttachmentPicker}
+          onClose={() => setShowAttachmentPicker(false)}
+          onSelectOption={handleAttachmentSelect}
+        />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -525,5 +675,14 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: '#666',
     textAlign: 'center',
+  },
+  mediaBubble: {
+    padding: 5,
+    backgroundColor: 'transparent',
+  },
+  mediaCaption: {
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingBottom: 5,
   },
 });

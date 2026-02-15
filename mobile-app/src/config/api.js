@@ -53,6 +53,13 @@ export const MESSAGE_ENDPOINTS = {
     SEARCH: (conversationId) => `${API_BASE_URL}/messages/${conversationId}/search`,
 };
 
+// Upload endpoints
+export const UPLOAD_ENDPOINTS = {
+    UPLOAD_MEDIA: `${API_BASE_URL}/upload/media`,
+    UPLOAD_MULTIPLE: `${API_BASE_URL}/upload/multiple`,
+    DELETE_FILE: (publicId) => `${API_BASE_URL}/upload/${encodeURIComponent(publicId)}`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
@@ -62,6 +69,7 @@ export default {
     AUTH_ENDPOINTS,
     CONVERSATION_ENDPOINTS,
     MESSAGE_ENDPOINTS,
+    UPLOAD_ENDPOINTS,
     HEALTH_CHECK_URL,
     LAPTOP_IP,
     PORT,

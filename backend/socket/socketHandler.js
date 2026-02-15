@@ -81,7 +81,19 @@ const socketHandler = (io) => {
 
         // ===== SEND A MESSAGE =====
         socket.on('send_message', async (data) => {
-            const { conversationId, senderId, content, messageType = 'text', fileUrl, fileName } = data;
+            const {
+                conversationId,
+                senderId,
+                content,
+                messageType = 'text',
+                fileUrl,
+                fileName,
+                fileSize,
+                fileMimeType,
+                thumbnailUrl,
+                cloudinaryPublicId,
+                mediaMetadata
+            } = data;
 
             try {
                 // Create and save the message
@@ -92,6 +104,11 @@ const socketHandler = (io) => {
                     messageType,
                     fileUrl,
                     fileName,
+                    fileSize,
+                    fileMimeType,
+                    thumbnailUrl,
+                    cloudinaryPublicId,
+                    mediaMetadata,
                     readBy: [{ user: senderId, readAt: new Date() }]
                 });
 
@@ -118,6 +135,10 @@ const socketHandler = (io) => {
                         messageType: message.messageType,
                         fileUrl: message.fileUrl,
                         fileName: message.fileName,
+                        fileSize: message.fileSize,
+                        fileMimeType: message.fileMimeType,
+                        thumbnailUrl: message.thumbnailUrl,
+                        mediaMetadata: message.mediaMetadata,
                         readBy: message.readBy,
                         createdAt: message.createdAt
                     }
@@ -135,6 +156,7 @@ const socketHandler = (io) => {
                                     sender: message.sender,
                                     content: message.content,
                                     messageType: message.messageType,
+                                    fileName: message.fileName,
                                     createdAt: message.createdAt
                                 }
                             });
@@ -142,7 +164,7 @@ const socketHandler = (io) => {
                     }
                 });
 
-                console.log(`📨 Message sent in conversation ${conversationId}`);
+                console.log(`📨 Message sent in conversation ${conversationId} (type: ${messageType})`);
 
             } catch (error) {
                 console.error('Error sending message:', error);
