@@ -16,6 +16,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const eventsRoutes = require("./routes/events");
 const announcementsRoutes = require("./routes/announcements");
+const reportsRoutes = require("./routes/reports");
 
 // Initialize Express App
 const app = express();
@@ -44,6 +45,9 @@ app.use("/api/events", eventsRoutes);
 
 // Announcements routes
 app.use("/api/announcements", announcementsRoutes);
+
+// Reports routes (anonymous)
+app.use("/api/reports", reportsRoutes);
 
 // ====================================
 // DATABASE CONNECTION & SERVER START
