@@ -33,7 +33,8 @@ export default function MoreScreen() {
                 <TouchableOpacity
                     style={styles.optionCard}
                     onPress={() => router.push("/anonymous-report")}
-                >                    <View style={styles.iconContainer}>
+                >
+                    <View style={styles.iconContainer}>
                         <Ionicons name="shield-checkmark-outline" size={28} color="#e63946" />
                     </View>
                     <View style={styles.optionText}>
