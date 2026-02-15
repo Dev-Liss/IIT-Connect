@@ -32,7 +32,7 @@ export default function MoreScreen() {
                 {/* Anonymous Report */}
                 <TouchableOpacity style={styles.optionCard}>
                     <View style={styles.iconContainer}>
-                        <Ionicons name="shield-outline" size={28} color="#e63946" />
+                        <Ionicons name="shield-checkmark-outline" size={28} color="#e63946" />
                     </View>
                     <View style={styles.optionText}>
                         <Text style={styles.optionTitle}>Anonymous Report</Text>
