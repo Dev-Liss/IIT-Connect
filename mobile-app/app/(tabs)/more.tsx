@@ -1,9 +1,10 @@
 /**
  * ====================================
- * MORE SCREEN (PLACEHOLDER)
+ * MORE SCREEN
  * ====================================
- * Tab for additional features and options.
- * TODO: Implement more features in future phases.
+ * A 2-column grid of squircle feature tiles.
+ * Each tile has a tinted background, themed border,
+ * and a Feather line-style icon.
  */
 
 import React from "react";
@@ -14,10 +15,46 @@ import {
   SafeAreaView,
   Platform,
   StatusBar,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 
+// ── Tile Data ──────────────────────────────────────
+interface TileItem {
+  label: string;
+  icon: keyof typeof Feather.glyphMap;
+  themeColor: string;
+  background: string;
+}
+
+const TILES: TileItem[] = [
+  {
+    label: "Anonymous\nReport",
+    icon: "flag",
+    themeColor: "#f9252b",
+    background: "#fff3f3",
+  },
+  {
+    label: "Empty Hall\nFinder",
+    icon: "map-pin",
+    themeColor: "#007AFF",
+    background: "#f0f6ff",
+  },
+  {
+    label: "Clubs",
+    icon: "users",
+    themeColor: "#34C759",
+    background: "#f2fbf4",
+  },
+];
+
+// ── Screen Component ───────────────────────────────
 export default function MoreScreen() {
+  const handleTilePress = () => {
+    Alert.alert("Coming Soon");
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -27,22 +64,33 @@ export default function MoreScreen() {
         <Text style={styles.headerTitle}>More</Text>
       </View>
 
-      {/* Placeholder Content */}
-      <View style={styles.content}>
-        <Ionicons name="grid" size={80} color="#c7c7c7" />
-        <Text style={styles.title}>Explore More</Text>
-        <Text style={styles.subtitle}>
-          Additional features like events, clubs, and campus services will be
-          available here.
-        </Text>
-        <View style={styles.comingSoonBadge}>
-          <Text style={styles.comingSoonText}>Coming Soon</Text>
-        </View>
+      {/* Tile Grid */}
+      <View style={styles.grid}>
+        {TILES.map((tile) => (
+          <TouchableOpacity
+            key={tile.label}
+            activeOpacity={0.7}
+            onPress={handleTilePress}
+            style={[
+              styles.tile,
+              {
+                backgroundColor: tile.background,
+                borderColor: tile.themeColor,
+              },
+            ]}
+          >
+            <Feather name={tile.icon} size={36} color={tile.themeColor} />
+            <Text style={[styles.tileLabel, { color: tile.themeColor }]}>
+              {tile.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </SafeAreaView>
   );
 }
 
+// ── Styles ─────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -50,7 +98,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10,
+    paddingTop:
+      Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 10 : 10,
     paddingBottom: 12,
     backgroundColor: "#fff",
     borderBottomWidth: 1,
@@ -61,35 +110,30 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#262626",
   },
-  content: {
-    flex: 1,
-    justifyContent: "center",
+
+  /* ── Grid ── */
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    padding: 16,
+  },
+
+  /* ── Individual Tile ── */
+  tile: {
+    width: "47%",
+    aspectRatio: 1,
+    borderRadius: 24,
+    borderWidth: 2,
     alignItems: "center",
-    paddingHorizontal: 40,
+    justifyContent: "center",
+    marginBottom: 16,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "600",
-    color: "#262626",
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#8e8e8e",
+  tileLabel: {
+    marginTop: 12,
+    fontSize: 15,
+    fontWeight: "700",
     textAlign: "center",
     lineHeight: 20,
-    marginBottom: 20,
-  },
-  comingSoonBadge: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-  },
-  comingSoonText: {
-    color: "#666",
-    fontSize: 14,
-    fontWeight: "500",
   },
 });
