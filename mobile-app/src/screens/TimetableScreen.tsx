@@ -10,6 +10,8 @@ import {
     Animated, // Added
     Platform,
     StatusBar,
+    Modal,
+    TouchableWithoutFeedback,
 } from "react-native";
 // ... imports (keep existing) -- Removing this comment line
 import { Ionicons } from "@expo/vector-icons";
@@ -30,6 +32,8 @@ interface TimetableEntry {
     endTime: string; // "11:00"
     location: string;
     color?: string;
+    lecturer?: string;
+    tutorialGroup?: string;
 }
 
 const HOURS = [
@@ -57,6 +61,9 @@ export default function TimetableScreen() {
     const [view, setView] = useState<"weekly" | "today">("weekly");
     const [activeTab, setActiveTab] = useState("Timetable");
     const [selectedGroup, setSelectedGroup] = useState("CS-2A");
+    const [selectedLecture, setSelectedLecture] = useState<TimetableEntry | null>(
+        null,
+    );
 
     const todayIndex = new Date().getDay();
     const currentDay = DAYS[todayIndex - 1] || "";
@@ -206,7 +213,7 @@ export default function TimetableScreen() {
         return daysClasses.map((entry) => {
             const style = getPositionStyle(entry.startTime, entry.endTime);
             return ( // ... keep existing render 
-                <View
+                <TouchableOpacity
                     key={entry._id}
                     style={{
                         position: "absolute",
@@ -215,6 +222,8 @@ export default function TimetableScreen() {
                         right: 2,
                         height: style.height,
                     }}
+                    onPress={() => setSelectedLecture(entry)}
+                    activeOpacity={0.8}
                 >
                     <ClassCard
                         courseCode={entry.courseCode}
@@ -223,7 +232,7 @@ export default function TimetableScreen() {
                         color={entry.color}
                         height={style.height - 4}
                     />
-                </View>
+                </TouchableOpacity>
             );
         });
     };
@@ -381,14 +390,19 @@ export default function TimetableScreen() {
                                 >
                                     {todayClasses.length > 0 ? (
                                         todayClasses.map((entry) => (
-                                            <TodayClassCard
+                                            <TouchableOpacity
                                                 key={entry._id}
-                                                courseCode={entry.courseCode}
-                                                courseName={entry.courseName || ""}
-                                                startTime={entry.startTime}
-                                                endTime={entry.endTime}
-                                                location={entry.location}
-                                            />
+                                                onPress={() => setSelectedLecture(entry)}
+                                                activeOpacity={0.8}
+                                            >
+                                                <TodayClassCard
+                                                    courseCode={entry.courseCode}
+                                                    courseName={entry.courseName || ""}
+                                                    startTime={entry.startTime}
+                                                    endTime={entry.endTime}
+                                                    location={entry.location}
+                                                />
+                                            </TouchableOpacity>
                                         ))
                                     ) : (
                                         <View style={styles.emptyState}>
@@ -415,7 +429,83 @@ export default function TimetableScreen() {
                 <BottomTabIcon name="chatbubble-outline" label="Message" />
                 <BottomTabIcon name="person-outline" label="Profile" />
             </View >
-        </View >
+            {/* Detail Modal */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={!!selectedLecture}
+                onRequestClose={() => setSelectedLecture(null)}
+            >
+                <TouchableWithoutFeedback onPress={() => setSelectedLecture(null)}>
+                    <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback onPress={() => { }}>
+                            <View style={styles.modalContent}>
+                                {/* Close Button */}
+                                <TouchableOpacity
+                                    style={styles.closeButton}
+                                    onPress={() => setSelectedLecture(null)}
+                                >
+                                    <Ionicons name="close-circle" size={28} color="#ccc" />
+                                </TouchableOpacity>
+
+                                {/* Header Section */}
+                                <View style={styles.modalHeader}>
+                                    <Text style={styles.modalCode}>
+                                        {selectedLecture?.courseCode}
+                                    </Text>
+                                    <Text style={styles.modalTitle}>
+                                        {selectedLecture?.courseName || "Module Name"}
+                                    </Text>
+                                </View>
+
+                                {/* Details Body */}
+                                <View>
+                                    {/* Time */}
+                                    <View style={styles.modalDetailRow}>
+                                        <Ionicons name="time-outline" size={22} color="#f9252b" />
+                                        <Text style={styles.modalDetailText}>
+                                            <Text style={styles.modalLabel}>Time Slot: </Text>
+                                            {selectedLecture?.startTime} - {selectedLecture?.endTime}
+                                        </Text>
+                                    </View>
+
+                                    {/* Location */}
+                                    <View style={styles.modalDetailRow}>
+                                        <Ionicons
+                                            name="location-outline"
+                                            size={22}
+                                            color="#f9252b"
+                                        />
+                                        <Text style={styles.modalDetailText}>
+                                            <Text style={styles.modalLabel}>Location: </Text>
+                                            {selectedLecture?.location}
+                                        </Text>
+                                    </View>
+
+                                    {/* Lecturer */}
+                                    <View style={styles.modalDetailRow}>
+                                        <Ionicons name="person-outline" size={22} color="#f9252b" />
+                                        <Text style={styles.modalDetailText}>
+                                            <Text style={styles.modalLabel}>Lecturer: </Text>
+                                            {selectedLecture?.lecturer || "Unknown Lecturer"}
+                                        </Text>
+                                    </View>
+
+                                    {/* Tutorial Group */}
+                                    <View style={styles.modalDetailRow}>
+                                        <Ionicons name="people-outline" size={22} color="#f9252b" />
+                                        <Text style={styles.modalDetailText}>
+                                            <Text style={styles.modalLabel}>Group: </Text>
+                                            {selectedLecture?.tutorialGroup || selectedGroup}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </View>
+                </TouchableWithoutFeedback>
+            </Modal>
+        </View>
     );
 }
 
@@ -672,5 +762,65 @@ const styles = StyleSheet.create({
         // top: 0, 
         // left: 20,
         // But user said "absolute OR specifically padded container". Fixed height container is safer for layout.
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    modalContent: {
+        backgroundColor: "#fff",
+        width: "85%",
+        borderRadius: 20,
+        padding: 24,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 10,
+        borderLeftWidth: 6, // Accent strip
+        borderLeftColor: "#f9252b",
+    },
+    closeButton: {
+        position: "absolute",
+        top: 15,
+        right: 15,
+        padding: 5,
+        zIndex: 1,
+    },
+    modalHeader: {
+        marginBottom: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: "#eee",
+        paddingBottom: 10,
+    },
+    modalCode: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#f9252b",
+        marginBottom: 4,
+        textTransform: "uppercase",
+        letterSpacing: 1,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: "#333",
+    },
+    modalDetailRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 16,
+    },
+    modalDetailText: {
+        fontSize: 16,
+        color: "#555",
+        marginLeft: 12,
+        flex: 1,
+    },
+    modalLabel: {
+        fontWeight: "600",
+        color: "#333",
     },
 });
