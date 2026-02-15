@@ -49,6 +49,15 @@ export const ANNOUNCEMENTS_ENDPOINTS = {
   DELETE: (id: string) => `${API_BASE_URL}/announcements/${id}`,
 };
 
+// Reports endpoints (anonymous)
+export const REPORTS_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/reports`,
+  GET_ONE: (id: string) => `${API_BASE_URL}/reports/${id}`,
+  CREATE: `${API_BASE_URL}/reports`,
+  UPDATE: (id: string) => `${API_BASE_URL}/reports/${id}`,
+  DELETE: (id: string) => `${API_BASE_URL}/reports/${id}`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
@@ -57,6 +66,7 @@ export default {
   AUTH_ENDPOINTS,
   EVENTS_ENDPOINTS,
   ANNOUNCEMENTS_ENDPOINTS,
+  REPORTS_ENDPOINTS,
   HEALTH_CHECK_URL,
   LAPTOP_IP,
   PORT,
