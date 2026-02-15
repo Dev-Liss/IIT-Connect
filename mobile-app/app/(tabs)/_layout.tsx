@@ -10,7 +10,7 @@
  */
 
 import { Tabs } from "expo-router";
-import { Octicons, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform } from "react-native";
 
@@ -54,12 +54,13 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ focused, color, size }) =>
-            focused ? (
-              <Octicons name="home-fill" size={size} color={color} />
-            ) : (
-              <Octicons name="home" size={size} color={color} />
-            ),
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={focused ? "home" : "home-outline"}
+              size={size}
+              color={color}
+            />
+          ),
         }}
       />
 
@@ -70,12 +71,13 @@ export default function TabLayout() {
         name="academic"
         options={{
           title: "Academic",
-          tabBarIcon: ({ focused, color, size }) =>
-            focused ? (
-              <Ionicons name="book" size={size} color={color} />
-            ) : (
-              <Ionicons name="book-outline" size={size} color={color} />
-            ),
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={focused ? "book" : "book-outline"}
+              size={size}
+              color={color}
+            />
+          ),
         }}
       />
 
@@ -86,12 +88,13 @@ export default function TabLayout() {
         name="more"
         options={{
           title: "More",
-          tabBarIcon: ({ focused, color, size }) =>
-            focused ? (
-              <Ionicons name="grid" size={size} color={color} />
-            ) : (
-              <Ionicons name="grid-outline" size={size} color={color} />
-            ),
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={focused ? "grid" : "grid-outline"}
+              size={size}
+              color={color}
+            />
+          ),
         }}
       />
 
@@ -102,20 +105,13 @@ export default function TabLayout() {
         name="messages"
         options={{
           title: "Messages",
-          tabBarIcon: ({ focused, color, size }) =>
-            focused ? (
-              <MaterialCommunityIcons
-                name="message-minus"
-                size={size}
-                color={color}
-              />
-            ) : (
-              <MaterialCommunityIcons
-                name="message-minus-outline"
-                size={size}
-                color={color}
-              />
-            ),
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={focused ? "chatbubble" : "chatbubble-outline"}
+              size={size}
+              color={color}
+            />
+          ),
         }}
       />
 
@@ -126,12 +122,13 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ focused, color, size }) =>
-            focused ? (
-              <Octicons name="person-fill" size={size} color={color} />
-            ) : (
-              <Octicons name="person" size={size} color={color} />
-            ),
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              size={size}
+              color={color}
+            />
+          ),
         }}
       />
     </Tabs>
