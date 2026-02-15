@@ -209,4 +209,104 @@ router.put("/:id/like", async (req, res) => {
   }
 });
 
+// ====================================
+// ADD COMMENT
+// POST /api/posts/:id/comment
+// ====================================
+router.post("/:id/comment", async (req, res) => {
+  try {
+    const { userId, text } = req.body;
+
+    if (!userId || !text) {
+      return res.status(400).json({
+        success: false,
+        message: "userId and text are required",
+      });
+    }
+
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    // Push the new comment sub-document
+    const newComment = {
+      user: userId,
+      text: text.trim(),
+      createdAt: new Date(),
+    };
+    post.comments.push(newComment);
+    await post.save();
+
+    // The saved comment is the last element in the array
+    const savedComment = post.comments[post.comments.length - 1];
+
+    // Populate the user field of the newly added comment
+    await post.populate({
+      path: "comments.user",
+      select: "username",
+      match: { _id: savedComment.user },
+    });
+
+    // Find the populated comment to return
+    const populatedComment = post.comments.id(savedComment._id);
+
+    console.log(`💬 Comment added to post ${post._id} by user ${userId}`);
+
+    res.status(201).json({
+      success: true,
+      comment: populatedComment,
+      commentCount: post.comments.length,
+    });
+  } catch (error) {
+    console.error("❌ Add Comment Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to add comment",
+    });
+  }
+});
+
+// ====================================
+// GET COMMENTS
+// GET /api/posts/:id/comments
+// ====================================
+router.get("/:id/comments", async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id).populate(
+      "comments.user",
+      "username",
+    );
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    // Sort comments oldest to newest (chronological)
+    const sortedComments = post.comments.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
+    res.json({
+      success: true,
+      comments: sortedComments,
+      commentCount: sortedComments.length,
+    });
+  } catch (error) {
+    console.error("❌ Fetch Comments Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch comments",
+    });
+  }
+});
+
 module.exports = router;

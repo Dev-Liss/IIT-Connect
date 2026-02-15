@@ -211,7 +211,6 @@ export default function HomeScreen() {
           <PostCard
             post={item}
             onLike={(id) => console.log("Like:", id)}
-            onComment={(id) => console.log("Comment:", id)}
             onShare={(id) => console.log("Share:", id)}
           />
         )}

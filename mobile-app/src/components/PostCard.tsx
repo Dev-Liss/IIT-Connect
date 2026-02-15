@@ -23,6 +23,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { POST_ENDPOINTS } from "../config/api";
 
@@ -46,23 +47,19 @@ interface Post {
     height?: number;
   };
   likes?: string[];
+  comments?: any[];
   createdAt: string;
 }
 
 interface PostCardProps {
   post: Post;
   onLike?: (postId: string) => void;
-  onComment?: (postId: string) => void;
   onShare?: (postId: string) => void;
 }
 
-export default function PostCard({
-  post,
-  onLike,
-  onComment,
-  onShare,
-}: PostCardProps) {
+export default function PostCard({ post, onLike, onShare }: PostCardProps) {
   const { user } = useAuth();
+  const router = useRouter();
 
   // Initialize state from real data
   const [isLiked, setIsLiked] = useState(
@@ -171,7 +168,7 @@ export default function PostCard({
             />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => onComment?.(post._id)}
+            onPress={() => router.push(`/comments/${post._id}` as any)}
             style={styles.actionButton}
           >
             <Ionicons name="chatbubble-outline" size={24} color="#262626" />
@@ -193,6 +190,18 @@ export default function PostCard({
         <Text style={styles.likesCount}>
           {likeCount} {likeCount === 1 ? "like" : "likes"}
         </Text>
+      )}
+
+      {/* ========== COMMENT COUNT ========== */}
+      {(post.comments?.length || 0) > 0 && (
+        <TouchableOpacity
+          onPress={() => router.push(`/comments/${post._id}` as any)}
+        >
+          <Text style={styles.commentCount}>
+            View all {post.comments!.length}{" "}
+            {post.comments!.length === 1 ? "comment" : "comments"}
+          </Text>
+        </TouchableOpacity>
       )}
 
       {/* ========== CAPTION ========== */}
@@ -283,6 +292,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#262626",
+    marginBottom: 6,
+  },
+  // Comment count
+  commentCount: {
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: "#8e8e8e",
     marginBottom: 6,
   },
   // Caption styles

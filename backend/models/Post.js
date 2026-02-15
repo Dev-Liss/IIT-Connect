@@ -15,6 +15,7 @@
  *   - width/height: Original dimensions
  *   - aspectRatio: width/height (crucial for UI layout!)
  * - likes: Array of user IDs who liked the post
+ * - comments: Array of comment sub-documents (user, text, createdAt)
  */
 
 const mongoose = require("mongoose");
@@ -67,6 +68,26 @@ const PostSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    // Array of comment sub-documents
+    comments: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        text: {
+          type: String,
+          required: true,
+          trim: true,
+          maxlength: [500, "Comment cannot exceed 500 characters"],
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     // Automatically add createdAt and updatedAt fields
@@ -77,6 +98,11 @@ const PostSchema = new mongoose.Schema(
 // Virtual for like count (doesn't store in DB, computed on-the-fly)
 PostSchema.virtual("likeCount").get(function () {
   return this.likes.length;
+});
+
+// Virtual for comment count
+PostSchema.virtual("commentCount").get(function () {
+  return this.comments.length;
 });
 
 // Ensure virtuals are included when converting to JSON

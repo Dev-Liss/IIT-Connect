@@ -25,6 +25,8 @@ export const POST_ENDPOINTS = {
   GET_ALL: `${API_BASE_URL}/posts`,
   GET_BY_ID: (id: string) => `${API_BASE_URL}/posts/${id}`,
   TOGGLE_LIKE: (id: string) => `${API_BASE_URL}/posts/${id}/like`,
+  ADD_COMMENT: (id: string) => `${API_BASE_URL}/posts/${id}/comment`,
+  GET_COMMENTS: (id: string) => `${API_BASE_URL}/posts/${id}/comments`,
 };
 
 // Story endpoints
