@@ -21,12 +21,14 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { REPORTS_ENDPOINTS } from "../src/config/api";
 
 export default function AnonymousReportScreen() {
     const [subject, setSubject] = useState("");
     const [description, setDescription] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!subject.trim()) {
             Alert.alert("Error", "Please enter a subject");
             return;
@@ -36,21 +38,45 @@ export default function AnonymousReportScreen() {
             return;
         }
 
-        // TODO: Connect to backend API in next commit
-        Alert.alert(
-            "Report Submitted",
-            "Your anonymous report has been submitted successfully.",
-            [
-                {
-                    text: "OK",
-                    onPress: () => {
-                        setSubject("");
-                        setDescription("");
-                        router.back();
-                    },
+        setIsLoading(true);
+        try {
+            const response = await fetch(REPORTS_ENDPOINTS.CREATE, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
                 },
-            ]
-        );
+                body: JSON.stringify({
+                    subject: subject.trim(),
+                    description: description.trim(),
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                Alert.alert(
+                    "Report Submitted",
+                    "Your anonymous report has been submitted successfully.",
+                    [
+                        {
+                            text: "OK",
+                            onPress: () => {
+                                setSubject("");
+                                setDescription("");
+                                router.back();
+                            },
+                        },
+                    ]
+                );
+            } else {
+                Alert.alert("Error", data.message || "Failed to submit report");
+            }
+        } catch (error) {
+            console.error("Error submitting report:", error);
+            Alert.alert("Error", "Could not connect to server. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -127,11 +153,14 @@ export default function AnonymousReportScreen() {
 
                     {/* Submit Button */}
                     <TouchableOpacity
-                        style={styles.submitButton}
+                        style={[styles.submitButton, isLoading && { opacity: 0.7 }]}
                         onPress={handleSubmit}
+                        disabled={isLoading}
                     >
                         <Ionicons name="send" size={20} color="#fff" />
-                        <Text style={styles.submitButtonText}>Submit Report Anonymously</Text>
+                        <Text style={styles.submitButtonText}>
+                            {isLoading ? "Submitting..." : "Submit Report Anonymously"}
+                        </Text>
                     </TouchableOpacity>
 
                     <View style={{ height: 40 }} />
