@@ -14,7 +14,7 @@ import {
     Platform,
     Animated,
 } from 'react-native';
-import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Linking from 'expo-linking';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -38,6 +38,61 @@ interface Resource {
     uploadedBy?: string;
     createdAt: string;
 }
+
+const renderFileIcon = (fileName: string | undefined, fileType: string, size: number = 32) => {
+    let ext = '';
+    if (fileName) {
+        ext = fileName.split('.').pop()?.toLowerCase() || '';
+    }
+    // Fallback or cleanup if fileType is passed as "image/png" etc
+    if (!ext || ext === fileName) {
+        if (fileType) {
+            if (fileType.includes('/')) {
+                ext = fileType.split('/')[1]?.toLowerCase();
+            } else {
+                ext = fileType.toLowerCase();
+            }
+        }
+    }
+
+    // Normalize common image types from mime
+    if (ext === 'jpeg') ext = 'jpg';
+    if (ext === 'vnd.openxmlformats-officedocument.wordprocessingml.document') ext = 'docx';
+
+    switch (ext) {
+        case 'pdf':
+            return <FontAwesome5 name="file-pdf" size={size} color={BRAND_RED} />;
+        case 'doc':
+        case 'docx':
+        case 'msword':
+            return <MaterialCommunityIcons name="file-word" size={size} color="#2b5797" />;
+        case 'xls':
+        case 'xlsx':
+        case 'sheet':
+        case 'excel':
+            return <MaterialCommunityIcons name="file-excel" size={size} color="#217346" />;
+        case 'ppt':
+        case 'pptx':
+        case 'presentation':
+        case 'powerpoint':
+            return <MaterialCommunityIcons name="file-powerpoint" size={size} color="#d24726" />;
+        case 'jpg':
+        case 'jpeg':
+        case 'png':
+        case 'gif':
+        case 'bmp':
+        case 'webp':
+            return <Ionicons name="image" size={size} color={BRAND_RED} />;
+        case 'zip':
+        case 'rar':
+        case '7z':
+            return <FontAwesome5 name="file-archive" size={size} color="#f0ad4e" />;
+        case 'txt':
+            return <FontAwesome5 name="file-alt" size={size} color="#666" />;
+        default:
+            return <FontAwesome5 name="file" size={size} color="#999" />;
+    }
+};
 
 const getMimeType = (fileName: string) => {
     const ext = fileName.split('.').pop()?.toLowerCase();
@@ -298,7 +353,7 @@ export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
             activeOpacity={0.8}
         >
             <View style={styles.cardIconContainer}>
-                <FontAwesome5 name="file-pdf" size={32} color={BRAND_RED} />
+                {renderFileIcon(item.originalName, item.fileType, 32)}
             </View>
             <Text style={styles.cardTitle} numberOfLines={2}>
                 {item.title}
@@ -483,7 +538,7 @@ export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
                         <ScrollView contentContainerStyle={styles.detailsContent}>
                             <View style={styles.detailsCard}>
                                 <View style={styles.detailsIconContainer}>
-                                    <FontAwesome5 name="file-pdf" size={50} color={BRAND_RED} />
+                                    {renderFileIcon(selectedResource.originalName, selectedResource.fileType, 50)}
                                 </View>
                                 <Text style={styles.detailsTitle}>{selectedResource.title}</Text>
                                 <View style={styles.detailsBadge}>
