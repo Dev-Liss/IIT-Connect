@@ -30,6 +30,7 @@ import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import PostCard from "../../src/components/PostCard";
 import StoriesRail from "../../src/components/StoriesRail";
+import ContentSwitcher from "../../src/components/ContentSwitcher";
 import { POST_ENDPOINTS } from "../../src/config/api";
 
 // Post type (matches backend response)
@@ -54,6 +55,7 @@ export default function HomeScreen() {
   const router = useRouter();
 
   // State
+  const [activeTab, setActiveTab] = useState<"feed" | "reels">("feed");
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -214,7 +216,12 @@ export default function HomeScreen() {
             onShare={(id) => console.log("Share:", id)}
           />
         )}
-        ListHeaderComponent={<StoriesRail />}
+        ListHeaderComponent={
+          <>
+            <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
+            <StoriesRail />
+          </>
+        }
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
