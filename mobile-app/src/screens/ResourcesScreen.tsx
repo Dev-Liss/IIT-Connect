@@ -13,6 +13,7 @@ import {
     ScrollView,
     Platform,
     Animated,
+    useWindowDimensions,
 } from 'react-native';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -22,7 +23,8 @@ import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import { RESOURCE_ENDPOINTS } from '../config/api';
 
-const { width } = Dimensions.get('window');
+// Removed static width
+
 const BRAND_RED = '#f9252b';
 
 interface Resource {
@@ -117,6 +119,10 @@ interface ResourcesScreenProps {
 }
 
 export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
+    const { width } = useWindowDimensions();
+    const numColumns = width < 500 ? 1 : 2;
+    const cardWidth = (width / numColumns) - 20;
+
     const [resources, setResources] = useState<Resource[]>([]);
     const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
     const [loading, setLoading] = useState(true);
@@ -348,14 +354,14 @@ export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
 
     const renderResourceItem = ({ item }: { item: Resource }) => (
         <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, { width: cardWidth }]}
             onPress={() => openDetails(item)}
             activeOpacity={0.8}
         >
             <View style={styles.cardIconContainer}>
                 {renderFileIcon(item.originalName, item.fileType, 32)}
             </View>
-            <Text style={styles.cardTitle} numberOfLines={2}>
+            <Text style={styles.cardTitle} numberOfLines={1} ellipsizeMode="tail">
                 {item.title}
             </Text>
             <View style={styles.badgeContainer}>
@@ -407,8 +413,9 @@ export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
                         </View>
                     }
                     keyExtractor={(item) => item._id}
-                    numColumns={2}
-                    columnWrapperStyle={styles.columnWrapper}
+                    key={numColumns} // Force re-render on column change
+                    numColumns={numColumns}
+                    columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : null}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
                     onScroll={Animated.event(
@@ -610,7 +617,7 @@ const styles = StyleSheet.create({
 
     listContent: {
         paddingTop: 200, // Matched updated header height
-        paddingHorizontal: 12,
+        paddingHorizontal: 10,
         paddingBottom: 80,
     },
     columnWrapper: {
@@ -618,7 +625,8 @@ const styles = StyleSheet.create({
     },
     card: {
         backgroundColor: '#fff',
-        width: (width / 2) - 24,
+        // width set dynamically via inline styles
+        // width: (width / 2) - 24,  <-- REMOVED
         borderRadius: 16,
         padding: 16,
         marginBottom: 16,
