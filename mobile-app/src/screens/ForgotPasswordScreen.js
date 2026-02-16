@@ -77,7 +77,59 @@ export default function ForgotPasswordScreen({ onBack, onCodeSent }) {
                 const clerkError = error.errors[0];
                 console.log("ℹ️ Clerk error code:", clerkError.code);
 
-                if (clerkError.code === "form_identifier_not_found") {
+                if (clerkError.code === "session_exists") {
+                    // Session exists - sign out and retry
+                    console.log("⚠️ Session exists, signing out and retrying password reset...");
+                    try {
+                        await signOut();
+                        console.log("🚪 Signed out, retrying password reset...");
+
+                        // Retry the password reset flow
+                        setIsSending(true);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+
+                        const retrySignIn = await signIn.create({
+                            identifier: trimmedEmail,
+                        });
+
+                        const retryEmailCodeFactor = retrySignIn.supportedFirstFactors?.find(
+                            (factor) => factor.strategy === "reset_password_email_code"
+                        );
+
+                        if (!retryEmailCodeFactor) {
+                            throw new Error("Password reset via email is not available for this account.");
+                        }
+
+                        await signIn.prepareFirstFactor({
+                            strategy: "reset_password_email_code",
+                            emailAddressId: retryEmailCodeFactor.emailAddressId,
+                        });
+
+                        console.log("✅ Password reset code sent to:", trimmedEmail);
+                        setIsSending(false);
+
+                        if (onCodeSent) {
+                            onCodeSent(trimmedEmail);
+                        }
+                    } catch (retryError) {
+                        setIsSending(false);
+                        console.error("❌ Retry failed:", retryError);
+
+                        if (retryError.errors && retryError.errors.length > 0) {
+                            const retryClerkError = retryError.errors[0];
+                            if (retryClerkError.code === "form_identifier_not_found") {
+                                Alert.alert(
+                                    "Email Not Found",
+                                    "No account found with this email. Please check your email or sign up first."
+                                );
+                            } else {
+                                Alert.alert("Error", retryClerkError.message || "Failed to send reset code. Please try again.");
+                            }
+                        } else {
+                            Alert.alert("Error", retryError.message || "Failed to send reset code. Please try again.");
+                        }
+                    }
+                } else if (clerkError.code === "form_identifier_not_found") {
                     Alert.alert(
                         "Email Not Found",
                         "No account found with this email. Please check your email or sign up first.",

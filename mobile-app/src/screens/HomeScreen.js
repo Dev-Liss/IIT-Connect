@@ -8,9 +8,11 @@ import {
     TouchableOpacity,
     Dimensions,
     Platform,
+    Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useAuth } from "@clerk/clerk-expo";
 
 const { width } = Dimensions.get("window");
 
@@ -22,7 +24,38 @@ const STORIES = [
     { id: "5", name: "Sports", image: "https://i.pravatar.cc/150?u=5" },
 ];
 
-export default function HomeScreen() {
+export default function HomeScreen({ onLogout }) {
+    const { signOut } = useAuth();
+
+    const handleLogout = async () => {
+        Alert.alert(
+            "Logout",
+            "Are you sure you want to logout?",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Logout",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await signOut();
+                            console.log("✅ User logged out successfully");
+                            if (onLogout) {
+                                onLogout();
+                            }
+                        } catch (error) {
+                            console.error("❌ Logout error:", error);
+                            Alert.alert("Error", "Failed to logout. Please try again.");
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={["top"]}>
             {/* Header */}
@@ -37,6 +70,9 @@ export default function HomeScreen() {
                             <Ionicons name="notifications-outline" size={24} color="#000" />
                             <View style={styles.notificationDot} />
                         </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.iconButton} onPress={handleLogout}>
+                        <Ionicons name="log-out-outline" size={24} color="#E31E24" />
                     </TouchableOpacity>
                 </View>
             </View>

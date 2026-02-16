@@ -207,7 +207,7 @@ function App() {
         }
 
         if (currentScreen === "home") {
-            return <HomeScreen />;
+            return <HomeScreen onLogout={() => setCurrentScreen("login")} />;
         }
 
         if (currentScreen === "forgotPassword") {
