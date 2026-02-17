@@ -1,7 +1,5 @@
 /**
- * ====================================
  * MORE SCREEN
- * ====================================
  * A 2-column grid of squircle feature tiles.
  * Each tile has a tinted background, themed border,
  * and a Feather line-style icon.
@@ -19,8 +17,9 @@ import {
   Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
-// ── Tile Data ──────────────────────────────────────
+// ── Tile Data ──
 interface TileItem {
   label: string;
   icon: keyof typeof Feather.glyphMap;
@@ -49,11 +48,33 @@ const TILES: TileItem[] = [
   },
 ];
 
-// ── Screen Component ───────────────────────────────
+// Lecturer-only tiles
+const LECTURER_TILES: TileItem[] = [
+  {
+    label: "Admin\nDashboard",
+    icon: "shield",
+    themeColor: "#f9252b",
+    background: "#fff3f3",
+  },
+];
+
+// ── Screen Component ──
 export default function MoreScreen() {
-  const handleTilePress = () => {
-    Alert.alert("Coming Soon");
+  const router = useRouter();
+
+  // For now, everyone can see Admin Dashboard for testing
+  const userRole = "lecturer"; // Set to "lecturer" for all users to test
+
+  const handleTilePress = (label: string) => {
+    if (label.includes("Admin")) {
+      router.push("/admin-dashboard");
+    } else {
+      Alert.alert("Coming Soon");
+    }
   };
+
+  // Combine tiles based on user role
+  const allTiles = userRole === "lecturer" ? [...TILES, ...LECTURER_TILES] : TILES;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -66,11 +87,11 @@ export default function MoreScreen() {
 
       {/* Tile Grid */}
       <View style={styles.grid}>
-        {TILES.map((tile) => (
+        {allTiles.map((tile) => (
           <TouchableOpacity
             key={tile.label}
             activeOpacity={0.7}
-            onPress={handleTilePress}
+            onPress={() => handleTilePress(tile.label)}
             style={[
               styles.tile,
               {
@@ -90,7 +111,7 @@ export default function MoreScreen() {
   );
 }
 
-// ── Styles ─────────────────────────────────────────
+// ── Styles ──
 const styles = StyleSheet.create({
   container: {
     flex: 1,
