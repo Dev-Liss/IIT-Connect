@@ -39,11 +39,20 @@ export const STORY_ENDPOINTS = {
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
+// Report endpoints (Admin Dashboard for Lecturers)
+export const REPORT_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/reports`,
+  GET_BY_ID: (id: string) => `${API_BASE_URL}/reports/${id}`,
+  UPDATE_STATUS: (id: string) => `${API_BASE_URL}/reports/${id}/status`,
+  ADD_RESPONSE: (id: string) => `${API_BASE_URL}/reports/${id}/response`,
+};
+
 export default {
   API_BASE_URL,
   AUTH_ENDPOINTS,
   POST_ENDPOINTS,
   STORY_ENDPOINTS,
+  REPORT_ENDPOINTS,
   HEALTH_CHECK_URL,
   LAPTOP_IP,
   PORT,
