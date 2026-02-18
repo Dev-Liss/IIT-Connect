@@ -150,4 +150,47 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// ====================================
+// DELETE POST
+// DELETE /api/posts/:id
+// ====================================
+router.delete("/:id", async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    // Delete image from Cloudinary if it exists
+    if (post.media?.publicId) {
+      try {
+        await cloudinary.uploader.destroy(post.media.publicId);
+        console.log("🗑️ Cloudinary image deleted:", post.media.publicId);
+      } catch (cloudinaryError) {
+        console.log("⚠️ Could not delete Cloudinary image:", cloudinaryError.message);
+      }
+    }
+
+    // Delete the post from MongoDB
+    await Post.findByIdAndDelete(req.params.id);
+
+    console.log("✅ Post deleted:", req.params.id);
+
+    res.json({
+      success: true,
+      message: "Post deleted successfully",
+    });
+  } catch (error) {
+    console.error("❌ Delete Post Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to delete post",
+    });
+  }
+});
+
 module.exports = router;
