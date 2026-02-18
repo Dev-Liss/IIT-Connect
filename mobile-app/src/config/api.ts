@@ -23,6 +23,7 @@ export const AUTH_ENDPOINTS = {
 export const POST_ENDPOINTS = {
   CREATE: `${API_BASE_URL}/posts`,
   GET_ALL: `${API_BASE_URL}/posts`,
+  GET_REELS: () => `${API_BASE_URL}/posts?mediaType=video`,
   GET_BY_ID: (id: string) => `${API_BASE_URL}/posts/${id}`,
   TOGGLE_LIKE: (id: string) => `${API_BASE_URL}/posts/${id}/like`,
   ADD_COMMENT: (id: string) => `${API_BASE_URL}/posts/${id}/comment`,

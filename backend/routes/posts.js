@@ -5,9 +5,10 @@
  * Handles creating and fetching social feed posts.
  *
  * Endpoints:
- * - POST /api/posts      - Create a new post with image upload
- * - GET  /api/posts      - Get all posts (newest first)
- * - GET  /api/posts/:id  - Get a single post by ID
+ * - POST /api/posts                  - Create a new post with image upload
+ * - GET  /api/posts                  - Get all posts (newest first)
+ * - GET  /api/posts?mediaType=video  - Get only video posts (Reels)
+ * - GET  /api/posts/:id              - Get a single post by ID
  */
 
 const express = require("express");
@@ -93,15 +94,23 @@ router.post("/", upload.single("media"), async (req, res) => {
 });
 
 // ====================================
-// GET ALL POSTS
+// GET ALL POSTS (with optional mediaType filter)
 // GET /api/posts
+// GET /api/posts?mediaType=video  → returns only video posts
 // ====================================
 router.get("/", async (req, res) => {
   try {
-    // Fetch all posts
+    // Build the query filter
+    // If ?mediaType=video is passed, only return video posts
+    const filter = {};
+    if (req.query.mediaType) {
+      filter["media.type"] = req.query.mediaType; // e.g. 'video'
+    }
+
+    // Fetch posts (filtered or all)
     // .populate() replaces user ObjectId with actual user data
     // .sort({ createdAt: -1 }) = newest first
-    const posts = await Post.find()
+    const posts = await Post.find(filter)
       .populate("user", "username email studentId") // Only include these user fields
       .sort({ createdAt: -1 });
 
