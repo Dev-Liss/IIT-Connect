@@ -10,7 +10,9 @@ import {
     StatusBar,
     Dimensions,
     ActivityIndicator,
+    Alert,
 } from "react-native";
+
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
@@ -97,6 +99,38 @@ export default function StudentProfile({ user }) {
         if (!dateString) return "";
         const options = { month: 'short', day: 'numeric', year: 'numeric' };
         return new Date(dateString).toLocaleDateString(undefined, options);
+    };
+
+    // Delete a post — shows confirmation dialog first
+    const handleDeletePost = (postId) => {
+        Alert.alert(
+            "Delete Post",
+            "Are you sure you want to delete this post? This cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+                                method: "DELETE",
+                            });
+                            const result = await response.json();
+                            if (result.success) {
+                                // Remove the deleted post from local state immediately
+                                setUserPosts(prev => prev.filter(p => p._id !== postId));
+                            } else {
+                                Alert.alert("Error", result.message || "Failed to delete post");
+                            }
+                        } catch (error) {
+                            console.error("Delete Post Error:", error);
+                            Alert.alert("Error", "Network error. Could not delete post.");
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     if (loading) {
@@ -206,8 +240,8 @@ export default function StudentProfile({ user }) {
                                                 <Text style={styles.postDate}>{formatDate(post.createdAt)}</Text>
                                             </View>
                                         </View>
-                                        <TouchableOpacity>
-                                            <Feather name="more-horizontal" size={20} color="#666" />
+                                        <TouchableOpacity onPress={() => handleDeletePost(post._id)}>
+                                            <Feather name="trash-2" size={20} color="#aa1111ff" />
                                         </TouchableOpacity>
                                     </View>
 
