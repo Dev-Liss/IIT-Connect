@@ -241,16 +241,8 @@ function App() {
                     email={resetEmail}
                     onBack={() => setCurrentScreen("passwordResetOTP")}
                     onPasswordSet={() => {
-                        Alert.alert(
-                            "Success",
-                            "Your password has been reset successfully!",
-                            [
-                                {
-                                    text: "OK",
-                                    onPress: () => setCurrentScreen("login")
-                                }
-                            ]
-                        );
+                        // Alert is already shown in NewPasswordScreen
+                        setCurrentScreen("login");
                     }}
                 />
             );

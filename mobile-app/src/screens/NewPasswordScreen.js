@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useSignIn } from "@clerk/clerk-expo";
+import { useSignIn, useAuth } from "@clerk/clerk-expo";
 
 export default function NewPasswordScreen({ email, onPasswordSet, onBack }) {
     const [password, setPassword] = useState("");
@@ -12,6 +12,7 @@ export default function NewPasswordScreen({ email, onPasswordSet, onBack }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { signIn, setActive } = useSignIn();
+    const { signOut } = useAuth();
 
     const validatePassword = (password) => {
         const minLength = 8;
@@ -74,18 +75,21 @@ export default function NewPasswordScreen({ email, onPasswordSet, onBack }) {
 
             console.log("✅ Password reset successful!");
 
-            // Set the session as active
-            await setActive({ session: result.createdSessionId });
-
             setIsSubmitting(false);
 
             Alert.alert(
                 "Success",
-                "Your password has been reset successfully!",
+                "Your password has been reset successfully! Please log in with your new password.",
                 [
                     {
                         text: "OK",
-                        onPress: () => {
+                        onPress: async () => {
+                            // Sign out the auto-created session so user must log in fresh
+                            try {
+                                await signOut();
+                            } catch (e) {
+                                console.log("signOut after reset:", e);
+                            }
                             if (onPasswordSet) {
                                 onPasswordSet();
                             }
