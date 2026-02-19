@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
     View,
     Text,
@@ -14,7 +14,7 @@ import {
 } from "react-native";
 
 import { Ionicons, Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 
 // Import Auth and API context
 import { useAuth } from "../../../src/context/AuthContext";
@@ -41,53 +41,52 @@ export default function StudentProfile({ user }) {
     // ==========================================
     // FETCH REAL DATA (Profile + Posts)
     // ==========================================
-    useEffect(() => {
-        const fetchAllData = async () => {
-            const userId = user?._id || user?.id; // AuthContext always stores as 'id' (not '_id')
-            if (!userId) {
-                setLoading(false);
-                return;
-            }
-
-            try {
-                // 1. Fetch Profile Data
-                const profileResponse = await fetch(`${API_BASE_URL}/users/profile/${userId}`);
-                if (profileResponse.ok) {
-                    const profileJson = await profileResponse.json();
-                    setProfileData(profileJson);
+    // useFocusEffect re-runs every time this screen comes into focus.
+    // This ensures that after saving in Edit Profile and navigating back,
+    // the latest profile data and posts are always shown.
+    useFocusEffect(
+        useCallback(() => {
+            const fetchAllData = async () => {
+                const userId = user?._id || user?.id;
+                if (!userId) {
+                    setLoading(false);
+                    return;
                 }
 
-                // 2. Fetch Posts Data
-                // NOTE: If your backend team made a specific route like `/users/profile/${userId}/posts`, use that!
-                // Otherwise, we fetch all posts and filter them for this specific user.
-                const postsResponse = await fetch(`${API_BASE_URL}/posts`);
-                if (postsResponse.ok) {
-                    const postsJson = await postsResponse.json();
-                    // Backend returns { success, count, data: [...] } — extract the array
-                    const allPosts = postsJson.data || [];
+                setLoading(true);
+                try {
+                    // 1. Fetch Profile Data
+                    const profileResponse = await fetch(`${API_BASE_URL}/users/profile/${userId}`);
+                    if (profileResponse.ok) {
+                        const profileJson = await profileResponse.json();
+                        setProfileData(profileJson);
+                    }
 
-                    // Filter out only the posts created by this user
-                    const filteredPosts = allPosts.filter(post => {
-                        // post.user is a populated object from .populate(); use .toString() to compare ObjectId to string
-                        const postUserId = typeof post.user === 'object' ? post.user._id?.toString() : post.user?.toString();
-                        return postUserId === userId;
-                    });
+                    // 2. Fetch Posts Data
+                    const postsResponse = await fetch(`${API_BASE_URL}/posts`);
+                    if (postsResponse.ok) {
+                        const postsJson = await postsResponse.json();
+                        const allPosts = postsJson.data || [];
 
-                    // Sort by newest first using createdAt
-                    filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        const filteredPosts = allPosts.filter(post => {
+                            const postUserId = typeof post.user === 'object' ? post.user._id?.toString() : post.user?.toString();
+                            return postUserId === userId;
+                        });
 
-                    setUserPosts(filteredPosts);
+                        filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        setUserPosts(filteredPosts);
+                    }
+
+                } catch (error) {
+                    console.error("Data Fetch Error:", error);
+                } finally {
+                    setLoading(false);
                 }
+            };
 
-            } catch (error) {
-                console.error("Data Fetch Error:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAllData();
-    }, [user]);
+            fetchAllData();
+        }, [user])
+    );
 
     const handleLogout = async () => {
         await logout();
