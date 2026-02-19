@@ -230,8 +230,74 @@ const validateAlumniCredentials = async (req, res) => {
   }
 };
 
+
+/**
+ * Sync Google User
+ * Called after Google OAuth success on mobile
+ * Ensures user exists in our DB and links the new Clerk ID if needed
+ */
+const syncGoogleUser = async (req, res) => {
+  console.log("🔵 ========== SYNC GOOGLE USER REQUEST RECEIVED ==========");
+  try {
+    const { email, clerkId, username } = req.body;
+
+    if (!email || !clerkId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields: email, clerkId",
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Find user by email
+    let user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      // User doesn't exist - WE DO NOT CREATE AUTOMATICALLY
+      // User must sign up first to select role (Student/Lecturer/Alumni)
+      return res.status(404).json({
+        success: false,
+        message: "No account found for this email. Please sign up first.",
+        requiresSignup: true
+      });
+    }
+
+    // User exists!
+    // If clerkId is different (e.g. they used email/pass before, now using Google), update it
+    if (user.clerkId !== clerkId) {
+      console.log(`🔄 Updating Clerk ID for ${normalizedEmail} (Linking Google Account)`);
+      user.clerkId = clerkId;
+      await user.save();
+    }
+
+    console.log("✅ Google User synced:", user.email);
+
+    res.status(200).json({
+      success: true,
+      message: "User synced successfully",
+      user: {
+        id: user._id,
+        clerkId: user.clerkId,
+        email: user.email,
+        username: user.username,
+        role: user.role,
+      },
+    });
+
+  } catch (error) {
+    console.error("❌ Google sync error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to sync google user",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   syncUserProfile,
   getUserProfile,
   validateAlumniCredentials,
+  syncGoogleUser
 };

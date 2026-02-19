@@ -2,10 +2,6 @@
  * API Service for IIT Connect Backend
  * Handles all HTTP requests to the backend server
  */
-
-// Backend server URL
-// ⚠️ ACTION REQUIRED: Change '192.168.1.10' below to your computer's actual local IP address!
-// You can find your IP by running 'ipconfig' in your terminal.
 const API_BASE_URL = "http://192.168.1.74:5000/api";
 
 /**
@@ -153,6 +149,45 @@ export const checkEmailExists = async (email) => {
         return data;
     } catch (error) {
         console.log("ℹ️ Email check finished:", error.message);
+        throw error;
+    }
+};
+
+
+/**
+ * Sync Google User to Backend
+ * Link Google account to existing user or check if signup needed
+ * @param {string} email - Google email
+ * @param {string} clerkId - Clerk User ID
+ * @param {string} username - User name from Google
+ * @returns {Promise<Object>} API response
+ */
+export const syncGoogleUser = async (email, clerkId, username) => {
+    try {
+        console.log("📤 Syncing Google user:", email);
+        const response = await fetch(`${API_BASE_URL}/auth/sync-google-user`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, clerkId, username }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Check if it's the specific "requires signup" 404
+            if (response.status === 404 && data.requiresSignup) {
+                const error = new Error(data.message);
+                error.requiresSignup = true;
+                throw error;
+            }
+            throw new Error(data.message || "Google sync failed");
+        }
+
+        return data;
+    } catch (error) {
+        console.log("ℹ️ Google sync finished:", error.message);
         throw error;
     }
 };
