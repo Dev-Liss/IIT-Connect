@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useSignIn, useAuth } from "@clerk/clerk-expo";
+import { useSignIn, useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
 
 export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword }) {
   const [email, setEmail] = useState("");
@@ -23,7 +23,54 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
   const [isLoading, setIsLoading] = useState(false);
 
   const { signIn, setActive } = useSignIn();
-  const { isSignedIn, signOut } = useAuth();
+  const { isSignedIn, signOut, user } = useAuth();
+  const { user: clerkUser } = useUser();
+  const [isSyncing, setIsSyncing] = useState(false);
+  const { syncGoogleUser } = require("../services/api");
+
+  // Effect to handle syncing after successful Google Login
+  React.useEffect(() => {
+    const syncUser = async () => {
+      if (isSignedIn && clerkUser && !isSyncing) {
+        // Check if this is a Google login (or we just want to ensure sync)
+
+        setIsSyncing(true);
+        try {
+          const email = clerkUser.primaryEmailAddress?.emailAddress;
+          const username = clerkUser.fullName;
+          const clerkId = clerkUser.id;
+
+          if (email) {
+            // We can check if it's a google account to be specific:
+            const isGoogle = clerkUser.externalAccounts.some(acc => acc.verification?.strategy === "oauth_google");
+
+            if (isGoogle) {
+              console.log("🔄 Detected Google User, syncing with backend...");
+              await syncGoogleUser(email, clerkId, username);
+              console.log("✅ Google User Auto-Synced");
+
+              if (onLoginSuccess) {
+                onLoginSuccess();
+              }
+            }
+          }
+        } catch (error) {
+          if (error.requiresSignup) {
+            console.log("ℹ️ Auto-sync: Account requires signup");
+            Alert.alert("Account Not Found", error.message);
+            await signOut();
+          } else {
+            console.error("Auto-sync error:", error);
+          }
+        } finally {
+          setIsSyncing(false);
+        }
+      }
+    };
+
+    syncUser();
+  }, [isSignedIn, clerkUser]);
+
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim().toLowerCase();
@@ -136,8 +183,49 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
     }
   };
 
-  const handleGoogleSignIn = () => {
-    Alert.alert("Google Sign In", "Google sign-in will be implemented soon");
+
+  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
+  // Import syncGoogleUser from api service
+
+  const handleGoogleSignIn = async () => {
+    try {
+      // If already signed in, sign out first to ensure a fresh login flow
+      if (isSignedIn) {
+        await signOut();
+      }
+
+      const { createdSessionId, setActive, signUp, signIn } = await startOAuthFlow();
+
+      if (createdSessionId) {
+        // 1. Set the session active
+        await setActive({ session: createdSessionId });
+
+        // 2. Get user details from Clerk
+
+        const userDetails = signIn?.identifier || signUp?.emailAddress;
+
+
+        console.log("✅ OAuth Session created:", createdSessionId);
+
+        // Trigger generic success. 
+        let emailAddress = null;
+        let username = null;
+        let clerkId = null;
+
+        if (signIn && signIn.identifier) {
+          emailAddress = signIn.identifier;
+          clerkId = signIn.userData?.id; // Attempt to get ID
+        }
+
+
+      } else {
+        // Use signIn or signUp for next steps such as MFA
+      }
+    } catch (err) {
+      console.error("OAuth error", err);
+      // See https://clerk.com/docs/custom-flows/oauth-connections for more info
+      Alert.alert("Google Sign In Error", err.message || "Failed to sign in with Google");
+    }
   };
 
   const handleForgotPassword = () => {
