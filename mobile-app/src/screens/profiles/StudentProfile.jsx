@@ -43,7 +43,7 @@ export default function StudentProfile({ user }) {
     // ==========================================
     useEffect(() => {
         const fetchAllData = async () => {
-            const userId = user?.id; // AuthContext always stores as 'id' (not '_id')
+            const userId = user?._id || user?.id; // AuthContext always stores as 'id' (not '_id')
             if (!userId) {
                 setLoading(false);
                 return;
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
         paddingBottom: 80,
     },
     coverContainer: {
-        height: 120,
+        height: 180,
         width: "100%",
         overflow: "hidden",
     },
@@ -424,11 +424,6 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 15,
         marginBottom: 15,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
     },
     postHeader: {
         flexDirection: "row",
