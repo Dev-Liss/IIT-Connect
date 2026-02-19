@@ -120,7 +120,7 @@ interface ResourcesScreenProps {
 
 export default function ResourcesScreen({ scrollY }: ResourcesScreenProps) {
     const { width } = useWindowDimensions();
-    const numColumns = width < 500 ? 1 : 2;
+    const numColumns = 2; // Fixed to 2 columns to match design
     const cardWidth = (width / numColumns) - 20;
 
     const [resources, setResources] = useState<Resource[]>([]);
