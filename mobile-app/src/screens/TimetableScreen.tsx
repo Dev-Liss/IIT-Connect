@@ -51,8 +51,7 @@ const HOURS = [
 ];
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-const SLOT_HEIGHT = 80; // Height for 1 hour slot
-const TUTORIAL_GROUPS = ["CS-2A", "CS-2B", "CS-2C"];
+const SLOT_HEIGHT = 80;
 
 export default function TimetableScreen() {
     const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
@@ -60,7 +59,8 @@ export default function TimetableScreen() {
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState<"weekly" | "today">("weekly");
     const [activeTab, setActiveTab] = useState("Timetable");
-    const [selectedGroup, setSelectedGroup] = useState("CS-2A");
+    const [groups, setGroups] = useState<string[]>([]);
+    const [selectedGroup, setSelectedGroup] = useState("");
     const [selectedLecture, setSelectedLecture] = useState<TimetableEntry | null>(
         null,
     );
@@ -141,6 +141,11 @@ export default function TimetableScreen() {
     // We use headerTranslateY to animate position
 
     useEffect(() => {
+        fetchGroups();
+    }, []);
+
+    useEffect(() => {
+        if (!selectedGroup) return;
         if (view === "weekly") {
             fetchTimetable(selectedGroup);
         } else {
@@ -148,22 +153,31 @@ export default function TimetableScreen() {
         }
     }, [view, selectedGroup]);
 
-    // ... fetch functions (keep)
+    const fetchGroups = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/timetable/groups/all`);
+            const result = await response.json();
+            if (result.success && result.data.length > 0) {
+                setGroups(result.data);
+                if (!selectedGroup) setSelectedGroup(result.data[0]);
+            }
+        } catch (error) {
+            console.error("Error fetching groups:", error);
+        }
+    };
+
     const fetchTimetable = async (group: string) => {
         setLoading(true);
         try {
-            const response = await fetch(
-                `${API_BASE_URL}/timetable/${group}`,
-            );
-            const data = await response.json();
-
-            if (data.success) {
-                setTimetable(data.data);
+            const response = await fetch(`${API_BASE_URL}/timetable?tutGroup=${group}`);
+            const result = await response.json();
+            if (result.success) {
+                setTimetable(result.data);
             } else {
-                Alert.alert("Error", "Failed to fetch timetable data");
+                Alert.alert("Error", result.message || "Failed to load timetable");
             }
         } catch (error) {
-            console.error("Fetch error:", error);
+            console.error("Network error:", error);
             Alert.alert("Error", "Could not connect to server");
         } finally {
             setLoading(false);
@@ -173,18 +187,15 @@ export default function TimetableScreen() {
     const fetchTodayTimetable = async (group: string) => {
         setLoading(true);
         try {
-            const response = await fetch(
-                `${API_BASE_URL}/timetable/today?tutGroup=${group}`,
-            );
-            const data = await response.json();
-
-            if (data.success) {
-                setTodayClasses(data.classes);
+            const response = await fetch(`${API_BASE_URL}/timetable/today?tutGroup=${group}`);
+            const result = await response.json();
+            if (result.success) {
+                setTodayClasses(result.classes);
             } else {
-                Alert.alert("Error", "Failed to fetch today's timetable");
+                Alert.alert("Error", result.message || "Failed to load today's timetable");
             }
         } catch (error) {
-            console.error("Fetch error:", error);
+            console.error("Network error:", error);
             Alert.alert("Error", "Could not connect to server");
         } finally {
             setLoading(false);
@@ -308,7 +319,7 @@ export default function TimetableScreen() {
                                     <View style={[styles.filterContainer, { marginBottom: 10 }]}>
                                         <View style={styles.pickerWrapper}>
                                             <ModalDropdown
-                                                options={TUTORIAL_GROUPS}
+                                                options={groups}
                                                 defaultValue={selectedGroup}
                                                 onSelect={(index: number, value: string) => setSelectedGroup(value)}
                                                 style={styles.dropdownButton}

@@ -17,7 +17,7 @@
  */
 
 // ⚠️ CHANGE THIS TO YOUR LAPTOP'S IP ADDRESS!
-const LAPTOP_IP = "192.168.1.157";
+const LAPTOP_IP = "192.168.100.165";
 
 // Backend port (should match PORT in backend/.env)
 const PORT = "5000";
