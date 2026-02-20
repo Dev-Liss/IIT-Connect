@@ -11,12 +11,19 @@ const dataPath = path.join(__dirname, '../data/timetable.json');
 
 const COLORS = ["#FFEBEB", "#E8F5E9", "#E3F2FD", "#FFF3E0", "#F3E5F5", "#E0F7FA", "#FFFDE7"];
 
-function processLocalData(group, targetDay) {
+function processLocalData(groupReq, targetDay) {
+  console.log("processLocalData req:", groupReq, " targetDay:", targetDay);
   if (!fs.existsSync(dataPath)) {
-    throw new Error("Timetable data not found");
+    console.error("Timetable data not found!");
+    return [];
   }
   const allData = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-  const groupData = allData[group] || {};
+
+  if (!allData[groupReq]) {
+    console.log(`Warning: Could not resolve group ${groupReq} in data`);
+    return [];
+  }
+  const groupData = allData[groupReq] || {};
   const entries = [];
   let colorIdx = 0;
 
@@ -59,7 +66,7 @@ function processLocalData(group, targetDay) {
           location: slot.room,
           color: COLORS[colorIdx % COLORS.length],
           lecturer: slot.lecturer,
-          tutorialGroup: group,
+          tutorialGroup: groupReq,
         };
         colorIdx++;
       }
@@ -75,7 +82,24 @@ exports.getAllGroups = async (req, res) => {
       return res.status(200).json({ success: true, data: [] });
     }
     const allData = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-    const groups = Object.keys(allData).sort();
+    const groups = Object.keys(allData);
+
+    groups.sort((a, b) => {
+      // SE first, then CS
+      const isASE = a.includes("SE");
+      const isBSE = b.includes("SE");
+
+      if (isASE && !isBSE) return -1;
+      if (!isASE && isBSE) return 1;
+
+      // Extract number
+      const regex = /G(\d+)/;
+      const numA = a.match(regex) ? parseInt(a.match(regex)[1], 10) : 0;
+      const numB = b.match(regex) ? parseInt(b.match(regex)[1], 10) : 0;
+
+      return numA - numB;
+    });
+
     res.status(200).json({ success: true, data: groups });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
@@ -90,6 +114,7 @@ exports.getAllGroups = async (req, res) => {
 exports.getTimetable = async (req, res) => {
   try {
     const { tutGroup } = req.query;
+    console.log("Requested Group (query):", tutGroup);
 
     if (!tutGroup) {
       return res.status(400).json({
@@ -122,6 +147,7 @@ exports.getTimetable = async (req, res) => {
 exports.getTodayTimetable = async (req, res) => {
   try {
     const { tutGroup } = req.query;
+    console.log("Requested Group (today query):", tutGroup);
 
     // Get current day name (e.g., "Mon", "Tue")
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -189,6 +215,7 @@ exports.createTimetableEntry = async (req, res) => {
 exports.getTimetableByGroup = async (req, res) => {
   try {
     const { tutGroup } = req.params;
+    console.log("Requested Group (param):", tutGroup);
 
     if (!tutGroup) {
       return res.status(400).json({

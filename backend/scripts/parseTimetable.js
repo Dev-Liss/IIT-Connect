@@ -27,10 +27,16 @@ function parseHtml(filePath, outputPath) {
         const th = table.find('th[colspan="6"]');
         if (!th.length) return;
 
-        const groupName = th.text().trim();
+        let rawGroupName = th.text().trim();
 
-        if (!(groupName.startsWith("L5 SE") || groupName.startsWith("L5 CS"))) {
+        if (!(rawGroupName.startsWith("L5 SE") || rawGroupName.startsWith("L5 CS"))) {
             return;
+        }
+
+        let groupName = rawGroupName;
+        const match = rawGroupName.match(/^L5 (SE|CS)\s*-?G(\d+)$/);
+        if (match) {
+            groupName = `${match[1]}-G${match[2]}`;
         }
 
         if (!result[groupName]) {

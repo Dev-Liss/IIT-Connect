@@ -169,16 +169,19 @@ export default function TimetableScreen() {
     const fetchTimetable = async (group: string) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/timetable?tutGroup=${group}`);
+            const encodeGroup = encodeURIComponent(group);
+            const response = await fetch(`${API_BASE_URL}/timetable?tutGroup=${encodeGroup}`);
             const result = await response.json();
             if (result.success) {
                 setTimetable(result.data);
             } else {
-                Alert.alert("Error", result.message || "Failed to load timetable");
+                setTimetable([]);
+                Alert.alert("Notice", result.message || "No timetable found for this group");
             }
         } catch (error) {
             console.error("Network error:", error);
-            Alert.alert("Error", "Could not connect to server");
+            setTimetable([]); // Prevent blank screen crash
+            Alert.alert("Error", "No timetable found for this group");
         } finally {
             setLoading(false);
         }
@@ -187,16 +190,19 @@ export default function TimetableScreen() {
     const fetchTodayTimetable = async (group: string) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/timetable/today?tutGroup=${group}`);
+            const encodeGroup = encodeURIComponent(group);
+            const response = await fetch(`${API_BASE_URL}/timetable/today?tutGroup=${encodeGroup}`);
             const result = await response.json();
             if (result.success) {
                 setTodayClasses(result.classes);
             } else {
-                Alert.alert("Error", result.message || "Failed to load today's timetable");
+                setTodayClasses([]);
+                Alert.alert("Notice", result.message || "No timetable found for this group");
             }
         } catch (error) {
             console.error("Network error:", error);
-            Alert.alert("Error", "Could not connect to server");
+            setTodayClasses([]); // Prevent blank screen crash
+            Alert.alert("Error", "No timetable found for this group");
         } finally {
             setLoading(false);
         }
@@ -320,8 +326,10 @@ export default function TimetableScreen() {
                                         <View style={styles.pickerWrapper}>
                                             <ModalDropdown
                                                 options={groups}
-                                                defaultValue={selectedGroup}
+                                                defaultValue={selectedGroup || "Select Your Group"}
                                                 onSelect={(index: number, value: string) => setSelectedGroup(value)}
+                                                showSearch={true}
+                                                searchPlaceholder="Search Group..."
                                                 style={styles.dropdownButton}
                                                 textStyle={styles.dropdownButtonText}
                                                 dropdownStyle={styles.dropdownList}
@@ -329,7 +337,7 @@ export default function TimetableScreen() {
                                                 dropdownTextHighlightStyle={styles.dropdownHighlightText}
                                             >
                                                 <View style={styles.dropdownContainer}>
-                                                    <Text style={styles.badgeText}>Tutorial Group: {selectedGroup}</Text>
+                                                    <Text style={styles.badgeText}>Group: {selectedGroup || "Select"}</Text>
                                                     <Ionicons name="chevron-down" size={12} color="#f9252b" style={{ marginLeft: 4 }} />
                                                 </View>
                                             </ModalDropdown>
@@ -739,9 +747,9 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     dropdownList: {
-        width: 150,
+        width: 180,
         height: 'auto',
-        maxHeight: 120, // Limit height
+        maxHeight: 300, // Increased limit for better scrolling
         borderRadius: 8,
         marginTop: 8,
         shadowColor: "#000",

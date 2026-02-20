@@ -63,6 +63,16 @@ connectDB()
       console.log(
         `📱 Mobile app should connect to: http://YOUR_IP:${PORT}/api`,
       );
+
+      const fs = require('fs');
+      const path = require('path');
+      const dataPath = path.join(__dirname, 'data/timetable.json');
+      if (fs.existsSync(dataPath)) {
+        const data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        const keys = Object.keys(data).slice(0, 2);
+        console.log("Timetable JSON initialized completely!");
+        console.log(`JSON mapping check: { "${keys[0] || 'empty'}": [...], "${keys[1] || 'empty'}": [...] }`);
+      }
     });
   })
   .catch((err) => {
