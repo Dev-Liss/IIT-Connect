@@ -1,15 +1,17 @@
 /**
  * ====================================
- * HOME SCREEN (FEED)
+ * HOME SCREEN (FEED + REELS)
  * ====================================
- * Main home tab displaying the social feed.
+ * Main home tab with a ContentSwitcher to toggle
+ * between Feed (image posts) and Reels (video posts).
  *
  * Features:
  * - Custom Header with IIT CoNNect logo image
+ * - ContentSwitcher pinned below header
+ * - Feed: PostCard list with StoriesRail
+ * - Reels: Full-screen vertical-paging video feed
  * - Create post & notification icons
- * - Fetches posts from API on mount
- * - Pull-to-refresh functionality
- * - Loading, empty, and error states
+ * - Pull-to-refresh, loading, empty, and error states
  */
 
 import React, { useState, useCallback } from "react";
@@ -31,6 +33,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import PostCard from "../../src/components/PostCard";
 import StoriesRail from "../../src/components/StoriesRail";
 import ContentSwitcher from "../../src/components/ContentSwitcher";
+import ReelsFeed from "../../src/components/ReelsFeed";
 import { POST_ENDPOINTS } from "../../src/config/api";
 
 // Post type (matches backend response)
@@ -170,13 +173,14 @@ export default function HomeScreen() {
   );
 
   // ====================================
-  // RENDER LOADING STATE
+  // RENDER LOADING STATE (Feed tab only)
   // ====================================
-  if (isLoading) {
+  if (isLoading && activeTab === "feed") {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         {renderHeader()}
+        <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
         <View style={styles.loadingContent}>
           <ActivityIndicator size="large" color="#f9252b" />
           <Text style={styles.loadingText}>Loading feed...</Text>
@@ -186,56 +190,62 @@ export default function HomeScreen() {
   }
 
   // ====================================
-  // RENDER ERROR
+  // RENDER ERROR (Feed tab only)
   // ====================================
-  if (error && posts.length === 0) {
+  if (error && posts.length === 0 && activeTab === "feed") {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         {renderHeader()}
+        <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
         {renderErrorState()}
       </SafeAreaView>
     );
   }
 
   // ====================================
-  // RENDER FEED
+  // MAIN RENDER — FEED + REELS
   // ====================================
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       {renderHeader()}
 
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item}
-            onLike={(id) => console.log("Like:", id)}
-            onShare={(id) => console.log("Share:", id)}
+      {/* ContentSwitcher — pinned below header, never scrolls */}
+      <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Conditional Content — flex: 1 gives a bounded height for paging */}
+      <View style={{ flex: 1 }}>
+        {activeTab === "feed" ? (
+          <FlatList
+            data={posts}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => (
+              <PostCard
+                post={item}
+                onLike={(id) => console.log("Like:", id)}
+                onShare={(id) => console.log("Share:", id)}
+              />
+            )}
+            ListHeaderComponent={<StoriesRail />}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
+                colors={["#f9252b"]}
+                tintColor="#f9252b"
+              />
+            }
+            ListEmptyComponent={renderEmptyState}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={
+              posts.length === 0 ? styles.emptyList : undefined
+            }
           />
+        ) : (
+          <ReelsFeed />
         )}
-        ListHeaderComponent={
-          <>
-            <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
-            <StoriesRail />
-          </>
-        }
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-            colors={["#f9252b"]}
-            tintColor="#f9252b"
-          />
-        }
-        ListEmptyComponent={renderEmptyState}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={
-          posts.length === 0 ? styles.emptyList : undefined
-        }
-      />
+      </View>
     </SafeAreaView>
   );
 }
