@@ -6,6 +6,7 @@ import { useAuth } from '../src/context/AuthContext';
 
 // Import the specific edit screens
 import EditStudentProfile from '../src/screens/profiles/EditStudentProfile';
+import EditLecturerProfile from '../src/screens/profiles/EditLecturerProfile';
 
 export default function EditProfileSwitcher() {
     const { user } = useAuth();
@@ -25,15 +26,7 @@ export default function EditProfileSwitcher() {
             return <EditStudentProfile user={user} />;
 
         case 'lecturer':
-            // return <EditLecturerProfile user={user} />;
-            return (
-                <SafeAreaView style={styles.fallbackContainer}>
-                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                        <Ionicons name="chevron-back" size={24} color="#333" />
-                    </TouchableOpacity>
-                    <Text>Lecturer edit profile coming soon...</Text>
-                </SafeAreaView>
-            );
+            return <EditLecturerProfile user={user} />;
 
         case 'admin':
             // return <EditAdminProfile user={user} />;

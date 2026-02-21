@@ -4,13 +4,13 @@ import { useAuth } from '../../src/context/AuthContext';
 
 // Import the actual UI screens
 import StudentProfile from '../../src/screens/profiles/StudentProfile';
-// import LecturerProfile from '../../src/screens/profiles/LecturerProfile';
+import LecturerProfile from '../../src/screens/profiles/LecturerProfile';
 
 export default function ProfileSwitcher() {
-  const { user, loading } = useAuth(); // useAuth provides a loading state
+  const { user, isLoading } = useAuth(); // useAuth provides a loading state
 
   // 1. Handle loading state
-  if (loading || !user) {
+  if (isLoading || !user) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#D32F2F" />
