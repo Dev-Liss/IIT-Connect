@@ -304,8 +304,6 @@ export default function AdminDashboardScreen() {
             <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             {renderHeader()}
             {renderTabs()}
-            {renderStats()}
-            {renderFilters()}
 
             <FlatList
                 style={{ flex: 1 }}
@@ -314,6 +312,12 @@ export default function AdminDashboardScreen() {
                 renderItem={({ item }) => (
                     <ReportCard report={item} onPress={handleReportPress} />
                 )}
+                ListHeaderComponent={
+                    <>
+                        {renderStats()}
+                        {renderFilters()}
+                    </>
+                }
                 refreshControl={
                     <RefreshControl
                         refreshing={isRefreshing}
@@ -322,7 +326,6 @@ export default function AdminDashboardScreen() {
                         tintColor="#f9252b"
                     />
                 }
-                ListHeaderComponent={null}
                 ListEmptyComponent={renderEmpty}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.listContent}
@@ -427,7 +430,7 @@ const styles = StyleSheet.create({
     },
     // Filters
     filterScrollView: {
-        paddingBottom: 0,
+        paddingBottom: 12,
     },
     filterScrollContent: {
         paddingHorizontal: 16,
@@ -458,7 +461,7 @@ const styles = StyleSheet.create({
     },
     // List
     listContent: {
-        flexGrow: 1,
+        paddingTop: 4,
         paddingBottom: 20,
     },
     // Loading

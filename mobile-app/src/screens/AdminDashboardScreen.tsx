@@ -274,8 +274,6 @@ export default function AdminDashboardScreen() {
             <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             {renderHeader()}
             {renderTabs()}
-            {renderStats()}
-            {renderFilters()}
 
             <FlatList
                 data={reports}
@@ -283,6 +281,12 @@ export default function AdminDashboardScreen() {
                 renderItem={({ item }) => (
                     <ReportCard report={item} onPress={handleReportPress} />
                 )}
+                ListHeaderComponent={
+                    <>
+                        {renderStats()}
+                        {renderFilters()}
+                    </>
+                }
                 refreshControl={
                     <RefreshControl
                         refreshing={isRefreshing}
@@ -293,6 +297,7 @@ export default function AdminDashboardScreen() {
                 }
                 ListEmptyComponent={renderEmpty}
                 showsVerticalScrollIndicator={false}
+                style={styles.flatList}
                 contentContainerStyle={
                     reports.length === 0 ? styles.emptyList : styles.listContent
                 }
@@ -369,7 +374,8 @@ const styles = StyleSheet.create({
     statsContainer: {
         flexDirection: "row",
         paddingHorizontal: 16,
-        paddingVertical: 16,
+        paddingTop: 8,
+        paddingBottom: 8,
         gap: 12,
     },
     statCard: {
@@ -398,7 +404,8 @@ const styles = StyleSheet.create({
     filterContainer: {
         flexDirection: "row",
         paddingHorizontal: 16,
-        paddingBottom: 12,
+        paddingTop: 4,
+        paddingBottom: 10,
         gap: 8,
     },
     filterButton: {
@@ -422,8 +429,10 @@ const styles = StyleSheet.create({
         color: "#fff",
     },
     // List
+    flatList: {
+        flex: 1,
+    },
     listContent: {
-        paddingTop: 8,
         paddingBottom: 20,
     },
     emptyList: {
