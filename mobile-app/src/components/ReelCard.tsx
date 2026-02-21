@@ -63,12 +63,15 @@ interface Reel {
 interface ReelCardProps {
   reel: Reel;
   isActive: boolean;
+  height?: number;
 }
 
 // ====================================
 // COMPONENT
 // ====================================
-export default function ReelCard({ reel, isActive }: ReelCardProps) {
+export default function ReelCard({ reel, isActive, height }: ReelCardProps) {
+  // Use provided height or fallback to full screen
+  const containerHeight = height || SCREEN_HEIGHT;
   const { user } = useAuth();
   const router = useRouter();
   const videoRef = useRef<Video>(null);
@@ -159,7 +162,7 @@ export default function ReelCard({ reel, isActive }: ReelCardProps) {
   // RENDER
   // ====================================
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { height: containerHeight }]}>
       {/* ========== VIDEO PLAYER ========== */}
       <TouchableOpacity
         activeOpacity={1}
