@@ -5,7 +5,7 @@
  * Handles creating and fetching social feed posts.
  *
  * Endpoints:
- * - POST /api/posts                  - Create a new post with image upload
+ * - POST /api/posts                  - Create a new post with image/video upload
  * - GET  /api/posts                  - Get all posts (newest first)
  * - GET  /api/posts?mediaType=video  - Get only video posts (Reels)
  * - GET  /api/posts/:id              - Get a single post by ID
@@ -17,17 +17,22 @@ const Post = require("../models/Post");
 const { upload, cloudinary } = require("../config/cloudinary");
 
 // ====================================
-// CREATE POST
+// CREATE POST (Image or Video)
 // POST /api/posts
 // ====================================
 // Use upload.single('media') - expects form field named 'media'
+// multer-storage-cloudinary uploads directly to Cloudinary
+// with resource_type: "auto" (supports images AND videos)
 router.post("/", upload.single("media"), async (req, res) => {
+  // Track the Cloudinary public ID so we can clean up on failure
+  let uploadedPublicId = null;
+
   try {
     // Validate: Ensure a file was uploaded
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: "No media file uploaded. Please attach an image.",
+        message: "No media file uploaded. Please attach an image or video.",
       });
     }
 
@@ -36,27 +41,46 @@ router.post("/", upload.single("media"), async (req, res) => {
     // Extract Cloudinary response data
     // multer-storage-cloudinary adds these to req.file
     const { path: cloudinaryUrl, filename: publicId } = req.file;
+    uploadedPublicId = publicId;
 
-    // Get image dimensions from Cloudinary
-    // We need to fetch the uploaded resource to get width/height
+    // Fetch the uploaded resource details from Cloudinary
+    // Using resource_type: "auto" so it works for both images and videos
     let width = 1;
     let height = 1;
     let aspectRatio = 1;
+    let detectedMediaType = "image"; // Default fallback
 
     try {
-      // Fetch the uploaded image details from Cloudinary
+      // Try fetching as image first
       const result = await cloudinary.api.resource(publicId, {
         resource_type: "image",
       });
       width = result.width || 1;
       height = result.height || 1;
       aspectRatio = width / height;
+      detectedMediaType = "image";
       console.log(
         `📐 Image dimensions: ${width}x${height}, AR: ${aspectRatio.toFixed(2)}`,
       );
-    } catch (cloudinaryError) {
-      console.log("⚠️ Could not fetch image dimensions, using defaults");
-      // Default to square if we can't get dimensions
+    } catch (imgError) {
+      // If image fetch fails, try as video
+      try {
+        const result = await cloudinary.api.resource(publicId, {
+          resource_type: "video",
+        });
+        width = result.width || 1;
+        height = result.height || 1;
+        aspectRatio = width / height;
+        detectedMediaType = "video";
+        console.log(
+          `🎬 Video dimensions: ${width}x${height}, AR: ${aspectRatio.toFixed(2)}`,
+        );
+      } catch (vidError) {
+        console.log("⚠️ Could not fetch media dimensions, using defaults");
+        // Fallback: guess type from file mimetype
+        const mime = req.file.mimetype || "";
+        detectedMediaType = mime.startsWith("video") ? "video" : "image";
+      }
     }
 
     // Create the new post document
@@ -67,7 +91,7 @@ router.post("/", upload.single("media"), async (req, res) => {
       media: {
         url: cloudinaryUrl,
         publicId: publicId,
-        type: "image", // TODO: Detect video in future
+        type: detectedMediaType,
         width: width,
         height: height,
         aspectRatio: aspectRatio,
@@ -77,15 +101,39 @@ router.post("/", upload.single("media"), async (req, res) => {
     // Save to MongoDB
     await newPost.save();
 
-    console.log("✅ Post created successfully:", newPost._id);
+    // Populate user data before returning
+    await newPost.populate("user", "username email studentId");
+
+    console.log(
+      `✅ ${detectedMediaType === "video" ? "🎬 Reel" : "📷 Post"} created successfully:`,
+      newPost._id,
+    );
 
     res.status(201).json({
       success: true,
-      message: "Post created successfully!",
+      message: `${detectedMediaType === "video" ? "Reel" : "Post"} created successfully!`,
       post: newPost,
     });
   } catch (error) {
     console.error("❌ Post Upload Error:", error);
+
+    // Cleanup: Delete the uploaded asset from Cloudinary if it exists
+    if (uploadedPublicId) {
+      try {
+        // Try deleting as image first, then as video
+        await cloudinary.uploader
+          .destroy(uploadedPublicId, { resource_type: "image" })
+          .catch(() =>
+            cloudinary.uploader.destroy(uploadedPublicId, {
+              resource_type: "video",
+            }),
+          );
+        console.log("🧹 Cleaned up Cloudinary asset:", uploadedPublicId);
+      } catch (cleanupError) {
+        console.error("⚠️ Cloudinary cleanup failed:", cleanupError);
+      }
+    }
+
     res.status(500).json({
       success: false,
       message: error.message || "Failed to create post",
