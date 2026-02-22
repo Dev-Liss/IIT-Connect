@@ -37,17 +37,18 @@ interface TimetableEntry {
 }
 
 const HOURS = [
-    "08:00",
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00",
-    "14:00",
-    "15:00",
-    "16:00",
-    "17:00",
-    "18:00",
+    "08:30",
+    "09:30",
+    "10:30",
+    "11:30",
+    "12:30",
+    "13:30",
+    "14:30",
+    "15:30",
+    "16:30",
+    "17:30",
+    "18:30",
+    "19:30"
 ];
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
@@ -215,7 +216,7 @@ export default function TimetableScreen() {
         const endHour = parseInt(endTime.split(":")[0]);
         const endMin = parseInt(endTime.split(":")[1]);
 
-        const startOffset = startHour - 8 + startMin / 60;
+        const startOffset = startHour - 8 + (startMin - 30) / 60;
         const duration = endHour - startHour + (endMin - startMin) / 60;
 
         return {
@@ -367,9 +368,9 @@ export default function TimetableScreen() {
                                             {HOURS.map((time) => (
                                                 <View key={time} style={styles.timeSlot}>
                                                     <Text style={styles.timeText}>
-                                                        {parseInt(time.split(":")[0]) > 12
-                                                            ? `${parseInt(time.split(":")[0]) - 12} PM`
-                                                            : `${parseInt(time.split(":")[0])} AM`}
+                                                        {parseInt(time.split(":")[0]) >= 12
+                                                            ? `${parseInt(time.split(":")[0]) === 12 ? 12 : parseInt(time.split(":")[0]) - 12}:${time.split(":")[1]} PM`
+                                                            : `${parseInt(time.split(":")[0])}:${time.split(":")[1]} AM`}
                                                     </Text>
                                                 </View>
                                             ))}
