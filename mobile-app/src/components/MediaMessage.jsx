@@ -29,7 +29,7 @@ const maxMediaHeight = 300;
 /**
  * Image Message Component
  */
-export const ImageMessage = ({ fileUrl, isMe, onPress }) => {
+export const ImageMessage = ({ fileUrl, thumbnailUrl, isMe, onPress }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -53,7 +53,7 @@ export const ImageMessage = ({ fileUrl, isMe, onPress }) => {
                     </View>
                 ) : (
                     <Image
-                        source={{ uri: fileUrl }}
+                        source={{ uri: thumbnailUrl || fileUrl }}
                         style={[styles.image, loading && styles.hidden]}
                         resizeMode="cover"
                         onLoad={() => setLoading(false)}
@@ -279,7 +279,7 @@ const MediaMessage = ({ message, isMe }) => {
 
     switch (messageType) {
         case 'image':
-            return <ImageMessage fileUrl={fileUrl} isMe={isMe} />;
+            return <ImageMessage fileUrl={fileUrl} thumbnailUrl={thumbnailUrl} isMe={isMe} />;
         case 'video':
             return (
                 <VideoMessage 

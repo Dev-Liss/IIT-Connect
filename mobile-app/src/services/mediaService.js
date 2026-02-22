@@ -353,6 +353,11 @@ export const uploadFile = async (file, onProgress = null) => {
                 reject(new Error('Upload cancelled'));
             });
 
+            xhr.timeout = 60000; // 60 second upload timeout
+            xhr.addEventListener('timeout', () => {
+                reject(new Error('Upload timed out. Please check your connection and try again.'));
+            });
+
             xhr.open('POST', UPLOAD_ENDPOINTS.UPLOAD_MEDIA);
             xhr.setRequestHeader('Authorization', `Bearer ${token}`);
             xhr.send(formData);

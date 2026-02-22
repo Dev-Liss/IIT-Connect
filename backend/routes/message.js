@@ -56,35 +56,36 @@ router.get('/:conversationId', protect, async (req, res) => {
             });
         }
 
-        // Build query
-        let query = { conversation: conversationId };
+        // Build query with cursor-based pagination (more efficient than skip-based)
+        const query = { conversation: conversationId };
 
-        // If "before" timestamp provided, get messages before that time (for infinite scroll)
+        // Cursor-based: get messages before a timestamp (for infinite scroll)
         if (before) {
             query.createdAt = { $lt: new Date(before) };
         }
 
+        const parsedLimit = Math.min(parseInt(limit) || 50, 100);
+
+        // Fetch one extra to determine if there are more messages
         const messages = await Message.find(query)
             .sort({ createdAt: -1 })
-            .limit(parseInt(limit))
-            .skip((parseInt(page) - 1) * parseInt(limit))
+            .limit(parsedLimit + 1)
             .populate('sender', 'username email studentId')
             .lean();
+
+        const hasMore = messages.length > parsedLimit;
+        if (hasMore) messages.pop();
 
         // Reverse to get chronological order
         messages.reverse();
 
-        // Get total count for pagination
-        const total = await Message.countDocuments({ conversation: conversationId });
-
         res.json({
             success: true,
             messages,
+            hasMore,
             pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
-                total,
-                pages: Math.ceil(total / parseInt(limit))
+                limit: parsedLimit,
+                returned: messages.length,
             }
         });
     } catch (error) {

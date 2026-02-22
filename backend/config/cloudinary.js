@@ -100,6 +100,74 @@ const uploadDocument = async (file, options = {}) => {
 };
 
 /**
+ * Upload a file from buffer using Cloudinary streams (avoids base64 overhead)
+ * @param {Buffer} buffer - File buffer
+ * @param {Object} options - Upload options
+ * @returns {Promise<Object>} Upload result
+ */
+const uploadFromBuffer = (buffer, options = {}) => {
+    return new Promise((resolve, reject) => {
+        const defaultOptions = {
+            folder: UPLOAD_FOLDER,
+            resource_type: 'auto',
+        };
+        const uploadOptions = { ...defaultOptions, ...options };
+
+        const uploadStream = cloudinary.uploader.upload_stream(
+            uploadOptions,
+            (error, result) => {
+                if (error) return reject(error);
+                resolve(result);
+            }
+        );
+
+        uploadStream.end(buffer);
+    });
+};
+
+/**
+ * Upload an image from buffer (streaming, no base64 overhead)
+ */
+const uploadImageFromBuffer = (buffer, options = {}) => {
+    return uploadFromBuffer(buffer, {
+        ...options,
+        resource_type: 'image',
+        folder: `${UPLOAD_FOLDER}/images`,
+        transformation: [
+            { quality: 'auto:good' },
+            { fetch_format: 'auto' }
+        ]
+    });
+};
+
+/**
+ * Upload a video from buffer (streaming, no base64 overhead)
+ */
+const uploadVideoFromBuffer = (buffer, options = {}) => {
+    return uploadFromBuffer(buffer, {
+        ...options,
+        resource_type: 'video',
+        folder: `${UPLOAD_FOLDER}/videos`,
+        eager: [
+            { quality: 'auto:good', fetch_format: 'mp4' },
+            { format: 'jpg', transformation: [{ width: 320, height: 240, crop: 'fill' }] }
+        ],
+        eager_async: true
+    });
+};
+
+/**
+ * Upload a document from buffer (streaming, no base64 overhead)
+ */
+const uploadDocumentFromBuffer = (buffer, options = {}) => {
+    return uploadFromBuffer(buffer, {
+        ...options,
+        resource_type: 'raw',
+        folder: `${UPLOAD_FOLDER}/documents`
+    });
+};
+
+/**
  * Delete a file from Cloudinary
  * @param {string} publicId - Public ID of the file
  * @param {string} resourceType - Type of resource (image, video, raw)
@@ -133,6 +201,10 @@ module.exports = {
     uploadImage,
     uploadVideo,
     uploadDocument,
+    uploadFromBuffer,
+    uploadImageFromBuffer,
+    uploadVideoFromBuffer,
+    uploadDocumentFromBuffer,
     deleteFromCloudinary,
     getOptimizedUrl,
     UPLOAD_FOLDER

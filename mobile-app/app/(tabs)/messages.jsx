@@ -184,7 +184,23 @@ export default function MessagesScreen() {
 
   const renderConversation = ({ item }) => {
     const name = getConversationName(item);
-    const lastMessage = item.latestMessage?.content || 'No messages yet';
+    let lastMessage = 'No messages yet';
+    if (item.latestMessage) {
+      const msg = item.latestMessage;
+      if (msg.messageType === 'text' || msg.messageType === 'system') {
+        lastMessage = msg.content || 'No messages yet';
+      } else if (msg.messageType === 'image') {
+        lastMessage = '📷 Image';
+      } else if (msg.messageType === 'video') {
+        lastMessage = '🎥 Video';
+      } else if (msg.messageType === 'audio') {
+        lastMessage = '🎵 Audio';
+      } else if (msg.messageType === 'document' || msg.messageType === 'file') {
+        lastMessage = '📄 ' + (msg.fileName || 'Document');
+      } else {
+        lastMessage = msg.content || 'New message';
+      }
+    }
     const time = formatTime(item.latestMessage?.createdAt || item.updatedAt);
     
     return (

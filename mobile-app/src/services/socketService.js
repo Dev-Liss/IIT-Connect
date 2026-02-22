@@ -33,10 +33,10 @@ class SocketService {
         this.socket = io(SOCKET_URL, {
             transports: ['websocket', 'polling'],
             reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 500,
             reconnectionDelayMax: 5000,
-            timeout: 20000,
+            timeout: 10000,
         });
 
         // Connection events

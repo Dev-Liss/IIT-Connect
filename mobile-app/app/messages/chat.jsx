@@ -39,8 +39,11 @@ export default function ChatScreen() {
   const [typingUser, setTypingUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isConnected, setIsConnected] = useState(socketService.getConnectionStatus());
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const flatListRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const isNearBottom = useRef(true);
 
   // Media attachment states
   const [showAttachmentPicker, setShowAttachmentPicker] = useState(false);
@@ -91,6 +94,7 @@ export default function ChatScreen() {
         
         if (data.success) {
           setMessages(data.messages);
+          setHasMore(data.hasMore || false);
         }
       } catch (error) {
         console.error('Error fetching messages:', error);
@@ -116,8 +120,24 @@ export default function ChatScreen() {
     if (!conversationId) return;
 
     const handleNewMessage = (message) => {
-      setMessages(prevMessages => [...prevMessages, message]);
-      
+      const currentUserId = currentUser?.id || currentUser?._id;
+      const isMine = message.sender?._id === currentUserId || message.sender === currentUserId;
+
+      setMessages(prev => {
+        // Replace optimistic message with server-confirmed one
+        if (isMine) {
+          const optimisticIdx = prev.findIndex(m => m._optimistic);
+          if (optimisticIdx !== -1) {
+            const updated = [...prev];
+            updated[optimisticIdx] = message;
+            return updated;
+          }
+        }
+        // Deduplicate by _id (prevent double-add from race conditions)
+        if (prev.some(m => m._id === message._id)) return prev;
+        return [...prev, message];
+      });
+
       // Mark as read
       socketService.markAsRead(conversationId);
     };
@@ -127,7 +147,7 @@ export default function ChatScreen() {
     return () => {
       socketService.removeMessageListener(conversationId, handleNewMessage);
     };
-  }, [conversationId]);
+  }, [conversationId, currentUser]);
 
   // Set up typing indicator listener
   useEffect(() => {
@@ -192,15 +212,34 @@ export default function ChatScreen() {
       clearTimeout(typingTimeoutRef.current);
     }
 
+    const currentUserId = currentUser.id || currentUser._id;
+    const content = inputText.trim();
+    const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Optimistic: show message instantly in UI
+    setMessages(prev => [...prev, {
+      _id: tempId,
+      conversation: conversationId,
+      sender: { _id: currentUserId, username: currentUser.username },
+      content,
+      messageType: 'text',
+      createdAt: new Date().toISOString(),
+      _optimistic: true,
+    }]);
+    setInputText('');
+
     // Send message via socket
     const sent = socketService.sendMessage({
       conversationId,
-      content: inputText.trim(),
+      content,
       messageType: 'text',
+      tempId,
     });
 
-    if (sent) {
-      setInputText('');
+    // Revert optimistic message if socket send failed
+    if (!sent) {
+      setMessages(prev => prev.filter(m => m._id !== tempId));
+      setInputText(content);
     }
   };
 
@@ -261,7 +300,30 @@ export default function ChatScreen() {
       if (uploadResult.success) {
         // Send message via socket with media data
         const messageType = selectedMedia.type === 'document' ? 'document' : selectedMedia.type;
-        
+        const currentUserId = currentUser.id || currentUser._id;
+        const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        // Optimistic: show media message immediately
+        setMessages(prev => [...prev, {
+          _id: tempId,
+          conversation: conversationId,
+          sender: { _id: currentUserId, username: currentUser.username },
+          content: inputText.trim() || '',
+          messageType,
+          fileUrl: uploadResult.file.url,
+          fileName: uploadResult.file.fileName,
+          fileSize: uploadResult.file.fileSize,
+          fileMimeType: uploadResult.file.mimeType,
+          thumbnailUrl: uploadResult.file.thumbnailUrl,
+          mediaMetadata: {
+            width: uploadResult.file.width,
+            height: uploadResult.file.height,
+            duration: uploadResult.file.duration,
+          },
+          createdAt: new Date().toISOString(),
+          _optimistic: true,
+        }]);
+
         socketService.sendMessage({
           conversationId,
           content: inputText.trim() || '',
@@ -277,6 +339,7 @@ export default function ChatScreen() {
             height: uploadResult.file.height,
             duration: uploadResult.file.duration,
           },
+          tempId,
         });
 
         // Clear media and input
@@ -303,15 +366,53 @@ export default function ChatScreen() {
     }
   };
 
+  // Load earlier messages (pagination)
+  const loadEarlierMessages = useCallback(async () => {
+    if (loadingMore || !hasMore || messages.length === 0) return;
+
+    setLoadingMore(true);
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const oldestMessage = messages[0];
+      const response = await fetch(
+        `${MESSAGE_ENDPOINTS.GET_MESSAGES(conversationId)}?before=${oldestMessage.createdAt}&limit=50`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      const data = await response.json();
+      if (data.success && data.messages.length > 0) {
+        setMessages(prev => [...data.messages, ...prev]);
+        setHasMore(data.hasMore || false);
+      }
+    } catch (error) {
+      console.error('Error loading earlier messages:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [conversationId, messages, loadingMore, hasMore]);
+
+  // Track scroll position for smart auto-scroll
+  const handleScroll = useCallback((event) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const distanceFromBottom = contentSize.height - contentOffset.y - layoutMeasurement.height;
+    isNearBottom.current = distanceFromBottom < 150;
+  }, []);
+
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   const renderMessage = ({ item }) => {
-    const isMe = item.sender?._id === currentUser?._id || item.sender === currentUser?._id;
+    const currentUserId = currentUser?._id || currentUser?.id;
+    const isMe = item.sender?._id === currentUserId || item.sender === currentUserId;
     const senderName = item.sender?.username || name || 'User';
     const hasMedia = item.messageType && item.messageType !== 'text' && item.messageType !== 'system';
+    const isVisualMedia = item.messageType === 'image' || item.messageType === 'video';
 
     return (
       <View style={[styles.messageContainer, isMe ? styles.myMessageContainer : styles.otherMessageContainer]}>
@@ -321,7 +422,7 @@ export default function ChatScreen() {
           </View>
         )}
         <View style={styles.messageWrapper}>
-          <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.otherMessage, hasMedia && styles.mediaBubble]}>
+          <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.otherMessage, isVisualMedia && styles.mediaBubble]}>
             {item.messageType === 'system' ? (
               <Text style={styles.systemMessageText}>{item.content}</Text>
             ) : hasMedia ? (
@@ -396,8 +497,33 @@ export default function ChatScreen() {
           keyExtractor={(item) => item._id || item.id}
           contentContainerStyle={styles.messagesContainer}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+          onContentSizeChange={() => {
+            if (isNearBottom.current) {
+              flatListRef.current?.scrollToEnd({ animated: false });
+            }
+          }}
+          onScroll={handleScroll}
+          scrollEventThrottle={100}
           keyboardShouldPersistTaps="handled"
+          initialNumToRender={20}
+          maxToRenderPerBatch={10}
+          windowSize={15}
+          removeClippedSubviews={Platform.OS === 'android'}
+          ListHeaderComponent={
+            hasMore ? (
+              <TouchableOpacity
+                onPress={loadEarlierMessages}
+                style={{ alignItems: 'center', paddingVertical: 10 }}
+                disabled={loadingMore}
+              >
+                {loadingMore ? (
+                  <ActivityIndicator size="small" color="#D32F2F" />
+                ) : (
+                  <Text style={{ color: '#D32F2F', fontSize: 14 }}>Load earlier messages</Text>
+                )}
+              </TouchableOpacity>
+            ) : null
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="chatbubbles-outline" size={48} color="#ccc" />

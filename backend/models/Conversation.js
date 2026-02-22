@@ -121,7 +121,10 @@ ConversationSchema.statics.findOrCreateDirect = async function (userId1, userId2
 ConversationSchema.statics.getUserConversations = async function (userId) {
     return this.find({ participants: userId })
         .populate("participants", "username email")
-        .populate("latestMessage")
+        .populate({
+            path: "latestMessage",
+            populate: { path: "sender", select: "username" }
+        })
         .populate("admin", "username")
         .sort({ updatedAt: -1 });
 };

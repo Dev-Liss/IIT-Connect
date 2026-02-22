@@ -11,10 +11,9 @@ const multer = require('multer');
 const { protect } = require('../middleware/authMiddleware');
 const logger = require('../config/logger');
 const {
-    uploadImage,
-    uploadVideo,
-    uploadDocument,
-    uploadToCloudinary,
+    uploadImageFromBuffer,
+    uploadVideoFromBuffer,
+    uploadDocumentFromBuffer,
     deleteFromCloudinary
 } = require('../config/cloudinary');
 
@@ -93,22 +92,21 @@ router.post('/media', protect, upload.single('file'), async (req, res) => {
         const fileCategory = getFileCategory(mimetype);
 
         let uploadResult;
-        const base64File = `data:${mimetype};base64,${buffer.toString('base64')}`;
 
-        // Upload based on file type
+        // Upload using buffer streaming (avoids base64 overhead for faster uploads)
         switch (fileCategory) {
             case 'image':
-                uploadResult = await uploadImage(base64File, {
+                uploadResult = await uploadImageFromBuffer(buffer, {
                     public_id: `${Date.now()}_${originalname.replace(/\.[^/.]+$/, '')}`,
                 });
                 break;
             case 'video':
-                uploadResult = await uploadVideo(base64File, {
+                uploadResult = await uploadVideoFromBuffer(buffer, {
                     public_id: `${Date.now()}_${originalname.replace(/\.[^/.]+$/, '')}`,
                 });
                 break;
             default:
-                uploadResult = await uploadDocument(base64File, {
+                uploadResult = await uploadDocumentFromBuffer(buffer, {
                     public_id: `${Date.now()}_${originalname}`,
                 });
         }
@@ -128,8 +126,10 @@ router.post('/media', protect, upload.single('file'), async (req, res) => {
                 height: uploadResult.height || null,
                 duration: uploadResult.duration || null,
                 thumbnailUrl: fileCategory === 'video'
-                    ? uploadResult.secure_url.replace(/\.[^/.]+$/, '.jpg')
-                    : null,
+                    ? uploadResult.secure_url.replace('/upload/', '/upload/w_400,h_300,c_fill,q_80/').replace(/\.[^/.]+$/, '.jpg')
+                    : fileCategory === 'image'
+                        ? uploadResult.secure_url.replace('/upload/', '/upload/w_400,q_60/')
+                        : null,
             }
         };
 
@@ -161,22 +161,22 @@ router.post('/multiple', protect, upload.array('files', 10), async (req, res) =>
         const uploadPromises = req.files.map(async (file) => {
             const { buffer, mimetype, originalname, size } = file;
             const fileCategory = getFileCategory(mimetype);
-            const base64File = `data:${mimetype};base64,${buffer.toString('base64')}`;
 
             let uploadResult;
+            // Upload using buffer streaming (avoids base64 overhead)
             switch (fileCategory) {
                 case 'image':
-                    uploadResult = await uploadImage(base64File, {
+                    uploadResult = await uploadImageFromBuffer(buffer, {
                         public_id: `${Date.now()}_${originalname.replace(/\.[^/.]+$/, '')}`,
                     });
                     break;
                 case 'video':
-                    uploadResult = await uploadVideo(base64File, {
+                    uploadResult = await uploadVideoFromBuffer(buffer, {
                         public_id: `${Date.now()}_${originalname.replace(/\.[^/.]+$/, '')}`,
                     });
                     break;
                 default:
-                    uploadResult = await uploadDocument(base64File, {
+                    uploadResult = await uploadDocumentFromBuffer(buffer, {
                         public_id: `${Date.now()}_${originalname}`,
                     });
             }
@@ -193,8 +193,10 @@ router.post('/multiple', protect, upload.array('files', 10), async (req, res) =>
                 height: uploadResult.height || null,
                 duration: uploadResult.duration || null,
                 thumbnailUrl: fileCategory === 'video'
-                    ? uploadResult.secure_url.replace(/\.[^/.]+$/, '.jpg')
-                    : null,
+                    ? uploadResult.secure_url.replace('/upload/', '/upload/w_400,h_300,c_fill,q_80/').replace(/\.[^/.]+$/, '.jpg')
+                    : fileCategory === 'image'
+                        ? uploadResult.secure_url.replace('/upload/', '/upload/w_400,q_60/')
+                        : null,
             };
         });
 

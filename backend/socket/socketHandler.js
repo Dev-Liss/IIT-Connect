@@ -69,7 +69,7 @@ const socketHandler = (io) => {
                     return;
                 }
 
-                const conversation = await Conversation.findById(conversationId);
+                const conversation = await Conversation.findById(conversationId).lean();
                 if (!conversation) {
                     socket.emit('error', { message: 'Conversation not found' });
                     return;
@@ -87,8 +87,8 @@ const socketHandler = (io) => {
                 socket.join(`conversation_${conversationId}`);
                 logger.debug('User joined conversation', { userId, conversationId });
 
-                // Mark messages as read when joining
-                await Message.updateMany(
+                // Mark messages as read when joining (fire-and-forget for faster room join)
+                Message.updateMany(
                     {
                         conversation: conversationId,
                         sender: { $ne: userId },
@@ -97,7 +97,7 @@ const socketHandler = (io) => {
                     {
                         $push: { readBy: { user: userId, readAt: new Date() } }
                     }
-                );
+                ).catch(err => logger.error('Error marking messages read on join', { error: err.message }));
 
                 socket.to(`conversation_${conversationId}`).emit('user_joined', {
                     conversationId,
@@ -155,8 +155,8 @@ const socketHandler = (io) => {
                     return;
                 }
 
-                // Verify sender is a participant
-                const conversation = await Conversation.findById(conversationId);
+                // Verify sender is a participant (lean query for speed)
+                const conversation = await Conversation.findById(conversationId).lean();
                 if (!conversation) {
                     socket.emit('error', { message: 'Conversation not found' });
                     return;
@@ -169,7 +169,7 @@ const socketHandler = (io) => {
                     return;
                 }
 
-                // Create and save the message
+                // Create the message (_id generated immediately by Mongoose)
                 const message = new Message({
                     conversation: conversationId,
                     sender: senderId,
@@ -185,13 +185,14 @@ const socketHandler = (io) => {
                     readBy: [{ user: senderId, readAt: new Date() }]
                 });
 
+                // Save message first, then update conversation + populate in parallel
                 await message.save();
-                await message.populate('sender', 'username email studentId');
-
-                // Update conversation's latestMessage
-                await Conversation.findByIdAndUpdate(conversationId, {
-                    latestMessage: message._id
-                });
+                await Promise.all([
+                    Conversation.findByIdAndUpdate(conversationId, {
+                        latestMessage: message._id
+                    }),
+                    message.populate('sender', 'username email studentId')
+                ]);
 
                 // Emit to everyone in the conversation room
                 const messagePayload = {
@@ -211,6 +212,12 @@ const socketHandler = (io) => {
                 };
 
                 io.to(`conversation_${conversationId}`).emit('receive_message', {
+                    message: messagePayload
+                });
+
+                // Acknowledge to sender for optimistic UI updates
+                socket.emit('message_sent', {
+                    tempId: data.tempId,
                     message: messagePayload
                 });
 

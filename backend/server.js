@@ -65,10 +65,18 @@ const io = new Server(server, {
     origin: ALLOWED_ORIGINS,
     methods: ["GET", "POST"],
   },
-  // Socket.io hardening
-  pingTimeout: 60000,
-  pingInterval: 25000,
+  // Socket.io optimization for real-time messaging
+  pingTimeout: 30000,
+  pingInterval: 15000,
   maxHttpBufferSize: 1e6, // 1 MB max payload per socket message
+  transports: ["websocket", "polling"],
+  allowUpgrades: true,
+  perMessageDeflate: {
+    threshold: 1024, // Compress messages larger than 1KB
+  },
+  httpCompression: {
+    threshold: 1024,
+  },
 });
 
 // Initialize Socket.io handler
@@ -100,10 +108,10 @@ app.use(hpp());
 // ====================================
 // RATE LIMITING
 // ====================================
-// Global limiter – 200 requests per 15 min window per IP
+// Global limiter – 500 requests per 15 min window per IP (higher for messaging apps)
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: "Too many requests, please try again later" },

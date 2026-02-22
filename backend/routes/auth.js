@@ -139,8 +139,19 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Compare hashed password
-    const isMatch = await user.comparePassword(password);
+    // Compare password (bcrypt hash)
+    let isMatch = await user.comparePassword(password);
+
+    // Backward compatibility: if the stored password is still plaintext
+    // (pre-bcrypt accounts), check directly and migrate to bcrypt
+    if (!isMatch && user.password === password) {
+      isMatch = true;
+      // Migrate: hash the plaintext password and save
+      user.password = password; // pre-save hook will hash it
+      await user.save();
+      logger.info("Migrated plaintext password to bcrypt", { userId: user._id });
+    }
+
     if (!isMatch) {
       return res.status(401).json({
         success: false,
