@@ -393,13 +393,6 @@ export default function TimetableScreen() {
                         ) : (
                             // TODAY LIST VIEW
                             <View style={styles.listContainer}>
-                                <View style={styles.dayHeaderSection}>
-                                    <Text style={styles.dayTitle}>{currentDay || "Today"}</Text>
-                                    <Text style={styles.classCount}>
-                                        {todayClasses.length} classes today
-                                    </Text>
-                                </View>
-
                                 <Animated.ScrollView
                                     contentContainerStyle={{ paddingTop: TOTAL_HEADER_HEIGHT, paddingBottom: 80 }}
                                     onScroll={Animated.event(
@@ -408,6 +401,15 @@ export default function TimetableScreen() {
                                     )}
                                     scrollEventThrottle={16}
                                 >
+                                    <Text style={{
+                                        fontWeight: "bold",
+                                        color: "#f9252b",
+                                        marginBottom: 15,
+                                        fontSize: 20
+                                    }}>
+                                        Today's Sessions
+                                    </Text>
+                                    
                                     {todayClasses.length > 0 ? (
                                         todayClasses.map((entry) => (
                                             <TouchableOpacity
@@ -426,7 +428,9 @@ export default function TimetableScreen() {
                                         ))
                                     ) : (
                                         <View style={styles.emptyState}>
-                                            <Text style={styles.emptyText}>No classes today 🎉</Text>
+                                            <Text style={{ fontSize: 16, color: "#888", textAlign: "center" }}>
+                                                No sessions scheduled for today.
+                                            </Text>
                                         </View>
                                     )}
                                 </Animated.ScrollView>
