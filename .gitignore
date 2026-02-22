@@ -45,3 +45,6 @@ ios/Pods/
 *.log
 tmp/
 temp/
+
+# Backend logs directory
+backend/logs/

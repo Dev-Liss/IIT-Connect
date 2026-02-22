@@ -7,6 +7,7 @@
  */
 
 const cloudinary = require('cloudinary').v2;
+const logger = require('./logger');
 
 // Configure Cloudinary with environment variables
 cloudinary.config({
@@ -46,7 +47,7 @@ const uploadToCloudinary = async (file, options = {}) => {
             return await cloudinary.uploader.upload(file, uploadOptions);
         }
     } catch (error) {
-        console.error('Cloudinary upload error:', error);
+        logger.error('Cloudinary upload error', { error: error.message });
         throw error;
     }
 };
@@ -109,7 +110,7 @@ const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
             resource_type: resourceType
         });
     } catch (error) {
-        console.error('Cloudinary delete error:', error);
+        logger.error('Cloudinary delete error', { error: error.message });
         throw error;
     }
 };

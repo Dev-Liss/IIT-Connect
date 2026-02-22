@@ -7,9 +7,17 @@
 
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const { protect } = require('../middleware/authMiddleware');
+const logger = require('../config/logger');
+
+/**
+ * Strip HTML-significant chars from user input
+ */
+const sanitise = (str) =>
+    typeof str === 'string' ? str.replace(/[<>]/g, '').trim() : '';
 
 /**
  * @route   GET /api/conversations
@@ -25,7 +33,7 @@ router.get('/', protect, async (req, res) => {
             conversations
         });
     } catch (error) {
-        console.error('Error fetching conversations:', error);
+        logger.error('Error fetching conversations', { error: error.message, userId: req.user._id });
         res.status(500).json({
             success: false,
             message: 'Failed to fetch conversations'
@@ -72,7 +80,7 @@ router.get('/:id', protect, async (req, res) => {
             conversation
         });
     } catch (error) {
-        console.error('Error fetching conversation:', error);
+        logger.error('Error fetching conversation', { error: error.message, convId: req.params.id });
         res.status(500).json({
             success: false,
             message: 'Failed to fetch conversation'
@@ -115,7 +123,7 @@ router.post('/direct', protect, async (req, res) => {
             conversation
         });
     } catch (error) {
-        console.error('Error creating direct conversation:', error);
+        logger.error('Error creating direct conversation', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Failed to create conversation'
@@ -130,7 +138,11 @@ router.post('/direct', protect, async (req, res) => {
  */
 router.post('/group', protect, async (req, res) => {
     try {
-        const { name, description, participants, category, type, isPublic } = req.body;
+        let { name, description, participants, category, type, isPublic } = req.body;
+
+        // Sanitise text inputs
+        name = sanitise(name);
+        description = description ? sanitise(description) : undefined;
 
         if (!name) {
             return res.status(400).json({
@@ -177,7 +189,7 @@ router.post('/group', protect, async (req, res) => {
             conversation
         });
     } catch (error) {
-        console.error('Error creating group:', error);
+        logger.error('Error creating group', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Failed to create group'
@@ -229,7 +241,7 @@ router.put('/:id', protect, async (req, res) => {
             conversation
         });
     } catch (error) {
-        console.error('Error updating conversation:', error);
+        logger.error('Error updating conversation', { error: error.message, convId: req.params.id });
         res.status(500).json({
             success: false,
             message: 'Failed to update conversation'
@@ -282,7 +294,7 @@ router.post('/:id/participants', protect, async (req, res) => {
             conversation
         });
     } catch (error) {
-        console.error('Error adding participant:', error);
+        logger.error('Error adding participant', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Failed to add participant'
@@ -332,7 +344,7 @@ router.delete('/:id/participants/:userId', protect, async (req, res) => {
             conversation
         });
     } catch (error) {
-        console.error('Error removing participant:', error);
+        logger.error('Error removing participant', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Failed to remove participant'
@@ -377,7 +389,7 @@ router.delete('/:id', protect, async (req, res) => {
             message: 'Conversation deleted successfully'
         });
     } catch (error) {
-        console.error('Error deleting conversation:', error);
+        logger.error('Error deleting conversation', { error: error.message, convId: req.params.id });
         res.status(500).json({
             success: false,
             message: 'Failed to delete conversation'

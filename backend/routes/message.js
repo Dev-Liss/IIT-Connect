@@ -10,6 +10,20 @@ const router = express.Router();
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
 const { protect } = require('../middleware/authMiddleware');
+const logger = require('../config/logger');
+
+/**
+ * Escape special regex characters to prevent ReDoS attacks
+ * when using user input in MongoDB $regex queries.
+ */
+const escapeRegex = (str) =>
+    str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Strip HTML-significant chars from user input
+ */
+const sanitise = (str) =>
+    typeof str === 'string' ? str.replace(/[<>]/g, '').trim() : '';
 
 /**
  * @route   GET /api/messages/:conversationId
@@ -74,7 +88,7 @@ router.get('/:conversationId', protect, async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error fetching messages:', error);
+        logger.error('Error fetching messages', { error: error.message, conversationId: req.params.conversationId });
         res.status(500).json({
             success: false,
             message: 'Failed to fetch messages'
@@ -90,7 +104,10 @@ router.get('/:conversationId', protect, async (req, res) => {
 router.post('/:conversationId', protect, async (req, res) => {
     try {
         const { conversationId } = req.params;
-        const { content, messageType = 'text', fileUrl, fileName } = req.body;
+        let { content, messageType = 'text', fileUrl, fileName } = req.body;
+
+        // Sanitise text content
+        if (content) content = sanitise(content);
 
         if (!content && messageType === 'text') {
             return res.status(400).json({
@@ -146,7 +163,7 @@ router.post('/:conversationId', protect, async (req, res) => {
             message
         });
     } catch (error) {
-        console.error('Error sending message:', error);
+        logger.error('Error sending message', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Failed to send message'
@@ -188,7 +205,7 @@ router.put('/:messageId/read', protect, async (req, res) => {
             message: 'Message marked as read'
         });
     } catch (error) {
-        console.error('Error marking message as read:', error);
+        logger.error('Error marking message as read', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Failed to mark message as read'
@@ -234,7 +251,7 @@ router.delete('/:messageId', protect, async (req, res) => {
             message: 'Message deleted'
         });
     } catch (error) {
-        console.error('Error deleting message:', error);
+        logger.error('Error deleting message', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Failed to delete message'
@@ -282,7 +299,7 @@ router.get('/:conversationId/search', protect, async (req, res) => {
 
         const messages = await Message.find({
             conversation: conversationId,
-            content: { $regex: q, $options: 'i' },
+            content: { $regex: escapeRegex(q), $options: 'i' },
             messageType: 'text'
         })
             .sort({ createdAt: -1 })
@@ -295,7 +312,7 @@ router.get('/:conversationId/search', protect, async (req, res) => {
             query: q
         });
     } catch (error) {
-        console.error('Error searching messages:', error);
+        logger.error('Error searching messages', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Failed to search messages'

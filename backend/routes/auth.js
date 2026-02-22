@@ -12,9 +12,21 @@
 
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 
-// ⚠️ IMPORTANT: File is 'user.js' (lowercase) - match exactly!
 const User = require("../models/user");
+const { generateToken } = require("../middleware/authMiddleware");
+const logger = require("../config/logger");
+
+// ====================================
+// HELPERS – input sanitisation
+// ====================================
+/**
+ * Strip characters that have no business in normal text inputs.
+ * Removes < > to prevent HTML/script injection.
+ */
+const sanitiseText = (str) =>
+  typeof str === "string" ? str.replace(/[<>]/g, "").trim() : "";
 
 // ====================================
 // REGISTER ROUTE
@@ -22,7 +34,6 @@ const User = require("../models/user");
 // ====================================
 router.post("/register", async (req, res) => {
   try {
-    // Extract user data from request body
     const { username, email, password, studentId } = req.body;
 
     // Validate required fields
@@ -34,8 +45,33 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // Sanitise text fields
+    const cleanUsername = sanitiseText(username);
+    const cleanEmail = sanitiseText(email).toLowerCase();
+    const cleanStudentId = sanitiseText(studentId);
+
+    // Basic format checks
+    if (cleanUsername.length < 3 || cleanUsername.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: "Username must be between 3 and 50 characters",
+      });
+    }
+    if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address",
+      });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: cleanEmail });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -43,21 +79,25 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // Create new user
+    // Create new user (password hashed automatically via pre-save hook)
     const newUser = new User({
-      username,
-      email,
-      password, // TODO: Hash password with bcrypt in Phase 3
-      studentId,
+      username: cleanUsername,
+      email: cleanEmail,
+      password,
+      studentId: cleanStudentId,
     });
 
-    // Save to database
     await newUser.save();
 
-    // Return success (don't send password back!)
+    // Generate JWT
+    const token = generateToken(newUser._id);
+
+    logger.info("New user registered", { userId: newUser._id, email: cleanEmail });
+
     res.status(201).json({
       success: true,
       message: "Account created successfully!",
+      token,
       user: {
         id: newUser._id,
         username: newUser.username,
@@ -67,8 +107,8 @@ router.post("/register", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Register Error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    logger.error("Register error", { error: err.message });
+    res.status(500).json({ success: false, message: "Registration failed. Please try again." });
   }
 });
 
@@ -80,7 +120,6 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate required fields
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -88,27 +127,36 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email });
+    const cleanEmail = sanitiseText(email).toLowerCase();
+
+    // Find user and explicitly include password for comparison
+    const user = await User.findOne({ email: cleanEmail }).select("+password");
     if (!user) {
-      return res.status(404).json({
+      // Use generic message to avoid user enumeration
+      return res.status(401).json({
         success: false,
-        message: "User not found. Please register first.",
+        message: "Invalid email or password",
       });
     }
 
-    // Check password (TODO: Use bcrypt.compare in Phase 3)
-    if (user.password !== password) {
-      return res.status(400).json({
+    // Compare hashed password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Invalid email or password",
       });
     }
 
-    // Success! Return user data (never send password!)
+    // Generate JWT
+    const token = generateToken(user._id);
+
+    logger.info("User logged in", { userId: user._id });
+
     res.json({
       success: true,
       message: "Login successful!",
+      token,
       user: {
         id: user._id,
         username: user.username,
@@ -118,8 +166,8 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Login Error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    logger.error("Login error", { error: err.message });
+    res.status(500).json({ success: false, message: "Login failed. Please try again." });
   }
 });
 
@@ -129,31 +177,29 @@ router.post("/login", async (req, res) => {
 // ====================================
 router.get("/users", async (req, res) => {
   try {
-    // Get all users, excluding the current user if userId is provided
     const { excludeUserId } = req.query;
 
     let query = {};
-    if (excludeUserId) {
+    if (excludeUserId && mongoose.Types.ObjectId.isValid(excludeUserId)) {
       query._id = { $ne: excludeUserId };
     }
 
-    // Find users and exclude password field
-    const users = await User.find(query).select('-password');
+    const users = await User.find(query);
 
     res.json({
       success: true,
-      users: users.map(user => ({
+      users: users.map((user) => ({
         id: user._id,
         username: user.username,
         email: user.email,
         studentId: user.studentId,
         role: user.role,
-        department: user.department || 'IIT Student',
+        department: user.department || "IIT Student",
       })),
     });
   } catch (err) {
-    console.error("Get Users Error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    logger.error("Get users error", { error: err.message });
+    res.status(500).json({ success: false, message: "Failed to fetch users" });
   }
 });
 

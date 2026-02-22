@@ -1,50 +1,67 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, Alert, StyleSheet } from "react-native";
+import { AUTH_ENDPOINTS, REQUEST_TIMEOUT } from "../config/api";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ⚠️ YOUR SPECIFIC IP IS SET HERE
-  const API_URL = "http://192.168.43.61:5000/api/auth/register";
-
   const handleLogin = async () => {
     // 1. Basic validation
-    if (!email || !password) {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
-    try {
-      console.log("Sending data to:", API_URL);
+    // Simple email format check
+    if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+      Alert.alert("Error", "Please enter a valid email address");
+      return;
+    }
 
-      // 2. The API Call
-      const response = await fetch(API_URL, {
+    try {
+      // 2. Use AbortController for request timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
+      const response = await fetch(AUTH_ENDPOINTS.LOGIN, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email,
-          password: password,
+          email: trimmedEmail,
+          password: trimmedPassword,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 
       // 3. Handle Response
       if (data.success) {
         Alert.alert("Success", "Welcome back!");
+        // Store the JWT token for authenticated requests
+        // e.g. AsyncStorage.setItem('token', data.token);
         console.log("User Info:", data.user);
         // This is where we will navigate to the Home Screen later
       } else {
         Alert.alert("Login Failed", data.message);
       }
     } catch (error) {
-      Alert.alert(
-        "Network Error",
-        "Could not connect to server.\nCheck if your laptop server is running.",
-      );
+      if (error.name === "AbortError") {
+        Alert.alert("Timeout", "Server did not respond in time. Please try again.");
+      } else {
+        Alert.alert(
+          "Network Error",
+          "Could not connect to server.\nCheck if your laptop server is running.",
+        );
+      }
       console.error(error);
     }
   };

@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { protect } = require('../middleware/authMiddleware');
+const logger = require('../config/logger');
 const {
     uploadImage,
     uploadVideo,
@@ -135,10 +136,10 @@ router.post('/media', protect, upload.single('file'), async (req, res) => {
         res.status(201).json(responseData);
 
     } catch (error) {
-        console.error('Upload error:', error);
+        logger.error('Upload error', { error: error.message });
         res.status(500).json({
             success: false,
-            message: error.message || 'Failed to upload file'
+            message: 'Failed to upload file'
         });
     }
 });
@@ -206,10 +207,10 @@ router.post('/multiple', protect, upload.array('files', 10), async (req, res) =>
         });
 
     } catch (error) {
-        console.error('Multiple upload error:', error);
+        logger.error('Multiple upload error', { error: error.message });
         res.status(500).json({
             success: false,
-            message: error.message || 'Failed to upload files'
+            message: 'Failed to upload files'
         });
     }
 });
@@ -236,10 +237,10 @@ router.delete('/:publicId', protect, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Delete error:', error);
+        logger.error('Delete error', { error: error.message });
         res.status(500).json({
             success: false,
-            message: error.message || 'Failed to delete file'
+            message: 'Failed to delete file'
         });
     }
 });

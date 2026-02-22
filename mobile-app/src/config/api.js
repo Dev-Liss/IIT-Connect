@@ -17,10 +17,13 @@
  */
 
 // ⚠️ CHANGE THIS TO YOUR LAPTOP'S IP ADDRESS!
-const LAPTOP_IP = " 10.31.14.180";
+const LAPTOP_IP = "10.31.14.180";
 
 // Backend port (should match PORT in backend/.env)
 const PORT = "5000";
+
+// Request timeout in milliseconds
+export const REQUEST_TIMEOUT = 15000;
 
 // Full API base URL
 export const API_BASE_URL = `http://${LAPTOP_IP}:${PORT}/api`;
