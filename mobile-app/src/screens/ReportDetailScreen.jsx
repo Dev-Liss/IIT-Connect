@@ -31,21 +31,12 @@ const STATUS_COLORS = {
     rejected: { background: "#FFEBEE", text: "#D32F2F" },
 };
 
-interface Report {
-    _id: string;
-    title: string;
-    description: string;
-    status: "pending" | "ongoing" | "solved" | "rejected";
-    createdAt: string;
-    responses?: any[];
-}
-
 export default function ReportDetailScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams();
 
     // State
-    const [report, setReport] = useState<Report | null>(null);
+    const [report, setReport] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [responseText, setResponseText] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +47,7 @@ export default function ReportDetailScreen() {
         const fetchReport = async () => {
             try {
                 console.log("📡 Fetching report:", id);
-                const response = await fetch(REPORT_ENDPOINTS.GET_BY_ID(id as string));
+                const response = await fetch(REPORT_ENDPOINTS.GET_BY_ID(id));
                 const data = await response.json();
 
                 if (data.success) {
@@ -79,11 +70,11 @@ export default function ReportDetailScreen() {
 
     // UPDATE REPORT STATUS
 
-    const updateStatus = async (newStatus: "ongoing" | "solved" | "rejected") => {
+    const updateStatus = async (newStatus) => {
         try {
             setIsSubmitting(true);
 
-            const response = await fetch(REPORT_ENDPOINTS.UPDATE_STATUS(id as string), {
+            const response = await fetch(REPORT_ENDPOINTS.UPDATE_STATUS(id), {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: newStatus }),
@@ -119,7 +110,7 @@ export default function ReportDetailScreen() {
             // TODO: Get actual user ID from auth context
             const userId = "000000000000000000000001"; // Placeholder
 
-            const response = await fetch(REPORT_ENDPOINTS.ADD_RESPONSE(id as string), {
+            const response = await fetch(REPORT_ENDPOINTS.ADD_RESPONSE(id), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -150,7 +141,7 @@ export default function ReportDetailScreen() {
     };
 
     // Format time ago
-    const formatTimeAgo = (dateString: string): string => {
+    const formatTimeAgo = (dateString) => {
         const date = new Date(dateString);
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();

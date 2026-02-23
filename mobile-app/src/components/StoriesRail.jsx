@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ====================================
  * STORIES RAIL — Instagram-Style Circular Avatars (v3.0)
  * ====================================
@@ -38,36 +38,14 @@ import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "../context/AuthContext";
 import { STORY_ENDPOINTS } from "../config/api";
 
-// ─── Types ───────────────────────────────────────────────────
-interface StoryUser {
-  _id: string;
-  username: string;
-  email?: string;
-  profilePicture?: string;
-}
-
-interface Story {
-  _id: string;
-  mediaUrl: string;
-  mediaType?: string;
-  viewed: boolean;
-  createdAt: string;
-}
-
-interface StoryGroup {
-  user: StoryUser;
-  stories: Story[];
-  allViewed: boolean;
-}
-
 // ─── Constants ───────────────────────────────────────────────
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const CIRCLE_SIZE = 70; // avatar circle diameter
-const RING_WIDTH = 3; // colored ring width
-const RING_GAP = 2; // gap between ring and avatar
+const RING_WIDTH = 3;   // colored ring width
+const RING_GAP = 2;     // gap between ring and avatar
 const OUTER_SIZE = CIRCLE_SIZE + (RING_WIDTH + RING_GAP) * 2; // total size with ring
-const BADGE_SIZE = 24; // (+) badge size
+const BADGE_SIZE = 24;  // (+) badge size
 const STORY_DURATION = 5000; // 5 s per story
 
 const BRAND_RED = "#f9252b";
@@ -76,7 +54,7 @@ const DEFAULT_AVATAR =
   "https://ui-avatars.com/api/?background=ccc&color=fff&name=User";
 
 // Instagram-style gradient colors for unviewed ring
-const GRADIENT_COLORS: [string, string, string, string] = [
+const GRADIENT_COLORS = [
   "#f9ce34",
   "#ee2a7b",
   "#6228d7",
@@ -84,7 +62,7 @@ const GRADIENT_COLORS: [string, string, string, string] = [
 ];
 
 // ─── Helper: first unviewed or first story thumbnail ─────────
-const getThumbnail = (stories: Story[], fallbackAvatar?: string): string => {
+const getThumbnail = (stories, fallbackAvatar) => {
   const firstUnviewed = stories.find((s) => !s.viewed);
   if (firstUnviewed) return firstUnviewed.mediaUrl;
   if (stories.length > 0) return stories[0].mediaUrl;
@@ -94,12 +72,7 @@ const getThumbnail = (stories: Story[], fallbackAvatar?: string): string => {
 // =============================================================
 //  StoryCircle — generic friend circle
 // =============================================================
-interface StoryCircleProps {
-  group: StoryGroup;
-  onPress: () => void;
-}
-
-const StoryCircle: React.FC<StoryCircleProps> = ({ group, onPress }) => {
+const StoryCircle = ({ group, onPress }) => {
   const avatar = group.user?.profilePicture || DEFAULT_AVATAR;
   const username = group.user?.username || "Unknown";
   const isViewed = group.allViewed;
@@ -141,17 +114,7 @@ const StoryCircle: React.FC<StoryCircleProps> = ({ group, onPress }) => {
 // =============================================================
 //  MyStoryCircle — current user's circle with (+) badge
 // =============================================================
-interface MyStoryCircleProps {
-  userAvatar?: string;
-  username: string;
-  hasStories: boolean;
-  allViewed: boolean;
-  onPressView: () => void;
-  onPressAdd: () => void;
-  isUploading: boolean;
-}
-
-const MyStoryCircle: React.FC<MyStoryCircleProps> = ({
+const MyStoryCircle = ({
   userAvatar,
   username,
   hasStories,
@@ -252,14 +215,7 @@ const MyStoryCircle: React.FC<MyStoryCircleProps> = ({
 // =============================================================
 //  StoryViewerModal — full-screen sequential viewer
 // =============================================================
-interface StoryViewerModalProps {
-  visible: boolean;
-  group: StoryGroup | null;
-  onClose: () => void;
-  onStoryViewed: (storyId: string) => void;
-}
-
-const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
+const StoryViewerModal = ({
   visible,
   group,
   onClose,
@@ -267,8 +223,8 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef(null);
+  const progressRef = useRef(null);
 
   // Stable callback refs to avoid useEffect re-triggers
   const onCloseRef = useRef(onClose);
@@ -332,7 +288,7 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   }, [visible, group, currentIndex]);
 
   // Tap handler: left half = previous, right half = next
-  const handleTap = (event: { nativeEvent: { locationX: number } }) => {
+  const handleTap = (event) => {
     const tapX = event.nativeEvent.locationX;
     const half = SCREEN_WIDTH / 2;
 
@@ -431,14 +387,14 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 // =============================================================
 //  StoriesRail — main exported component
 // =============================================================
-const StoriesRail: React.FC = () => {
+const StoriesRail = () => {
   const { user } = useAuth();
 
-  const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
-  const [myStoryGroup, setMyStoryGroup] = useState<StoryGroup | null>(null);
+  const [storyGroups, setStoryGroups] = useState([]);
+  const [myStoryGroup, setMyStoryGroup] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<StoryGroup | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   // ── Fetch stories ──────────────────────────────────────────
@@ -452,7 +408,7 @@ const StoriesRail: React.FC = () => {
       const data = await response.json();
 
       if (data.success) {
-        const groups: StoryGroup[] = data.data;
+        const groups = data.data;
         const myGroup = groups.find((g) => g.user?._id === user?.id) || null;
         const otherGroups = groups.filter((g) => g.user?._id !== user?.id);
 
@@ -491,7 +447,7 @@ const StoriesRail: React.FC = () => {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
+        allowsEditing: true,
         quality: 0.8,
       });
 
@@ -507,7 +463,7 @@ const StoriesRail: React.FC = () => {
         uri: selectedImage.uri,
         type: selectedImage.mimeType || "image/jpeg",
         name: `story_${Date.now()}.jpg`,
-      } as unknown as Blob);
+      });
 
       const response = await fetch(STORY_ENDPOINTS.CREATE, {
         method: "POST",
@@ -531,7 +487,7 @@ const StoriesRail: React.FC = () => {
   };
 
   // ── View stories ───────────────────────────────────────────
-  const handleViewStories = (group: StoryGroup) => {
+  const handleViewStories = (group) => {
     setSelectedGroup(group);
     setIsModalVisible(true);
   };
@@ -544,7 +500,7 @@ const StoriesRail: React.FC = () => {
   };
 
   const handleStoryViewed = useCallback(
-    async (storyId: string) => {
+    async (storyId) => {
       if (!user) return;
 
       // Fire-and-forget API call
@@ -555,10 +511,10 @@ const StoriesRail: React.FC = () => {
       }).catch((err) => console.error("❌ Failed to mark viewed:", err));
 
       // Optimistic local update
-      const updateStories = (stories: Story[]) =>
+      const updateStories = (stories) =>
         stories.map((s) => (s._id === storyId ? { ...s, viewed: true } : s));
 
-      const recalcAllViewed = (stories: Story[]) =>
+      const recalcAllViewed = (stories) =>
         stories.every((s) => s.viewed);
 
       setStoryGroups((prev) =>
@@ -665,8 +621,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   scrollContent: {
-    paddingHorizontal: 10,
-    gap: 14,
+    paddingHorizontal: 12,
+    gap: 12,
   },
 
   /* ── Circle wrapper ────────────────────────────── */
@@ -706,7 +662,7 @@ const styles = StyleSheet.create({
 
   /* ── Username label ────────────────────────────── */
   username: {
-    marginTop: 4,
+    marginTop: 5,
     fontSize: 11,
     color: "#262626",
     textAlign: "center",
@@ -716,8 +672,8 @@ const styles = StyleSheet.create({
   /* ── (+) Badge ─────────────────────────────────── */
   badgeContainer: {
     position: "absolute",
-    bottom: 20, // sits above the username label
-    right: 2,
+    bottom: 18, // sits above the username label
+    right: 0,
     zIndex: 10,
   },
   badge: {
@@ -741,11 +697,11 @@ const styles = StyleSheet.create({
   progressBarContainer: {
     position: "absolute",
     top: Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) + 10 : 54,
-    left: 8,
-    right: 8,
+    left: 10,
+    right: 10,
     flexDirection: "row",
     gap: 4,
-    zIndex: 10,
+    zIndex: 20,
   },
   progressBarWrapper: {
     flex: 1,
@@ -764,17 +720,17 @@ const styles = StyleSheet.create({
   modalHeader: {
     position: "absolute",
     top: Platform.OS === "android" ? (StatusBar.currentHeight ?? 24) + 20 : 64,
-    left: 12,
-    right: 12,
+    left: 14,
+    right: 14,
     flexDirection: "row",
     alignItems: "center",
-    zIndex: 10,
+    zIndex: 20,
   },
   modalAvatar: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: "#fff",
   },
   modalUserInfo: {
@@ -787,7 +743,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowRadius: 3,
   },
   modalStoryCount: {
     color: "rgba(255,255,255,0.7)",
@@ -795,7 +751,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   closeButton: {
-    padding: 4,
+    padding: 6,
   },
   modalImage: {
     width: SCREEN_WIDTH,

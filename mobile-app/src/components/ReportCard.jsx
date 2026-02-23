@@ -1,5 +1,5 @@
 /**
- * ==================================== 
+ * ====================================
  * REPORT CARD COMPONENT
  * ====================================
  * Displays a summary card for a report in the admin dashboard.
@@ -29,23 +29,8 @@ const STATUS_COLORS = {
     },
 };
 
-interface Report {
-    _id: string;
-    title: string;
-    description: string;
-    status: "pending" | "ongoing" | "solved" | "rejected";
-    createdAt: string;
-    responses?: any[];
-    responseCount?: number;
-}
-
-interface ReportCardProps {
-    report: Report;
-    onPress: (reportId: string) => void;
-}
-
 // Helper function to format "time ago"
-const formatTimeAgo = (dateString: string): string => {
+const formatTimeAgo = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -59,7 +44,7 @@ const formatTimeAgo = (dateString: string): string => {
     return date.toLocaleDateString();
 };
 
-export default function ReportCard({ report, onPress }: ReportCardProps) {
+export default function ReportCard({ report, onPress }) {
     const statusColor = STATUS_COLORS[report.status];
     const responseCount = report.responseCount || report.responses?.length || 0;
 

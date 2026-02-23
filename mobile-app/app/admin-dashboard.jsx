@@ -1,10 +1,12 @@
 /**
+ * ====================================
  * ADMIN DASHBOARD SCREEN
+ * ====================================
  * Lecturer-only screen for reviewing and managing user-submitted reports.
  * Displays reports list with filtering by status.
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
     View,
     Text,
@@ -16,39 +18,28 @@ import {
     SafeAreaView,
     Platform,
     StatusBar,
+    ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
-import ReportCard from "../components/ReportCard";
-import { REPORT_ENDPOINTS } from "../config/api";
-
-// Report type
-interface Report {
-    _id: string;
-    title: string;
-    description: string;
-    status: "pending" | "ongoing" | "solved" | "rejected";
-    createdAt: string;
-    responses?: any[];
-    responseCount?: number;
-}
-
-type FilterStatus = "all" | "pending" | "ongoing" | "solved";
+import ReportCard from "../src/components/ReportCard";
+import { REPORT_ENDPOINTS } from "../src/config/api";
 
 export default function AdminDashboardScreen() {
     const router = useRouter();
 
     // State
-    const [activeTab, setActiveTab] = useState<"moderation" | "reports">("reports");
-    const [reports, setReports] = useState<Report[]>([]);
-    const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+    const [activeTab, setActiveTab] = useState("reports");
+    const [reports, setReports] = useState([]);
+    const [filterStatus, setFilterStatus] = useState("all");
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [counts, setCounts] = useState({ pending: 0, ongoing: 0, solved: 0 });
+    const [error, setError] = useState(null);
+    const [counts, setCounts] = useState({ pending: 0, ongoing: 0, solved: 0, rejected: 0 });
 
+    // ====================================
     // FETCH REPORTS
-
+    // ====================================
     const fetchReports = useCallback(
         async (showRefreshIndicator = false) => {
             try {
@@ -71,7 +62,7 @@ export default function AdminDashboardScreen() {
 
                 if (data.success) {
                     setReports(data.data || []);
-                    setCounts(data.counts || { pending: 0, ongoing: 0, solved: 0 });
+                    setCounts(data.counts || { pending: 0, ongoing: 0, solved: 0, rejected: 0 });
                 } else {
                     setError(data.message || "Failed to fetch reports");
                 }
@@ -93,18 +84,24 @@ export default function AdminDashboardScreen() {
         }, [fetchReports])
     );
 
+    // Fetch reports when filter status changes
+    useEffect(() => {
+        fetchReports();
+    }, [filterStatus]);
+
     // Pull to refresh handler
     const onRefresh = () => {
         fetchReports(true);
     };
 
     // Navigate to report detail
-    const handleReportPress = (reportId: string) => {
+    const handleReportPress = (reportId) => {
         router.push(`/report-detail?id=${reportId}`);
     };
 
+    // ====================================
     // RENDER HEADER
-
+    // ====================================
     const renderHeader = () => (
         <View style={styles.header}>
             <TouchableOpacity
@@ -118,8 +115,9 @@ export default function AdminDashboardScreen() {
         </View>
     );
 
+    // ====================================
     // RENDER TAB SELECTOR
-
+    // ====================================
     const renderTabs = () => (
         <View style={styles.tabContainer}>
             <TouchableOpacity
@@ -162,8 +160,9 @@ export default function AdminDashboardScreen() {
         </View>
     );
 
+    // ====================================
     // RENDER STATS CARDS
-
+    // ====================================
     const renderStats = () => (
         <View style={styles.statsContainer}>
             <View style={styles.statCard}>
@@ -178,14 +177,24 @@ export default function AdminDashboardScreen() {
                 <Text style={styles.statNumber}>{counts.solved}</Text>
                 <Text style={styles.statLabel}>Solved</Text>
             </View>
+            <View style={styles.statCard}>
+                <Text style={styles.statNumber}>{counts.rejected}</Text>
+                <Text style={styles.statLabel}>Rejected</Text>
+            </View>
         </View>
     );
 
+    // ====================================
     // RENDER FILTER BUTTONS
-
+    // ====================================
     const renderFilters = () => (
-        <View style={styles.filterContainer}>
-            {(["all", "pending", "ongoing", "solved"] as FilterStatus[]).map((status) => (
+        <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScrollContent}
+            style={styles.filterScrollView}
+        >
+            {(["all", "pending", "ongoing", "solved", "rejected"]).map((status) => (
                 <TouchableOpacity
                     key={status}
                     style={[
@@ -193,6 +202,7 @@ export default function AdminDashboardScreen() {
                         filterStatus === status && styles.filterButtonActive,
                     ]}
                     onPress={() => setFilterStatus(status)}
+                    activeOpacity={0.7}
                 >
                     <Text
                         style={[
@@ -204,11 +214,12 @@ export default function AdminDashboardScreen() {
                     </Text>
                 </TouchableOpacity>
             ))}
-        </View>
+        </ScrollView>
     );
 
+    // ====================================
     // RENDER EMPTY STATE
-
+    // ====================================
     const renderEmpty = () => (
         <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={60} color="#c7c7c7" />
@@ -221,8 +232,9 @@ export default function AdminDashboardScreen() {
         </View>
     );
 
+    // ====================================
     // RENDER ERROR STATE
-
+    // ====================================
     const renderError = () => (
         <View style={styles.errorContainer}>
             <Ionicons name="cloud-offline-outline" size={60} color="#8e8e8e" />
@@ -238,8 +250,9 @@ export default function AdminDashboardScreen() {
         </View>
     );
 
+    // ====================================
     // RENDER LOADING STATE
-
+    // ====================================
     if (isLoading) {
         return (
             <SafeAreaView style={styles.container}>
@@ -254,8 +267,9 @@ export default function AdminDashboardScreen() {
         );
     }
 
+    // ====================================
     // RENDER ERROR
-
+    // ====================================
     if (error && reports.length === 0) {
         return (
             <SafeAreaView style={styles.container}>
@@ -267,8 +281,9 @@ export default function AdminDashboardScreen() {
         );
     }
 
+    // ====================================
     // RENDER MAIN CONTENT
-
+    // ====================================
     return (
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#fff" />
@@ -276,6 +291,7 @@ export default function AdminDashboardScreen() {
             {renderTabs()}
 
             <FlatList
+                style={{ flex: 1 }}
                 data={reports}
                 keyExtractor={(item) => item._id}
                 renderItem={({ item }) => (
@@ -297,17 +313,15 @@ export default function AdminDashboardScreen() {
                 }
                 ListEmptyComponent={renderEmpty}
                 showsVerticalScrollIndicator={false}
-                style={styles.flatList}
-                contentContainerStyle={
-                    reports.length === 0 ? styles.emptyList : styles.listContent
-                }
+                contentContainerStyle={styles.listContent}
             />
         </SafeAreaView>
     );
 }
 
+// ====================================
 // STYLES
-
+// ====================================
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -374,15 +388,14 @@ const styles = StyleSheet.create({
     statsContainer: {
         flexDirection: "row",
         paddingHorizontal: 16,
-        paddingTop: 8,
-        paddingBottom: 8,
-        gap: 12,
+        paddingVertical: 16,
+        gap: 8,
     },
     statCard: {
         flex: 1,
         backgroundColor: "#fff",
         borderRadius: 12,
-        padding: 16,
+        padding: 12,
         alignItems: "center",
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
@@ -401,27 +414,30 @@ const styles = StyleSheet.create({
         color: "#8e8e8e",
     },
     // Filters
-    filterContainer: {
-        flexDirection: "row",
+    filterScrollView: {
+        paddingBottom: 12,
+    },
+    filterScrollContent: {
         paddingHorizontal: 16,
-        paddingTop: 4,
-        paddingBottom: 10,
-        gap: 8,
     },
     filterButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 20,
+        height: 36,
+        paddingHorizontal: 20,
+        borderRadius: 18,
         backgroundColor: "#fff",
         borderWidth: 1,
-        borderColor: "#ddd",
+        borderColor: "#e3e3e3",
+        marginRight: 8,
+        justifyContent: "center",
+        alignItems: "center",
+        overflow: "hidden",
     },
     filterButtonActive: {
         backgroundColor: "#f9252b",
         borderColor: "#f9252b",
     },
     filterText: {
-        fontSize: 13,
+        fontSize: 14,
         fontWeight: "600",
         color: "#262626",
     },
@@ -429,14 +445,9 @@ const styles = StyleSheet.create({
         color: "#fff",
     },
     // List
-    flatList: {
-        flex: 1,
-    },
     listContent: {
+        paddingTop: 4,
         paddingBottom: 20,
-    },
-    emptyList: {
-        flexGrow: 1,
     },
     // Loading
     loadingContainer: {
