@@ -21,7 +21,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { EVENTS_ENDPOINTS } from "../src/config/api";
 
 export default function CreateEventScreen() {
@@ -44,7 +44,7 @@ export default function CreateEventScreen() {
     const [endTimeSelected, setEndTimeSelected] = useState(false);
 
     // Format date for display
-    const formatDate = (d: Date) => {
+    const formatDate = (d) => {
         return d.toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
@@ -53,7 +53,7 @@ export default function CreateEventScreen() {
     };
 
     // Format time for display
-    const formatTime = (d: Date) => {
+    const formatTime = (d) => {
         return d.toLocaleTimeString("en-US", {
             hour: "numeric",
             minute: "2-digit",
@@ -62,7 +62,7 @@ export default function CreateEventScreen() {
     };
 
     // Handlers
-    const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    const onDateChange = (event, selectedDate) => {
         setShowDatePicker(Platform.OS === "ios");
         if (selectedDate) {
             setDate(selectedDate);
@@ -70,7 +70,7 @@ export default function CreateEventScreen() {
         }
     };
 
-    const onStartTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    const onStartTimeChange = (event, selectedTime) => {
         setShowStartTimePicker(Platform.OS === "ios");
         if (selectedTime) {
             setStartTime(selectedTime);
@@ -78,7 +78,7 @@ export default function CreateEventScreen() {
         }
     };
 
-    const onEndTimeChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
+    const onEndTimeChange = (event, selectedTime) => {
         setShowEndTimePicker(Platform.OS === "ios");
         if (selectedTime) {
             setEndTime(selectedTime);

@@ -21,31 +21,9 @@ import { router } from "expo-router";
 import { EVENTS_ENDPOINTS, ANNOUNCEMENTS_ENDPOINTS } from "../src/config/api";
 
 // ====================================
-// TYPE DEFINITIONS
-// ====================================
-interface Event {
-    _id: string;
-    title: string;
-    description: string;
-    category: "academic" | "career" | "workshop" | "sports" | "other";
-    eventDate: string;
-    startTime: string;
-    endTime: string;
-    location: string;
-}
-
-interface Announcement {
-    _id: string;
-    title: string;
-    content: string;
-    source: string;
-    createdAt: string;
-}
-
-// ====================================
 // CATEGORY BADGE COLORS
 // ====================================
-const categoryColors: Record<string, string> = {
+const categoryColors = {
     academic: "#e63946",
     career: "#f4a261",
     workshop: "#2a9d8f",
@@ -56,7 +34,7 @@ const categoryColors: Record<string, string> = {
 // ====================================
 // HELPER FUNCTIONS
 // ====================================
-const formatDate = (dateString: string): string => {
+const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
         month: "long",
@@ -65,7 +43,7 @@ const formatDate = (dateString: string): string => {
     });
 };
 
-const getTimeAgo = (dateString: string): string => {
+const getTimeAgo = (dateString) => {
     const now = new Date();
     const date = new Date(dateString);
     const diffMs = now.getTime() - date.getTime();
@@ -81,7 +59,7 @@ const getTimeAgo = (dateString: string): string => {
 // ====================================
 // SAMPLE DATA (for testing before backend is ready)
 // ====================================
-const sampleEvents: Event[] = [
+const sampleEvents = [
     {
         _id: "1",
         title: "Engineering Week 2024 Opening Ceremony",
@@ -128,7 +106,7 @@ const sampleEvents: Event[] = [
     },
 ];
 
-const sampleAnnouncements: Announcement[] = [
+const sampleAnnouncements = [
     {
         _id: "1",
         title: "Exam Schedule Released",
@@ -174,7 +152,7 @@ const sampleAnnouncements: Announcement[] = [
 // ====================================
 // EVENT CARD COMPONENT
 // ====================================
-const EventCard: React.FC<{ event: Event }> = ({ event }) => {
+const EventCard = ({ event }) => {
     return (
         <View style={styles.eventCard}>
             {/* Header with Icon and Title */}
@@ -212,9 +190,7 @@ const EventCard: React.FC<{ event: Event }> = ({ event }) => {
 // ====================================
 // ANNOUNCEMENT CARD COMPONENT
 // ====================================
-const AnnouncementCard: React.FC<{ announcement: Announcement }> = ({
-    announcement,
-}) => {
+const AnnouncementCard = ({ announcement }) => {
     return (
         <View style={styles.announcementCard}>
             <View style={styles.announcementHeader}>
@@ -240,12 +216,9 @@ const AnnouncementCard: React.FC<{ announcement: Announcement }> = ({
 // MAIN COMPONENT
 // ====================================
 export default function EventsAnnouncementsScreen() {
-    const [activeTab, setActiveTab] = useState<"events" | "announcements">(
-        "events"
-    );
-    const [events, setEvents] = useState<Event[]>(sampleEvents);
-    const [announcements, setAnnouncements] =
-        useState<Announcement[]>(sampleAnnouncements);
+    const [activeTab, setActiveTab] = useState("events");
+    const [events, setEvents] = useState(sampleEvents);
+    const [announcements, setAnnouncements] = useState(sampleAnnouncements);
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 

@@ -3,7 +3,6 @@
  * IIT CONNECT - ANONYMOUS REPORT SCREEN
  * ====================================
  * Form for submitting anonymous reports
- * Frontend only - backend to be added later
  */
 
 import React, { useState } from "react";
