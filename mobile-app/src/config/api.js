@@ -1,4 +1,4 @@
-const LAPTOP_IP = "192.168.1.74";
+const LAPTOP_IP = "172.20.10.14";
 
 // Backend port (should match PORT in backend/.env)
 const PORT = "5000";

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSignIn, useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
+import { syncGoogleUser } from "../services/api";
 
 export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword }) {
   const [email, setEmail] = useState("");
@@ -23,53 +24,19 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
   const [isLoading, setIsLoading] = useState(false);
 
   const { signIn, setActive } = useSignIn();
-  const { isSignedIn, signOut, user } = useAuth();
+  const { isSignedIn, signOut } = useAuth();
   const { user: clerkUser } = useUser();
-  const [isSyncing, setIsSyncing] = useState(false);
-  const { syncGoogleUser } = require("../services/api");
 
-  // Effect to handle syncing after successful Google Login
+  // Always keep a ref to the latest clerkUser so async functions can read current value
+  const clerkUserRef = useRef(clerkUser);
   React.useEffect(() => {
-    const syncUser = async () => {
-      if (isSignedIn && clerkUser && !isSyncing) {
-        // Check if this is a Google login (or we just want to ensure sync)
+    clerkUserRef.current = clerkUser;
+  }, [clerkUser]);
 
-        setIsSyncing(true);
-        try {
-          const email = clerkUser.primaryEmailAddress?.emailAddress;
-          const username = clerkUser.fullName;
-          const clerkId = clerkUser.id;
+  // Guard ref to prevent double-runs
+  const isSyncingRef = useRef(false);
 
-          if (email) {
-            // We can check if it's a google account to be specific:
-            const isGoogle = clerkUser.externalAccounts.some(acc => acc.verification?.strategy === "oauth_google");
 
-            if (isGoogle) {
-              console.log("🔄 Detected Google User, syncing with backend...");
-              await syncGoogleUser(email, clerkId, username);
-              console.log("✅ Google User Auto-Synced");
-
-              if (onLoginSuccess) {
-                onLoginSuccess();
-              }
-            }
-          }
-        } catch (error) {
-          if (error.requiresSignup) {
-            console.log("ℹ️ Auto-sync: Account requires signup");
-            Alert.alert("Account Not Found", error.message);
-            await signOut();
-          } else {
-            console.error("Auto-sync error:", error);
-          }
-        } finally {
-          setIsSyncing(false);
-        }
-      }
-    };
-
-    syncUser();
-  }, [isSignedIn, clerkUser]);
 
 
   const handleLogin = async () => {
@@ -185,46 +152,115 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
 
 
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
-  // Import syncGoogleUser from api service
 
   const handleGoogleSignIn = async () => {
+    if (isSyncingRef.current) return;
+
     try {
-      // If already signed in, sign out first to ensure a fresh login flow
+      setIsLoading(true);
+      isSyncingRef.current = true;
+
+      // Sign out any existing session first
       if (isSignedIn) {
         await signOut();
       }
 
-      const { createdSessionId, setActive, signUp, signIn } = await startOAuthFlow();
+      console.log("🔵 [Google] Starting OAuth flow...");
+      const oauthResult = await startOAuthFlow();
+      const { createdSessionId, setActive: oauthSetActive, signIn: oauthSignIn, signUp: oauthSignUp } = oauthResult;
 
-      if (createdSessionId) {
-        // 1. Set the session active
-        await setActive({ session: createdSessionId });
-
-        // 2. Get user details from Clerk
-
-        const userDetails = signIn?.identifier || signUp?.emailAddress;
-
-
-        console.log("✅ OAuth Session created:", createdSessionId);
-
-        // Trigger generic success. 
-        let emailAddress = null;
-        let username = null;
-        let clerkId = null;
-
-        if (signIn && signIn.identifier) {
-          emailAddress = signIn.identifier;
-          clerkId = signIn.userData?.id; // Attempt to get ID
-        }
-
-
-      } else {
-        // Use signIn or signUp for next steps such as MFA
+      // User cancelled the Google picker
+      if (!createdSessionId) {
+        console.log("ℹ️ Google OAuth cancelled.");
+        isSyncingRef.current = false;
+        setIsLoading(false);
+        return;
       }
+
+      // --- Extract email & clerkId from the OAuth result BEFORE activating the session ---
+      // This is the most reliable source — doesn't depend on hook timing.
+      let googleEmail = null;
+      let googleClerkId = null;
+      let googleUsername = "User";
+
+      // Try from signIn object (returning user)
+      if (oauthSignIn) {
+        console.log("🔍 [Google] oauthSignIn data:", JSON.stringify(oauthSignIn, null, 2));
+        const si = oauthSignIn;
+        googleEmail = si.identifier
+          || si.userData?.emailAddresses?.[0]?.emailAddress
+          || null;
+        googleClerkId = si.userData?.id || null;
+        googleUsername = si.userData?.firstName || googleUsername;
+      }
+
+      // Try from signUp object (new Clerk user created via Google)
+      if (oauthSignUp && (!googleEmail || !googleClerkId)) {
+        console.log("🔍 [Google] oauthSignUp data:", JSON.stringify(oauthSignUp, null, 2));
+        const su = oauthSignUp;
+        googleEmail = su.emailAddress || su.identifier || null;
+        googleClerkId = su.createdUserId || null;
+        googleUsername = su.firstName || googleUsername;
+      }
+
+      // Activate the Clerk session so we can use clerkUserRef as a last-resort fallback
+      await oauthSetActive({ session: createdSessionId });
+      console.log("✅ [Google] Session activated.");
+
+      // Last-resort: wait up to 3 seconds for clerkUser to populate via the hook
+      if (!googleEmail || !googleClerkId) {
+        console.log("⏳ [Google] Email/ClerkId not in OAuth result, polling clerkUserRef...");
+        let waited = 0;
+        while (waited < 3000) {
+          await new Promise(r => setTimeout(r, 200));
+          waited += 200;
+          const u = clerkUserRef.current;
+          if (u && u.id) {
+            googleEmail = u.primaryEmailAddress?.emailAddress
+              || u.emailAddresses?.[0]?.emailAddress
+              || null;
+            googleClerkId = u.id;
+            googleUsername = u.fullName || u.firstName || googleUsername;
+            if (googleEmail && googleClerkId) break;
+          }
+        }
+      }
+
+      console.log("📧 [Google] Final email:", googleEmail, " clerkId:", googleClerkId);
+
+      if (!googleEmail || !googleClerkId) {
+        console.error("❌ [Google] Could not resolve email or clerkId. Signing out.");
+        try { await signOut(); } catch (_) { }
+        Alert.alert("Sign In Error", "Could not retrieve your Google account details. Please try again.");
+        return;
+      }
+
+      // --- Verify against MongoDB — this is the gatekeeper ---
+      console.log("📡 [Google] Checking MongoDB for:", googleEmail);
+      await syncGoogleUser(googleEmail, googleClerkId, googleUsername);
+
+      // Only reach here if account EXISTS in MongoDB
+      console.log("✅ [Google] MongoDB account confirmed. Navigating to home.");
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      }
+
     } catch (err) {
-      console.error("OAuth error", err);
-      // See https://clerk.com/docs/custom-flows/oauth-connections for more info
-      Alert.alert("Google Sign In Error", err.message || "Failed to sign in with Google");
+      console.log("❌ [Google] Error:", err.message, " requiresSignup:", err.requiresSignup);
+      if (err.requiresSignup) {
+        // Backend found no MongoDB account and deleted the Clerk user
+        try { await signOut(); } catch (_) { }
+        Alert.alert(
+          "No Account Found",
+          "There is no account linked to this Google email.\nPlease sign up first."
+        );
+      } else {
+        try { await signOut(); } catch (_) { }
+        Alert.alert("Google Sign In Error", err.message || "Failed to sign in with Google. Please try again.");
+      }
+    } finally {
+      isSyncingRef.current = false;
+      setIsLoading(false);
     }
   };
 

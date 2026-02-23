@@ -1,8 +1,10 @@
 /**
  * API Service for IIT Connect Backend
  * Handles all HTTP requests to the backend server
+ * IP is read from EXPO_PUBLIC_LAPTOP_IP in .env — update that file when your network changes.
  */
-const API_BASE_URL = "http://192.168.1.74:5000/api";
+const LAPTOP_IP = process.env.EXPO_PUBLIC_LAPTOP_IP || "172.20.10.14";
+const API_BASE_URL = `http://${LAPTOP_IP}:5000/api`;
 
 /**
  * Sync user profile to MongoDB after Clerk authentication

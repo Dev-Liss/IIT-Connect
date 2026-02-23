@@ -8,6 +8,7 @@
  */
 
 const User = require("../models/user");
+const { clerkClient } = require("@clerk/clerk-sdk-node");
 
 /**
  * Sync user profile to MongoDB after Clerk signup/login
@@ -240,8 +241,10 @@ const syncGoogleUser = async (req, res) => {
   console.log("🔵 ========== SYNC GOOGLE USER REQUEST RECEIVED ==========");
   try {
     const { email, clerkId, username } = req.body;
+    console.log(`📥 Request Data - Email: ${email}, ClerkId: ${clerkId}`);
 
     if (!email || !clerkId) {
+      console.log("❌ Missing required fields");
       return res.status(400).json({
         success: false,
         message: "Missing required fields: email, clerkId",
@@ -249,13 +252,23 @@ const syncGoogleUser = async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    console.log(`🔍 Searching MongoDB for: ${normalizedEmail}`);
 
     // Find user by email
     let user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       // User doesn't exist - WE DO NOT CREATE AUTOMATICALLY
-      // User must sign up first to select role (Student/Lecturer/Alumni)
+      // To prevent "orphan" Clerk accounts, delete the user from Clerk
+      console.log(`� User not found in MongoDB. Deleting Clerk user: ${clerkId}`);
+      try {
+        await clerkClient.users.deleteUser(clerkId);
+        console.log("✅ Clerk user deleted successfully");
+      } catch (clerkError) {
+        console.error("❌ Failed to delete Clerk user:", clerkError.message);
+      }
+
+      console.log("📤 Sending 404 Requires Signup");
       return res.status(404).json({
         success: false,
         message: "No account found for this email. Please sign up first.",
@@ -263,16 +276,15 @@ const syncGoogleUser = async (req, res) => {
       });
     }
 
-    // User exists!
+    console.log(`✅ User found! Linking/Updating ClerkId for: ${user.email}`);
     // If clerkId is different (e.g. they used email/pass before, now using Google), update it
     if (user.clerkId !== clerkId) {
-      console.log(`🔄 Updating Clerk ID for ${normalizedEmail} (Linking Google Account)`);
+      console.log(`🔄 Updating Clerk ID for ${normalizedEmail}`);
       user.clerkId = clerkId;
       await user.save();
     }
 
-    console.log("✅ Google User synced:", user.email);
-
+    console.log("✅ Google User synced successfully");
     res.status(200).json({
       success: true,
       message: "User synced successfully",
