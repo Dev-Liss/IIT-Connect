@@ -16,11 +16,11 @@ import {
     Dimensions,
     Modal,
     ActivityIndicator,
-    Linking,
+    Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode } from 'expo-av';
-import { formatFileSize, getFileIcon, getFileColor } from '../services/mediaService';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import { formatFileSize, getFileIcon, getFileColor, downloadToMediaLibrary, downloadDocument } from '../services/mediaService';
 
 const { width: screenWidth } = Dimensions.get('window');
 const maxMediaWidth = screenWidth * 0.65;
@@ -33,6 +33,17 @@ export const ImageMessage = ({ fileUrl, thumbnailUrl, isMe, onPress }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
+    const [downloading, setDownloading] = useState(false);
+
+    const handleDownload = async () => {
+        if (downloading) return;
+        setDownloading(true);
+        try {
+            await downloadToMediaLibrary(fileUrl, 'image');
+        } finally {
+            setDownloading(false);
+        }
+    };
 
     return (
         <>
@@ -73,12 +84,25 @@ export const ImageMessage = ({ fileUrl, thumbnailUrl, isMe, onPress }) => {
                 onRequestClose={() => setModalVisible(false)}
             >
                 <View style={styles.modalContainer}>
-                    <TouchableOpacity 
-                        style={styles.modalClose}
-                        onPress={() => setModalVisible(false)}
-                    >
-                        <Ionicons name="close" size={28} color="#fff" />
-                    </TouchableOpacity>
+                    <View style={styles.modalTopBar}>
+                        <TouchableOpacity 
+                            style={styles.modalClose}
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <Ionicons name="close" size={28} color="#fff" />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={styles.modalDownload}
+                            onPress={handleDownload}
+                            disabled={downloading}
+                        >
+                            {downloading ? (
+                                <ActivityIndicator color="#fff" size="small" />
+                            ) : (
+                                <Ionicons name="download-outline" size={26} color="#fff" />
+                            )}
+                        </TouchableOpacity>
+                    </View>
                     <Image
                         source={{ uri: fileUrl }}
                         style={styles.fullImage}
@@ -93,14 +117,69 @@ export const ImageMessage = ({ fileUrl, thumbnailUrl, isMe, onPress }) => {
 /**
  * Video Message Component
  */
+const VideoPlayerModal = ({ fileUrl, visible, onClose, onDownload, downloading }) => {
+    const player = useVideoPlayer(fileUrl, (p) => {
+        p.loop = false;
+        p.play();
+    });
+
+    return (
+        <Modal
+            visible={visible}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={onClose}
+        >
+            <View style={styles.modalContainer}>
+                <View style={styles.modalTopBar}>
+                    <TouchableOpacity 
+                        style={styles.modalClose}
+                        onPress={onClose}
+                    >
+                        <Ionicons name="close" size={28} color="#fff" />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={styles.modalDownload}
+                        onPress={onDownload}
+                        disabled={downloading}
+                    >
+                        {downloading ? (
+                            <ActivityIndicator color="#fff" size="small" />
+                        ) : (
+                            <Ionicons name="download-outline" size={26} color="#fff" />
+                        )}
+                    </TouchableOpacity>
+                </View>
+                <VideoView
+                    player={player}
+                    style={styles.fullVideo}
+                    contentFit="contain"
+                    nativeControls={true}
+                />
+            </View>
+        </Modal>
+    );
+};
+
 export const VideoMessage = ({ fileUrl, thumbnailUrl, duration }) => {
     const [modalVisible, setModalVisible] = useState(false);
+    const [downloading, setDownloading] = useState(false);
 
     const formatDuration = (seconds) => {
         if (!seconds) return '';
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const handleDownload = async () => {
+        if (downloading) return;
+        setDownloading(true);
+        try {
+            await downloadToMediaLibrary(fileUrl, 'video');
+        } finally {
+            setDownloading(false);
+        }
     };
 
     return (
@@ -134,29 +213,15 @@ export const VideoMessage = ({ fileUrl, thumbnailUrl, duration }) => {
             </TouchableOpacity>
 
             {/* Full Screen Video Modal */}
-            <Modal
-                visible={modalVisible}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <View style={styles.modalContainer}>
-                    <TouchableOpacity 
-                        style={styles.modalClose}
-                        onPress={() => setModalVisible(false)}
-                    >
-                        <Ionicons name="close" size={28} color="#fff" />
-                    </TouchableOpacity>
-                    <Video
-                        source={{ uri: fileUrl }}
-                        style={styles.fullVideo}
-                        useNativeControls
-                        resizeMode={ResizeMode.CONTAIN}
-                        shouldPlay={true}
-                        isLooping={false}
-                    />
-                </View>
-            </Modal>
+            {modalVisible && (
+                <VideoPlayerModal
+                    fileUrl={fileUrl}
+                    visible={modalVisible}
+                    onClose={() => setModalVisible(false)}
+                    onDownload={handleDownload}
+                    downloading={downloading}
+                />
+            )}
         </>
     );
 };
@@ -168,17 +233,13 @@ export const DocumentMessage = ({ fileUrl, fileName, fileSize, mimeType, isMe })
     const [downloading, setDownloading] = useState(false);
 
     const handleOpenDocument = async () => {
+        if (downloading) return;
         try {
             setDownloading(true);
-            const supported = await Linking.canOpenURL(fileUrl);
-            if (supported) {
-                await Linking.openURL(fileUrl);
-            } else {
-                alert('Cannot open this file type');
-            }
+            await downloadDocument(fileUrl, fileName, mimeType);
         } catch (error) {
-            console.error('Error opening document:', error);
-            alert('Failed to open document');
+            console.error('Error downloading document:', error);
+            Alert.alert('Error', 'Failed to download document.');
         } finally {
             setDownloading(false);
         }
@@ -358,11 +419,20 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    modalClose: {
+    modalTopBar: {
         position: 'absolute',
         top: 50,
-        right: 20,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
         zIndex: 10,
+    },
+    modalClose: {
+        padding: 10,
+    },
+    modalDownload: {
         padding: 10,
     },
     fullImage: {

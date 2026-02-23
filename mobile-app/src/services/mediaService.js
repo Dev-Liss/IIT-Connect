@@ -8,7 +8,10 @@
 
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as LegacyFileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UPLOAD_ENDPOINTS } from '../config/api';
 
@@ -277,7 +280,7 @@ export const pickMedia = async () => {
  */
 export const getFileInfo = async (uri) => {
     try {
-        const fileInfo = await FileSystem.getInfoAsync(uri, { size: true });
+        const fileInfo = await LegacyFileSystem.getInfoAsync(uri, { size: true });
         return fileInfo;
     } catch (error) {
         console.error('Error getting file info:', error);
@@ -464,6 +467,113 @@ export const validateFileSize = (file) => {
     return { valid: true };
 };
 
+/**
+ * Get file extension from URL or mime type
+ */
+const getExtensionFromUrl = (url, mimeType) => {
+    // Try to get extension from URL
+    if (url) {
+        const urlPath = url.split('?')[0]; // Remove query params
+        const match = urlPath.match(/\.([a-zA-Z0-9]+)$/);
+        if (match) return match[1];
+    }
+    // Fallback to mime type mapping
+    const mimeToExt = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'video/mp4': 'mp4',
+        'video/quicktime': 'mov',
+        'video/x-msvideo': 'avi',
+        'application/pdf': 'pdf',
+        'application/msword': 'doc',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+        'application/vnd.ms-excel': 'xls',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+        'text/plain': 'txt',
+    };
+    return mimeToExt[mimeType] || 'file';
+};
+
+/**
+ * Download and save an image or video to the device's media library
+ * @param {string} fileUrl - URL of the file to download
+ * @param {string} mediaType - 'image' or 'video'
+ * @returns {Promise<boolean>} - Whether the save was successful
+ */
+export const downloadToMediaLibrary = async (fileUrl, mediaType = 'image') => {
+    try {
+        // Request media library permissions (only photo & video, not audio)
+        const { status } = await MediaLibrary.requestPermissionsAsync(false, ['photo', 'video']);
+        if (status !== 'granted') {
+            Alert.alert('Permission Required', 'Please grant media library access to save files.');
+            return false;
+        }
+
+        const ext = mediaType === 'video' ? 'mp4' : 'jpg';
+        const fileName = `${mediaType}_${Date.now()}.${ext}`;
+        const localUri = LegacyFileSystem.cacheDirectory + fileName;
+
+        // Download the file
+        const downloadResult = await LegacyFileSystem.downloadAsync(fileUrl, localUri);
+
+        if (downloadResult.status !== 200) {
+            throw new Error(`Download failed with status ${downloadResult.status}`);
+        }
+
+        // Save to media library
+        const asset = await MediaLibrary.createAssetAsync(downloadResult.uri);
+        await MediaLibrary.createAlbumAsync('IIT Connect', asset, false);
+
+        Alert.alert('Saved', `${mediaType === 'video' ? 'Video' : 'Photo'} saved to gallery.`);
+        return true;
+    } catch (error) {
+        console.error(`Error saving ${mediaType}:`, error);
+        Alert.alert('Error', `Failed to save ${mediaType}. Please try again.`);
+        return false;
+    }
+};
+
+/**
+ * Download a document/file and open the share sheet so the user can save or open it
+ * @param {string} fileUrl - URL of the file to download
+ * @param {string} fileName - Original file name
+ * @param {string} mimeType - MIME type of the file
+ * @returns {Promise<boolean>} - Whether the download was successful
+ */
+export const downloadDocument = async (fileUrl, fileName, mimeType) => {
+    try {
+        const ext = getExtensionFromUrl(fileUrl, mimeType);
+        const safeName = fileName || `document_${Date.now()}.${ext}`;
+        const localUri = LegacyFileSystem.cacheDirectory + safeName;
+
+        // Download the file
+        const downloadResult = await LegacyFileSystem.downloadAsync(fileUrl, localUri);
+
+        if (downloadResult.status !== 200) {
+            throw new Error(`Download failed with status ${downloadResult.status}`);
+        }
+
+        // Check if sharing is available
+        const isAvailable = await Sharing.isAvailableAsync();
+        if (isAvailable) {
+            await Sharing.shareAsync(downloadResult.uri, {
+                mimeType: mimeType || 'application/octet-stream',
+                dialogTitle: `Save ${safeName}`,
+                UTI: mimeType || 'public.data',
+            });
+        } else {
+            Alert.alert('Downloaded', `File saved to app storage: ${safeName}`);
+        }
+        return true;
+    } catch (error) {
+        console.error('Error downloading document:', error);
+        Alert.alert('Error', 'Failed to download file. Please try again.');
+        return false;
+    }
+};
+
 export default {
     MEDIA_TYPES,
     MAX_FILE_SIZES,
@@ -481,4 +591,6 @@ export default {
     getFileIcon,
     getFileColor,
     validateFileSize,
+    downloadToMediaLibrary,
+    downloadDocument,
 };

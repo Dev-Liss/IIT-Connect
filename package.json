@@ -13,5 +13,9 @@
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "expo": "^54.0.33",
+    "expo-dev-client": "~6.0.20"
+  }
 }
