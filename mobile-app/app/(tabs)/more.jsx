@@ -61,6 +61,8 @@ export default function MoreScreen() {
     const handleTilePress = (label) => {
         if (label.includes("Admin")) {
             router.push("/admin-dashboard");
+        } else if (label.includes("Anonymous")) {
+            router.push("/anonymous-report");
         } else {
             Alert.alert("Coming Soon");
         }

@@ -16,6 +16,47 @@ const router = express.Router();
 const Report = require("../models/Report");
 
 // ====================================
+// CREATE A NEW REPORT
+// POST /api/reports
+// Body: { title, description, category?, reportedBy? }
+// ====================================
+router.post("/", async (req, res) => {
+    try {
+        const { title, subject, description, category, reportedBy } = req.body;
+        const reportTitle = title || subject; // accept either field name
+
+        if (!reportTitle || !reportTitle.trim()) {
+            return res.status(400).json({ success: false, message: "Report title is required" });
+        }
+        if (!description || !description.trim()) {
+            return res.status(400).json({ success: false, message: "Report description is required" });
+        }
+
+        const report = await Report.create({
+            title: reportTitle.trim(),
+            description: description.trim(),
+            category: category || "other",
+            reportedBy: reportedBy || undefined,
+            status: "pending",
+        });
+
+        console.log(`📝 New report created: "${report.title}" (${report._id})`);
+
+        res.status(201).json({
+            success: true,
+            message: "Report submitted successfully",
+            data: report,
+        });
+    } catch (error) {
+        console.error("❌ Create Report Error:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to create report",
+        });
+    }
+});
+
+// ====================================
 // GET ALL REPORTS
 // GET /api/reports?status=pending
 // ====================================
@@ -106,7 +147,11 @@ router.put("/:id/status", async (req, res) => {
             });
         }
 
-        const report = await Report.findById(req.params.id);
+        const report = await Report.findByIdAndUpdate(
+            req.params.id,
+            { $set: { status } },
+            { new: true, runValidators: false }
+        );
 
         if (!report) {
             return res.status(404).json({
@@ -114,10 +159,6 @@ router.put("/:id/status", async (req, res) => {
                 message: "Report not found",
             });
         }
-
-        // Update status
-        report.status = status;
-        await report.save();
 
         console.log(`✅ Report ${report._id} status updated to: ${status}`);
 
@@ -144,7 +185,6 @@ router.post("/:id/response", async (req, res) => {
     try {
         const { userId, text } = req.body;
 
-        // Validate input
         if (!userId || !text) {
             return res.status(400).json({
                 success: false,
@@ -159,7 +199,22 @@ router.post("/:id/response", async (req, res) => {
             });
         }
 
-        const report = await Report.findById(req.params.id);
+        // Use $push with findByIdAndUpdate to avoid re-validating
+        // the whole document (old reports may be missing required fields
+        // like `title` because they were saved with `subject` instead)
+        const newResponse = {
+            user: userId,
+            text: text.trim(),
+            createdAt: new Date(),
+        };
+
+        const report = await Report.findByIdAndUpdate(
+            req.params.id,
+            { $push: { responses: newResponse } },
+            { new: true, runValidators: false }
+        )
+            .populate("reportedBy", "username email")
+            .populate("responses.user", "username");
 
         if (!report) {
             return res.status(404).json({
@@ -167,19 +222,6 @@ router.post("/:id/response", async (req, res) => {
                 message: "Report not found",
             });
         }
-
-        // Add response
-        const newResponse = {
-            user: userId,
-            text: text.trim(),
-            createdAt: new Date(),
-        };
-
-        report.responses.push(newResponse);
-        await report.save();
-
-        // Populate the new response user data
-        await report.populate("responses.user", "username");
 
         console.log(`💬 Response added to report ${report._id} by user ${userId}`);
 

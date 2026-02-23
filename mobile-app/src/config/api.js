@@ -41,6 +41,7 @@ export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
 // Report endpoints (Admin Dashboard for Lecturers)
 export const REPORT_ENDPOINTS = {
+    CREATE: `${API_BASE_URL}/reports`,
     GET_ALL: `${API_BASE_URL}/reports`,
     GET_BY_ID: (id) => `${API_BASE_URL}/reports/${id}`,
     UPDATE_STATUS: (id) => `${API_BASE_URL}/reports/${id}/status`,

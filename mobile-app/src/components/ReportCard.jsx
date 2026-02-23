@@ -45,8 +45,9 @@ const formatTimeAgo = (dateString) => {
 };
 
 export default function ReportCard({ report, onPress }) {
-    const statusColor = STATUS_COLORS[report.status];
+    const statusColor = STATUS_COLORS[report.status] || STATUS_COLORS.pending;
     const responseCount = report.responseCount || report.responses?.length || 0;
+    const displayTitle = report.title || report.subject || "(No title)";
 
     return (
         <TouchableOpacity
@@ -56,7 +57,7 @@ export default function ReportCard({ report, onPress }) {
         >
             {/* Title */}
             <Text style={styles.title} numberOfLines={2}>
-                {report.title}
+                {displayTitle}
             </Text>
 
             {/* Status Badge */}
