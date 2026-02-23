@@ -1,14 +1,16 @@
 /**
  * ====================================
- * CREATE POST SCREEN (NEW DESIGN)
+ * CREATE POST SCREEN
  * ====================================
  * Modal-card style post creation with:
- * - Text content (required)
- * - Optional media upload
- * - Tags input
+ * - Caption text input
+ * - Media picker (image or video) via expo-image-picker
+ * - Category selector with brand-red highlight
+ * - Video/Image preview with clear button
+ * - Navigation to preview-post screen
  */
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -26,19 +28,37 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { Video, ResizeMode } from "expo-av";
 import { useAuth } from "../src/context/AuthContext";
+
+// ====================================
+// CONSTANTS
+// ====================================
+const CATEGORIES = [
+  "General",
+  "Academic",
+  "Events",
+  "Sports",
+  "Clubs",
+  "Memes",
+];
 
 export default function CreatePostNewScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const videoRef = useRef<Video>(null);
 
-  // Form state
-  const [content, setContent] = useState("");
-  const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
+  // ── Form state ──
+  const [caption, setCaption] = useState("");
+  const [media, setMedia] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<"image" | "video">("image");
+  const [category, setCategory] = useState("General");
   const [tags, setTags] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  // Auth guard
+  // ====================================
+  // AUTH GUARD
+  // ====================================
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
@@ -59,7 +79,9 @@ export default function CreatePostNewScreen() {
     );
   }
 
-  // Pick media from gallery
+  // ====================================
+  // PICK MEDIA FROM GALLERY
+  // ====================================
   const pickMedia = async () => {
     try {
       const permissionResult =
@@ -80,7 +102,20 @@ export default function CreatePostNewScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setSelectedMedia(result.assets[0].uri);
+        const asset = result.assets[0];
+        setMedia(asset.uri);
+
+        // Detect media type from the picker result
+        // expo-image-picker returns asset.type as "image" or "video"
+        if (asset.type === "video") {
+          setMediaType("video");
+        } else {
+          setMediaType("image");
+        }
+
+        console.log(
+          `📎 Media selected: ${asset.type || "image"} — ${asset.uri.slice(-30)}`,
+        );
       }
     } catch (error) {
       console.error("Media pick error:", error);
@@ -88,12 +123,22 @@ export default function CreatePostNewScreen() {
     }
   };
 
-  // Handle preview - navigate to preview screen
+  // ====================================
+  // CLEAR SELECTED MEDIA
+  // ====================================
+  const clearMedia = () => {
+    setMedia(null);
+    setMediaType("image");
+  };
+
+  // ====================================
+  // HANDLE PREVIEW NAVIGATION
+  // ====================================
   const handlePreview = () => {
-    if (!content.trim()) {
+    if (!caption.trim() && !media) {
       Alert.alert(
-        "Required Field",
-        "Please enter your thoughts before continuing.",
+        "Required",
+        "Please add a caption or select media before continuing.",
       );
       return;
     }
@@ -102,13 +147,18 @@ export default function CreatePostNewScreen() {
     router.push({
       pathname: "/preview-post",
       params: {
-        content: content,
-        media: selectedMedia || "",
+        content: caption,
+        media: media || "",
+        mediaType: mediaType,
+        category: category,
         tags: tags,
       },
     });
   };
 
+  // ====================================
+  // RENDER
+  // ====================================
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f5f7fa" />
@@ -131,7 +181,7 @@ export default function CreatePostNewScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Content Input */}
+          {/* ========== CAPTION INPUT ========== */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>
               What's on your mind? <Text style={styles.required}>*</Text>
@@ -140,42 +190,95 @@ export default function CreatePostNewScreen() {
               style={styles.textArea}
               placeholder="Share your thoughts..."
               placeholderTextColor="#999"
-              value={content}
-              onChangeText={setContent}
+              value={caption}
+              onChangeText={setCaption}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
             />
           </View>
 
-          {/* Media Picker */}
+          {/* ========== MEDIA PICKER ========== */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Media (Optional)</Text>
             <TouchableOpacity style={styles.mediaPicker} onPress={pickMedia}>
-              {selectedMedia ? (
+              {media ? (
                 <View style={styles.mediaPreviewContainer}>
-                  <Image
-                    source={{ uri: selectedMedia }}
-                    style={styles.mediaPreview}
-                  />
+                  {/* Show Image or Video preview based on mediaType */}
+                  {mediaType === "video" ? (
+                    <View style={styles.videoPreviewWrapper}>
+                      <Video
+                        ref={videoRef}
+                        source={{ uri: media }}
+                        style={styles.mediaPreview}
+                        resizeMode={ResizeMode.COVER}
+                        shouldPlay={false}
+                        isMuted
+                      />
+                      {/* Video badge overlay */}
+                      <View style={styles.videoBadge}>
+                        <Ionicons name="videocam" size={14} color="#fff" />
+                        <Text style={styles.videoBadgeText}>Video</Text>
+                      </View>
+                    </View>
+                  ) : (
+                    <Image
+                      source={{ uri: media }}
+                      style={styles.mediaPreview}
+                    />
+                  )}
+
+                  {/* X button to clear selection */}
                   <TouchableOpacity
                     style={styles.removeMedia}
-                    onPress={() => setSelectedMedia(null)}
+                    onPress={clearMedia}
                   >
-                    <Ionicons name="close-circle" size={24} color="#f9252b" />
+                    <Ionicons name="close-circle" size={26} color="#f9252b" />
                   </TouchableOpacity>
                 </View>
               ) : (
                 <View style={styles.mediaPlaceholder}>
                   <Ionicons name="images-outline" size={32} color="#999" />
                   <Text style={styles.mediaText}>Add photos or videos</Text>
-                  <Text style={styles.mediaSubtext}>Click to select files</Text>
+                  <Text style={styles.mediaSubtext}>
+                    Tap to select from gallery
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>
           </View>
 
-          {/* Tags Input */}
+          {/* ========== CATEGORY SELECTOR ========== */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Category</Text>
+            <View style={styles.categoryRow}>
+              {CATEGORIES.map((cat) => {
+                const isSelected = category === cat;
+                return (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[
+                      styles.categoryChip,
+                      isSelected && styles.categoryChipActive,
+                    ]}
+                    onPress={() => setCategory(cat)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        isSelected && styles.categoryChipTextActive,
+                      ]}
+                    >
+                      {cat}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* ========== TAGS INPUT ========== */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Tags</Text>
             <TextInput
@@ -188,7 +291,7 @@ export default function CreatePostNewScreen() {
             <Text style={styles.hint}>Separate tags with commas</Text>
           </View>
 
-          {/* Action Buttons */}
+          {/* ========== ACTION BUTTONS ========== */}
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={styles.backButton}
@@ -323,17 +426,64 @@ const styles = StyleSheet.create({
   mediaPreviewContainer: {
     position: "relative",
   },
+  videoPreviewWrapper: {
+    position: "relative",
+  },
   mediaPreview: {
     width: "100%",
-    height: 180,
+    height: 200,
     resizeMode: "cover",
+  },
+  videoBadge: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.6)",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 4,
+  },
+  videoBadgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "600",
   },
   removeMedia: {
     position: "absolute",
     top: 8,
     right: 8,
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 13,
+  },
+  // Category Selector
+  categoryRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  categoryChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    backgroundColor: "#fff",
+  },
+  categoryChipActive: {
+    backgroundColor: "#f9252b",
+    borderColor: "#f9252b",
+  },
+  categoryChipText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#666",
+  },
+  categoryChipTextActive: {
+    color: "#fff",
+    fontWeight: "600",
   },
   // Buttons
   buttonRow: {
