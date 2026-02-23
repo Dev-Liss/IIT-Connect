@@ -17,7 +17,7 @@
  */
 
 // ⚠️ CHANGE THIS TO YOUR LAPTOP'S IP ADDRESS!
-const LAPTOP_IP = "192.168.100.165";
+const LAPTOP_IP = "10.31.21.62";
 
 // Backend port (should match PORT in backend/.env)
 const PORT = "5000";
@@ -36,7 +36,7 @@ export const KUPPI_ENDPOINTS = {
   GET_ALL: `${API_BASE_URL}/kuppi`,
   MY_SESSIONS: `${API_BASE_URL}/kuppi/my-sessions`,
   CREATE: `${API_BASE_URL}/kuppi/create`,
-  JOIN: (id: string) => `${API_BASE_URL}/kuppi/join/${id}`,
+  JOIN: (id) => `${API_BASE_URL}/kuppi/join/${id}`,
 };
 
 // Resource endpoints

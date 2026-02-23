@@ -30,7 +30,6 @@ import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
 // ====================================
 import { useAuth } from "../src/context/AuthContext";
 
-
 export default function AuthScreen() {
   const router = useRouter();
   const { login } = useAuth(); // Destructure login from context
@@ -94,12 +93,11 @@ export default function AuthScreen() {
 
       if (data.success) {
         if (isRegistering) {
-
           // Auto login after registration if backend returns token, or ask to switch
           if (data.token) {
             await login(data.user, data.token);
             // Alert.alert("Success", "Account created!");
-            router.replace("/timetable" as any); // Navigate to main app
+            router.replace("/timetable"); // Navigate to main app
           } else {
             Alert.alert(
               "🎉 Success!",
@@ -109,14 +107,13 @@ export default function AuthScreen() {
             // Clear form for login
             setPassword("");
           }
-
         } else {
           // Login Success
           console.log("✅ Logged in user:", data.user);
           await login(data.user, data.token); // Store in context
 
           // Navigate to Timetable
-          router.replace("/timetable" as any);
+          router.replace("/timetable");
         }
       } else {
         Alert.alert("❌ Error", data.message);
@@ -126,10 +123,10 @@ export default function AuthScreen() {
       Alert.alert(
         "🔌 Connection Error",
         "Could not connect to server.\n\n" +
-        "Check:\n" +
-        "1. Backend is running (node server.js)\n" +
-        "2. IP address in src/config/api.ts is correct\n" +
-        "3. Phone and laptop on same WiFi",
+          "Check:\n" +
+          "1. Backend is running (node server.js)\n" +
+          "2. IP address in src/config/api.js is correct\n" +
+          "3. Phone and laptop on same WiFi",
       );
     } finally {
       setIsLoading(false);
@@ -152,7 +149,7 @@ export default function AuthScreen() {
     } catch (error) {
       Alert.alert(
         "❌ Connection Failed",
-        "Cannot reach the backend server.\nCheck the IP in src/config/api.ts",
+        "Cannot reach the backend server.\nCheck the IP in src/config/api.js",
       );
     } finally {
       setIsLoading(false);
