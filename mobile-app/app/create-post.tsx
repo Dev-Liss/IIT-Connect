@@ -30,6 +30,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { Video, ResizeMode } from "expo-av";
 import { useAuth } from "../src/context/AuthContext";
+import { POST_ENDPOINTS } from "../src/config/api";
 
 // ====================================
 // CONSTANTS
@@ -55,6 +56,7 @@ export default function CreatePostNewScreen() {
   const [category, setCategory] = useState("General");
   const [tags, setTags] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ====================================
   // AUTH GUARD
@@ -154,6 +156,94 @@ export default function CreatePostNewScreen() {
         tags: tags,
       },
     });
+  };
+
+  // ====================================
+  // HANDLE SHARE POST (UPLOAD)
+  // ====================================
+  const handleSharePost = async () => {
+    // Validate
+    if (!user) {
+      Alert.alert("Error", "You must be logged in to post.");
+      return;
+    }
+
+    if (!media) {
+      Alert.alert("Media Required", "Please select a photo or video to share.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Build FormData
+      const formData = new FormData();
+      formData.append("userId", user.id);
+      formData.append("caption", caption);
+      formData.append("category", category);
+
+      // CRITICAL ANDROID FIX:
+      // Android requires the file to be appended as an object with
+      // uri, name, and type — not as a Blob.
+      const filename = media.split("/").pop() || "upload.jpg";
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `${mediaType}/${match[1]}` : `${mediaType}/jpeg`;
+
+      formData.append("media", {
+        uri: media,
+        name: filename,
+        type: type,
+      } as any);
+
+      console.log(`📤 Uploading ${mediaType}: ${filename} (${type})`);
+
+      // POST to backend
+      const response = await fetch(POST_ENDPOINTS.CREATE, {
+        method: "POST",
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        Alert.alert(
+          "🎉 Success!",
+          `Your ${mediaType === "video" ? "reel" : "post"} has been shared!`,
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                // Clear all states
+                setCaption("");
+                setMedia(null);
+                setMediaType("image");
+                setCategory("General");
+                setTags("");
+
+                // Navigate back to feed
+                router.replace("/");
+              },
+            },
+          ],
+        );
+      } else {
+        Alert.alert(
+          "Upload Failed",
+          data.message || "Something went wrong. Please try again.",
+        );
+      }
+    } catch (error) {
+      console.error("❌ Upload error:", error);
+      Alert.alert(
+        "Connection Error",
+        "Could not connect to the server. Please check your connection and try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ====================================
@@ -296,24 +386,45 @@ export default function CreatePostNewScreen() {
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => router.back()}
+              disabled={isSubmitting}
             >
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
                 styles.previewButton,
-                isUploading && styles.buttonDisabled,
+                styles.previewButtonOutline,
+                isSubmitting && styles.buttonDisabledOutline,
               ]}
               onPress={handlePreview}
-              disabled={isUploading}
+              disabled={isSubmitting}
             >
-              {isUploading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.previewButtonText}>Preview</Text>
-              )}
+              <Text style={styles.previewButtonTextOutline}>Preview</Text>
             </TouchableOpacity>
           </View>
+
+          {/* ========== SHARE POST BUTTON ========== */}
+          <TouchableOpacity
+            style={[
+              styles.shareButton,
+              (!media || isSubmitting) && styles.buttonDisabled,
+            ]}
+            onPress={handleSharePost}
+            disabled={!media || isSubmitting}
+            activeOpacity={0.8}
+          >
+            {isSubmitting ? (
+              <View style={styles.shareButtonContent}>
+                <ActivityIndicator color="#fff" size="small" />
+                <Text style={styles.shareButtonText}>Uploading...</Text>
+              </View>
+            ) : (
+              <View style={styles.shareButtonContent}>
+                <Ionicons name="paper-plane" size={18} color="#fff" />
+                <Text style={styles.shareButtonText}>Share Post</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -512,13 +623,44 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9252b",
     alignItems: "center",
   },
+  previewButtonOutline: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#f9252b",
+  },
   previewButtonText: {
     fontSize: 15,
     fontWeight: "600",
     color: "#fff",
   },
+  previewButtonTextOutline: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#f9252b",
+  },
+  // Share Post Button
+  shareButton: {
+    marginTop: 12,
+    paddingVertical: 16,
+    borderRadius: 8,
+    backgroundColor: "#f9252b",
+    alignItems: "center",
+  },
+  shareButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  shareButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#fff",
+  },
   buttonDisabled: {
     backgroundColor: "#fca5a5",
+  },
+  buttonDisabledOutline: {
+    borderColor: "#fca5a5",
   },
   // Auth Guard
   guardContainer: {
