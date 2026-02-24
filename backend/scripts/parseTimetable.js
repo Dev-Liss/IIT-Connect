@@ -81,60 +81,82 @@ function parseHtml(filePath, outputPath) {
                 let cellData = { module: "Free", room: "", type: "", lecturer: "" };
 
                 if (content.length > 0 && content[0] !== '---') {
-                    const line1 = content.length > 1 ? content[1] : content[0];
-
+                    let code = "Unknown";
                     let typeStr = "";
-                    const upperLine1 = line1.toUpperCase();
-                    if (upperLine1.includes("LEC")) typeStr = "LEC";
-                    else if (upperLine1.includes("TUT")) typeStr = "TUT";
-                    else if (upperLine1.includes("PRA")) typeStr = "PRA";
-                    else if (upperLine1.split(/\s+/).includes("M")) typeStr = "Module";
-
-                    let room = "";
-                    if (upperLine1.includes("ONLINE")) {
-                        room = "ONLINE";
-                    } else if (content.length > 3) {
-                        room = content[3];
-                    } else if (content.length > 2 && content[2].includes("SP")) {
-                        room = content[2];
-                    } else {
-                        room = "TBA";
-                    }
-
+                    let room = "TBA";
                     let lecturer = "Unknown Lecturer";
-                    if (content.length > 2 && !content[2].includes("SP")) {
-                        lecturer = content[2];
-                    } else if (content.length > 1 && !content[1].includes("SP")) {
-                        lecturer = content[1];
+
+                    let fullModuleLine = content[0];
+                    let codeMatch = null;
+                    
+                    // 1. Find Code (e.g., 5COSC021C)
+                    for (let line of content) {
+                        const match = line.match(/\b([1-9][A-Z]{3,4}\d{3}[A-Z]?)\b/);
+                        if (match && code === "Unknown") {
+                            codeMatch = match;
+                            code = match[1];
+                            fullModuleLine = line;
+                        }
+                    }
+                    if (code === "Unknown" && content.length > 0) {
+                        // Fallback: If no code found, just take first line but strip type keywords
+                        code = fullModuleLine.replace(/\b(LEC|TUT|PRA)\b/gi, '').trim() || "Unknown";
                     }
 
-                    let moduleName = line1;
-                    const match = line1.match(/^([A-Z0-9]+)\s*(.*)/);
-                    if (match) {
-                        const code = match[1];
-                        const labels = {
-                            "5COSC021C": "Software Engineering",
-                            "5COSC999C": "System Design",
-                            "5SENG003C": "Professional Practice",
-                            "5DATA001C": "Database Systems",
-                            "5COSC024C": "Algorithms",
-                            "5COSC022C": "Programming II",
-                            "5COSC023C": "Computer Networks",
-                            "5CCGD013C": "Graphics",
-                            "5CCGD010C": "Game Dev",
-                            "5COSC019C": "Object Oriented Programming",
-                            "5COSC020C": "Client Server Architecture",
-                        };
-                        if (labels[code]) {
-                            moduleName = `${code} ${labels[code]} ${typeStr}`.trim();
+                    // 2. Find Type (LEC/TUT/PRA)
+                    for (let line of content) {
+                        const match = line.toUpperCase().match(/\b(LEC|TUT|PRA)\b/);
+                        if (match) {
+                            typeStr = match[1];
+                            break;
+                        }
+                    }
+
+                    // 3. Find Room
+                    for (let line of content) {
+                        const upper = line.toUpperCase();
+                        if (upper.includes("ONLINE") || upper.includes("EXAM HALL") || upper.includes("SP-") || upper.includes("SP -") || /\bSP\b/.test(upper)) {
+                            room = line.trim();
+                            break;
+                        }
+                    }
+
+                    // 4. Find Lecturer(s)
+                    const reservedWordsRegex = /^(LEC|TUT|PRA|FREE|---)$/i;
+                    let lecturerLines = content.filter(line => {
+                        const upper = line.toUpperCase();
+                        // Module names usually have lowercase letters, while lecturer initials are all caps.
+                        // Filter out mixed-case lines to avoid treating module names as lecturers.
+                        if (line !== upper) return false;
+                        
+                        // Avoid matching the module code line
+                        if (upper.includes(code.toUpperCase())) return false;
+                        if (codeMatch && upper.includes(codeMatch[0].toUpperCase())) return false;
+                        
+                        // Avoid matching room or reserved keywords
+                        if (upper === room.toUpperCase()) return false;
+                        if (reservedWordsRegex.test(upper)) return false;
+                        if (upper.includes("ONLINE") || upper.includes("EXAM HALL") || upper.includes("SP-") || upper.includes("SP -") || /\bSP\b/.test(upper)) return false;
+                        if (upper.includes("MODULE NAME")) return false;
+                        
+                        return true;
+                    });
+
+                    if (lecturerLines.length > 0) {
+                        lecturer = lecturerLines.join(", ").trim();
+                    } else if (content.length > 1) {
+                        // Fallback if no ALL-CAPS lecturers found (very rare)
+                        const fallbackLine = content[1].trim();
+                        if (fallbackLine !== fullModuleLine.trim() && fallbackLine.toUpperCase() !== room.toUpperCase()) {
+                            lecturer = fallbackLine;
                         }
                     }
 
                     cellData = {
-                        module: moduleName,
-                        room: room.trim(),
+                        module: code,
+                        room: room,
                         type: typeStr,
-                        lecturer: lecturer.trim()
+                        lecturer: lecturer
                     };
 
                     for (let r = 0; r < rowspan; r++) {

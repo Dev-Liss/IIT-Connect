@@ -2,50 +2,50 @@
     "SE-G1": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
@@ -58,13 +58,13 @@
         },
         "Tuesday": {
             "08:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "SHK,\n                    IMA"
             },
             "09:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "SHK,\n                    IMA"
@@ -84,13 +84,13 @@
             },
             "13:30": "Free",
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "PJN"
             },
             "15:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "PJN"
@@ -135,13 +135,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
@@ -190,50 +190,50 @@
     "SE-G2": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
@@ -246,13 +246,13 @@
         },
         "Tuesday": {
             "08:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "SHK,\n                    IMA"
             },
             "09:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "SHK,\n                    IMA"
@@ -272,13 +272,13 @@
             },
             "13:30": "Free",
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "PJN"
             },
             "15:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "PJN"
@@ -323,13 +323,13 @@
             "11:30": "Free",
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
@@ -378,50 +378,50 @@
     "SE-G3": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
@@ -434,13 +434,13 @@
         },
         "Tuesday": {
             "08:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    5LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    CHAR"
             },
             "09:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    5LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    CHAR"
@@ -449,13 +449,13 @@
             "11:30": "Free",
             "12:30": "Free",
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "NYIB"
             },
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "NYIB"
@@ -511,13 +511,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
@@ -566,50 +566,50 @@
     "SE-G4": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 6LA",
                 "type": "",
                 "lecturer": "SAVM, KUS, DES, VINR"
@@ -622,39 +622,39 @@
         },
         "Tuesday": {
             "08:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "SHK,\n                    IMA"
             },
             "09:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "SHK,\n                    IMA"
             },
             "10:30": "Free",
             "11:30": {
-                "module": "5SENG003C Professional Practice TUT",
+                "module": "5SENG003C",
                 "room": "SP -\n                    3LC",
                 "type": "TUT",
                 "lecturer": "PJN, HARR"
             },
             "12:30": {
-                "module": "5SENG003C Professional Practice TUT",
+                "module": "5SENG003C",
                 "room": "SP -\n                    3LC",
                 "type": "TUT",
                 "lecturer": "PJN, HARR"
             },
             "13:30": "Free",
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "PJN"
             },
             "15:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "PJN"
@@ -699,13 +699,13 @@
             "11:30": "Free",
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
@@ -754,50 +754,50 @@
     "SE-G5": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -810,13 +810,13 @@
         },
         "Tuesday": {
             "08:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    5LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    CHAR"
             },
             "09:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    5LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    CHAR"
@@ -825,13 +825,13 @@
             "11:30": "Free",
             "12:30": "Free",
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "NYIB"
             },
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "NYIB"
@@ -861,13 +861,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "14:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
@@ -942,50 +942,50 @@
     "SE-G6": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -998,13 +998,13 @@
         },
         "Tuesday": {
             "08:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    5LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    CHAR"
             },
             "09:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    5LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    CHAR"
@@ -1023,13 +1023,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "NYIB"
             },
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "NYIB"
@@ -1049,13 +1049,13 @@
             "11:30": "Free",
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "14:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
@@ -1130,50 +1130,50 @@
     "SE-G7": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -1202,13 +1202,13 @@
             "12:30": "Free",
             "13:30": "Free",
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "PJN"
             },
             "15:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "PJN"
@@ -1234,26 +1234,26 @@
                 "lecturer": "DASU, YAAL"
             },
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "IMA,\n                    BALA"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "IMA,\n                    BALA"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "14:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
@@ -1318,50 +1318,50 @@
     "SE-G8": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -1376,38 +1376,38 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC023C Computer Networks LEC",
+                "module": "5COSC023C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "TOR"
             },
             "11:30": {
-                "module": "5COSC023C Computer Networks LEC",
+                "module": "5COSC023C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "TOR"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "NYIB"
             },
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "NYIB"
             },
             "15:30": {
-                "module": "5COSC023C Computer Networks TUT",
+                "module": "5COSC023C",
                 "room": "SP -\n                    3LD",
                 "type": "TUT",
                 "lecturer": "TOR, RUW"
             },
             "16:30": {
-                "module": "5COSC023C Computer Networks TUT",
+                "module": "5COSC023C",
                 "room": "SP -\n                    3LD",
                 "type": "TUT",
                 "lecturer": "TOR, RUW"
@@ -1422,13 +1422,13 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "IMA,\n                    BALA"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "IMA,\n                    BALA"
@@ -1506,50 +1506,50 @@
     "SE-G9": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -1575,26 +1575,26 @@
             },
             "10:30": "Free",
             "11:30": {
-                "module": "5SENG003C Professional Practice TUT",
+                "module": "5SENG003C",
                 "room": "SP -\n                    3LC",
                 "type": "TUT",
                 "lecturer": "PJN, HARR"
             },
             "12:30": {
-                "module": "5SENG003C Professional Practice TUT",
+                "module": "5SENG003C",
                 "room": "SP -\n                    3LC",
                 "type": "TUT",
                 "lecturer": "PJN, HARR"
             },
             "13:30": "Free",
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "PJN"
             },
             "15:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "PJN"
@@ -1610,26 +1610,26 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "IMA,\n                    BALA"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "IMA,\n                    BALA"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "14:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
@@ -1694,50 +1694,50 @@
     "SE-G10": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -1752,13 +1752,13 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    SHK"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    SHK"
@@ -1780,13 +1780,13 @@
             "10:30": "Free",
             "11:30": "Free",
             "12:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "VISHM"
             },
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "VISHM"
@@ -1862,50 +1862,50 @@
     "CS-G1": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -1918,25 +1918,25 @@
         },
         "Tuesday": {
             "08:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "AMMR"
             },
             "09:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "AMMR"
             },
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    SHK"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    SHK"
@@ -1947,13 +1947,13 @@
             "15:30": "Free",
             "16:30": "Free",
             "17:30": {
-                "module": "5CCGD013C Graphics LEC",
+                "module": "5CCGD013C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "WIM"
             },
             "18:30": {
-                "module": "5CCGD013C Graphics LEC",
+                "module": "5CCGD013C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "WIM"
@@ -1964,13 +1964,13 @@
         },
         "Wednesday": {
             "08:30": {
-                "module": "5CCGD013C Graphics TUT",
+                "module": "5CCGD013C",
                 "room": "SP -\n                    3LD",
                 "type": "TUT",
                 "lecturer": "MANU"
             },
             "09:30": {
-                "module": "5CCGD013C Graphics TUT",
+                "module": "5CCGD013C",
                 "room": "SP -\n                    3LD",
                 "type": "TUT",
                 "lecturer": "MANU"
@@ -2050,50 +2050,50 @@
     "CS-G2": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -2106,25 +2106,25 @@
         },
         "Tuesday": {
             "08:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "AMMR"
             },
             "09:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "AMMR"
             },
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    SHK"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    SHK"
@@ -2152,25 +2152,25 @@
         },
         "Wednesday": {
             "08:30": {
-                "module": "5CCGD010C Game Dev LEC",
+                "module": "5CCGD010C",
                 "room": "SP - 7LB",
                 "type": "LEC",
                 "lecturer": "SAP"
             },
             "09:30": {
-                "module": "5CCGD010C Game Dev LEC",
+                "module": "5CCGD010C",
                 "room": "SP - 7LB",
                 "type": "LEC",
                 "lecturer": "SAP"
             },
             "10:30": {
-                "module": "5CCGD010C Game Dev TUT",
+                "module": "5CCGD010C",
                 "room": "SP -\n                    7LB",
                 "type": "TUT",
                 "lecturer": "SAP"
             },
             "11:30": {
-                "module": "5CCGD010C Game Dev TUT",
+                "module": "5CCGD010C",
                 "room": "SP -\n                    7LB",
                 "type": "TUT",
                 "lecturer": "SAP"
@@ -2238,50 +2238,50 @@
     "CS-G3": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -2294,25 +2294,25 @@
         },
         "Tuesday": {
             "08:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "AMMR"
             },
             "09:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "AMMR"
             },
             "10:30": {
-                "module": "5COSC023C Computer Networks LEC",
+                "module": "5COSC023C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "TOR"
             },
             "11:30": {
-                "module": "5COSC023C Computer Networks LEC",
+                "module": "5COSC023C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "TOR"
@@ -2342,26 +2342,26 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP -\n                    5LD",
                 "type": "TUT",
                 "lecturer": "NPU, UTHP"
             },
             "11:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP -\n                    5LD",
                 "type": "TUT",
                 "lecturer": "NPU, UTHP"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
@@ -2394,13 +2394,13 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "BALA, SHK"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "BALA, SHK"
@@ -2446,50 +2446,50 @@
     "CS-G4": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -2502,25 +2502,25 @@
         },
         "Tuesday": {
             "08:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "AMMR"
             },
             "09:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "AMMR"
             },
             "10:30": {
-                "module": "5COSC023C Computer Networks LEC",
+                "module": "5COSC023C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "TOR"
             },
             "11:30": {
-                "module": "5COSC023C Computer Networks LEC",
+                "module": "5COSC023C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "TOR"
@@ -2550,26 +2550,26 @@
                 "lecturer": "AMMR, SAJA"
             },
             "10:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP -\n                    5LD",
                 "type": "TUT",
                 "lecturer": "NPU, UTHP"
             },
             "11:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP -\n                    5LD",
                 "type": "TUT",
                 "lecturer": "NPU, UTHP"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
@@ -2596,26 +2596,26 @@
                 "lecturer": "TOR, HARR"
             },
             "10:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "11:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "CHAR,\n                    TBA 1"
             },
             "14:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "CHAR,\n                    TBA 1"
@@ -2630,38 +2630,38 @@
         },
         "Friday": {
             "08:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "09:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "10:30": {
-                "module": "5SENG003C Professional Practice TUT",
+                "module": "5SENG003C",
                 "room": "SP -\n                    4LA",
                 "type": "TUT",
                 "lecturer": "SANDU, KASUW"
             },
             "11:30": {
-                "module": "5SENG003C Professional Practice TUT",
+                "module": "5SENG003C",
                 "room": "SP -\n                    4LA",
                 "type": "TUT",
                 "lecturer": "SANDU, KASUW"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC024C Algorithms TUT",
+                "module": "5COSC024C",
                 "room": "SP\n                    - 4LA",
                 "type": "TUT",
                 "lecturer": "KELUM,\n                    DASU"
             },
             "14:30": {
-                "module": "5COSC024C Algorithms TUT",
+                "module": "5COSC024C",
                 "room": "SP\n                    - 4LA",
                 "type": "TUT",
                 "lecturer": "KELUM,\n                    DASU"
@@ -2694,50 +2694,50 @@
     "CS-G5": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -2766,25 +2766,25 @@
         },
         "Wednesday": {
             "08:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "IMA, SHK"
             },
             "09:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "IMA, SHK"
             },
             "10:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "11:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
@@ -2816,13 +2816,13 @@
             "10:30": "Free",
             "11:30": "Free",
             "12:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "MAL"
             },
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "MAL"
@@ -2838,13 +2838,13 @@
         },
         "Friday": {
             "08:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "KUS"
             },
             "09:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "KUS"
@@ -2902,50 +2902,50 @@
     "CS-G6": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP Exam Hall",
                 "type": "",
                 "lecturer": "MJAN, SANJ, AKAR, KAGI, BIWI, DASU"
@@ -2973,13 +2973,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
@@ -2994,25 +2994,25 @@
         },
         "Wednesday": {
             "08:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "IMA, SHK"
             },
             "09:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "IMA, SHK"
             },
             "10:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "11:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
@@ -3046,13 +3046,13 @@
         },
         "Friday": {
             "08:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "KUS"
             },
             "09:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "KUS"
@@ -3110,50 +3110,50 @@
     "CS-G7": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
@@ -3182,25 +3182,25 @@
         },
         "Wednesday": {
             "08:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "IMA, SHK"
             },
             "09:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "IMA, SHK"
             },
             "10:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "11:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
@@ -3244,13 +3244,13 @@
         },
         "Friday": {
             "08:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "KUS"
             },
             "09:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "KUS"
@@ -3298,50 +3298,50 @@
     "CS-G8": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
@@ -3370,25 +3370,25 @@
         },
         "Wednesday": {
             "08:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "IMA, SHK"
             },
             "09:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "IMA, SHK"
             },
             "10:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "11:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "THE"
@@ -3422,13 +3422,13 @@
         },
         "Friday": {
             "08:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "KUS"
             },
             "09:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "KUS"
@@ -3486,50 +3486,50 @@
     "CS-G9": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
@@ -3544,13 +3544,13 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "CHAR, TBA 2"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "CHAR, TBA 2"
@@ -3591,25 +3591,25 @@
             "09:30": "Free",
             "10:30": "Free",
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "12:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "13:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP -\n                    4LD",
                 "type": "TUT",
                 "lecturer": "THAM, UTHP"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP -\n                    4LD",
                 "type": "TUT",
                 "lecturer": "THAM, UTHP"
@@ -3624,25 +3624,25 @@
         },
         "Thursday": {
             "08:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "09:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "10:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "11:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "THE"
@@ -3694,50 +3694,50 @@
     "CS-G10": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 4LA",
                 "type": "",
                 "lecturer": "NYIB, SAEL, HARR"
@@ -3752,13 +3752,13 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "CHAR, TBA 2"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "CHAR, TBA 2"
@@ -3799,25 +3799,25 @@
             },
             "10:30": "Free",
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "12:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "13:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP -\n                    4LD",
                 "type": "TUT",
                 "lecturer": "THAM, UTHP"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP -\n                    4LD",
                 "type": "TUT",
                 "lecturer": "THAM, UTHP"
@@ -3832,13 +3832,13 @@
         },
         "Thursday": {
             "08:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "09:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
@@ -3846,13 +3846,13 @@
             "10:30": "Free",
             "11:30": "Free",
             "12:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "MAL"
             },
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "MAL"
@@ -3902,50 +3902,50 @@
     "CS-G11": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
@@ -3970,13 +3970,13 @@
                 "lecturer": "SHAV, CHCO"
             },
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "CHAR, TBA 2"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "CHAR, TBA 2"
@@ -4007,13 +4007,13 @@
             },
             "10:30": "Free",
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "12:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -4021,13 +4021,13 @@
             "13:30": "Free",
             "14:30": "Free",
             "15:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP - 7LC",
                 "type": "TUT",
                 "lecturer": "DIPA, TBA\n                    2"
             },
             "16:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP - 7LC",
                 "type": "TUT",
                 "lecturer": "DIPA, TBA\n                    2"
@@ -4040,13 +4040,13 @@
         },
         "Thursday": {
             "08:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "09:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
@@ -4054,13 +4054,13 @@
             "10:30": "Free",
             "11:30": "Free",
             "12:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "MAL"
             },
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "MAL"
@@ -4110,50 +4110,50 @@
     "CS-G12": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
@@ -4178,13 +4178,13 @@
                 "lecturer": "NYIB, VISHM"
             },
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "CHAR, TBA 2"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "CHAR, TBA 2"
@@ -4215,13 +4215,13 @@
             },
             "10:30": "Free",
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "12:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -4248,13 +4248,13 @@
         },
         "Thursday": {
             "08:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "09:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
@@ -4262,13 +4262,13 @@
             "10:30": "Free",
             "11:30": "Free",
             "12:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "MAL"
             },
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "MAL"
@@ -4318,50 +4318,50 @@
     "CS-G13": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
@@ -4386,26 +4386,26 @@
                 "lecturer": "DILIT, GANR"
             },
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "IMA, TBA 3"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "IMA, TBA 3"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
@@ -4434,13 +4434,13 @@
                 "lecturer": "THIM, OMSH"
             },
             "12:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "VISHM"
             },
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "VISHM"
@@ -4484,13 +4484,13 @@
                 "lecturer": "VISHM, NAND"
             },
             "10:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "KUS"
             },
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "KUS"
@@ -4526,50 +4526,50 @@
     "CS-G14": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 5LA",
                 "type": "",
                 "lecturer": "BNU, YAAL, CLAW"
@@ -4584,26 +4584,26 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "IMA, TBA 3"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "IMA, TBA 3"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
@@ -4632,13 +4632,13 @@
             "10:30": "Free",
             "11:30": "Free",
             "12:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "VISHM"
             },
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "VISHM"
@@ -4692,13 +4692,13 @@
                 "lecturer": "THAB, MERA"
             },
             "10:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "KUS"
             },
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "KUS"
@@ -4734,50 +4734,50 @@
     "CS-G15": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
@@ -4792,26 +4792,26 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "IMA, TBA 3"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "IMA, TBA 3"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
@@ -4840,13 +4840,13 @@
             "10:30": "Free",
             "11:30": "Free",
             "12:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "VISHM"
             },
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "VISHM"
@@ -4900,13 +4900,13 @@
                 "lecturer": "PJN, KASUW"
             },
             "10:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "KUS"
             },
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "KUS"
@@ -4942,50 +4942,50 @@
     "CS-G16": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
@@ -5010,26 +5010,26 @@
                 "lecturer": "SANA, THIM"
             },
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "IMA, TBA 3"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "IMA, TBA 3"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
@@ -5058,13 +5058,13 @@
             "10:30": "Free",
             "11:30": "Free",
             "12:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "VISHM"
             },
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "VISHM"
@@ -5108,13 +5108,13 @@
                 "lecturer": "MAL, MAAM"
             },
             "10:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "KUS"
             },
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "KUS"
@@ -5150,50 +5150,50 @@
     "CS-G17": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
@@ -5231,13 +5231,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "CHAR, BALA"
             },
             "14:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "CHAR, BALA"
@@ -5284,13 +5284,13 @@
         },
         "Friday": {
             "08:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "09:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
@@ -5301,13 +5301,13 @@
             "13:30": "Free",
             "14:30": "Free",
             "15:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "16:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -5338,50 +5338,50 @@
     "CS-G18": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 3LA",
                 "type": "",
                 "lecturer": "SUR, THARR"
@@ -5419,13 +5419,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "CHAR, BALA"
             },
             "14:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "CHAR, BALA"
@@ -5472,13 +5472,13 @@
         },
         "Friday": {
             "08:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "09:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
@@ -5489,13 +5489,13 @@
             "13:30": "Free",
             "14:30": "Free",
             "15:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "16:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -5526,50 +5526,50 @@
     "CS-G19": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
@@ -5607,13 +5607,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "CHAR, BALA"
             },
             "14:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "CHAR, BALA"
@@ -5660,13 +5660,13 @@
         },
         "Friday": {
             "08:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "09:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
@@ -5677,13 +5677,13 @@
             "13:30": "Free",
             "14:30": "Free",
             "15:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "16:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -5714,50 +5714,50 @@
     "CS-G20": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
@@ -5795,13 +5795,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "CHAR, BALA"
             },
             "14:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "CHAR, BALA"
@@ -5848,13 +5848,13 @@
         },
         "Friday": {
             "08:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "09:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 3LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
@@ -5865,13 +5865,13 @@
             "13:30": "Free",
             "14:30": "Free",
             "15:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "16:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -5902,50 +5902,50 @@
     "CS-G21": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
@@ -5960,26 +5960,26 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    SHK"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "BALA,\n                    SHK"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
@@ -6022,13 +6022,13 @@
                 "lecturer": "SANA, ISAT"
             },
             "10:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "AHTU"
             },
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "AHTU"
@@ -6048,13 +6048,13 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5SENG003C Professional Practice TUT",
+                "module": "5SENG003C",
                 "room": "SP -\n                    4LA",
                 "type": "TUT",
                 "lecturer": "SANDU, KASUW"
             },
             "11:30": {
-                "module": "5SENG003C Professional Practice TUT",
+                "module": "5SENG003C",
                 "room": "SP -\n                    4LA",
                 "type": "TUT",
                 "lecturer": "SANDU, KASUW"
@@ -6090,50 +6090,50 @@
     "CS-G22": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "14:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "15:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
             },
             "16:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "SP - 7LA",
                 "type": "",
                 "lecturer": "DIPA, INEK"
@@ -6161,13 +6161,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
@@ -6210,26 +6210,26 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "AHTU"
             },
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "AHTU"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "CHAR,\n                    TBA 1"
             },
             "14:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "CHAR,\n                    TBA 1"
@@ -6278,25 +6278,25 @@
     "CS-G23": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
@@ -6365,13 +6365,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
@@ -6398,26 +6398,26 @@
                 "lecturer": "NAND, OMSH"
             },
             "10:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "AHTU"
             },
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "AHTU"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "CHAR,\n                    TBA 1"
             },
             "14:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "CHAR,\n                    TBA 1"
@@ -6466,25 +6466,25 @@
     "CS-G24": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
@@ -6553,13 +6553,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "NPU"
@@ -6576,26 +6576,26 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "AHTU"
             },
             "11:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "AHTU"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "CHAR,\n                    TBA 1"
             },
             "14:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "CHAR,\n                    TBA 1"
@@ -6654,25 +6654,25 @@
     "CS-G25": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
@@ -6767,13 +6767,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "14:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -6790,26 +6790,26 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "BALA, SHK"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "BALA, SHK"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "GANR"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "GANR"
@@ -6842,25 +6842,25 @@
     "CS-G26": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
@@ -6945,13 +6945,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "14:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -6978,26 +6978,26 @@
                 "lecturer": "SAVH, AMMR"
             },
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "BALA, SHK"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "BALA, SHK"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "GANR"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "GANR"
@@ -7030,25 +7030,25 @@
     "CS-G27": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
@@ -7143,13 +7143,13 @@
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "14:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -7166,26 +7166,26 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "BALA, SHK"
             },
             "11:30": {
-                "module": "5COSC999C System Design LEC",
+                "module": "5COSC999C",
                 "room": "SP - 5LA",
                 "type": "LEC",
                 "lecturer": "BALA, SHK"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "GANR"
             },
             "14:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP -\n                    3LA",
                 "type": "LEC",
                 "lecturer": "GANR"
@@ -7218,25 +7218,25 @@
     "CS-G28": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
@@ -7283,13 +7283,13 @@
             "15:30": "Free",
             "16:30": "Free",
             "17:30": {
-                "module": "5CCGD013C Graphics LEC",
+                "module": "5CCGD013C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "WIM"
             },
             "18:30": {
-                "module": "5CCGD013C Graphics LEC",
+                "module": "5CCGD013C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "WIM"
@@ -7300,13 +7300,13 @@
         },
         "Wednesday": {
             "08:30": {
-                "module": "5CCGD013C Graphics TUT",
+                "module": "5CCGD013C",
                 "room": "SP -\n                    3LD",
                 "type": "TUT",
                 "lecturer": "MANU"
             },
             "09:30": {
-                "module": "5CCGD013C Graphics TUT",
+                "module": "5CCGD013C",
                 "room": "SP -\n                    3LD",
                 "type": "TUT",
                 "lecturer": "MANU"
@@ -7315,25 +7315,25 @@
             "11:30": "Free",
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC022C Programming II TUT",
+                "module": "5COSC022C",
                 "room": "SP -\n                    4LC",
                 "type": "TUT",
                 "lecturer": "BIWI, SAJA"
             },
             "14:30": {
-                "module": "5COSC022C Programming II TUT",
+                "module": "5COSC022C",
                 "room": "SP -\n                    4LC",
                 "type": "TUT",
                 "lecturer": "BIWI, SAJA"
             },
             "15:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP - 7LC",
                 "type": "TUT",
                 "lecturer": "DIPA, TBA\n                    2"
             },
             "16:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP - 7LC",
                 "type": "TUT",
                 "lecturer": "DIPA, TBA\n                    2"
@@ -7346,38 +7346,38 @@
         },
         "Thursday": {
             "08:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "09:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "10:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "11:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "14:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -7397,13 +7397,13 @@
             "11:30": "Free",
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC024C Algorithms TUT",
+                "module": "5COSC024C",
                 "room": "SP\n                    - 4LA",
                 "type": "TUT",
                 "lecturer": "KELUM,\n                    DASU"
             },
             "14:30": {
-                "module": "5COSC024C Algorithms TUT",
+                "module": "5COSC024C",
                 "room": "SP\n                    - 4LA",
                 "type": "TUT",
                 "lecturer": "KELUM,\n                    DASU"
@@ -7436,25 +7436,25 @@
     "CS-G29": {
         "Monday": {
             "08:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "09:30": {
-                "module": "5COSC021C Software Engineering LEC",
+                "module": "5COSC021C",
                 "room": "ONLINE",
                 "type": "LEC",
                 "lecturer": "BNU"
             },
             "10:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
             },
             "11:30": {
-                "module": "5COSC021C Software Engineering",
+                "module": "5COSC021C",
                 "room": "TBA",
                 "type": "",
                 "lecturer": "MANU,\n                    MJAN,\n                    INEK, SANJ, AKAR, DIPA, KAGI, DASU, BIWI, NYIB, SASU, SAEL, BNU, HARR, CLAW, YAAL, VATD, SAVM, KUS,\n                    DES, VINR,\n                    THARR, SUR, PUM, RAD, SUL, THE, HIR, TOR, SAP, RUW, SAHP, KASUW, VISHM, DMS, NILAN, PASI, KALW,\n                    SANDU, UTHP,\n                    KELUM, SALIP, SAADH, RUZK, SUB, YAS, APS, PJN, JAPA, DIPE, AHTU, UMMAR, THAM, MERA, RUV, RAJ"
@@ -7494,38 +7494,38 @@
             "08:30": "Free",
             "09:30": "Free",
             "10:30": {
-                "module": "5COSC023C Computer Networks LEC",
+                "module": "5COSC023C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "TOR"
             },
             "11:30": {
-                "module": "5COSC023C Computer Networks LEC",
+                "module": "5COSC023C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "TOR"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "14:30": {
-                "module": "5SENG003C Professional Practice LEC",
+                "module": "5SENG003C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "DILIT"
             },
             "15:30": {
-                "module": "5COSC023C Computer Networks TUT",
+                "module": "5COSC023C",
                 "room": "SP -\n                    3LD",
                 "type": "TUT",
                 "lecturer": "TOR, RUW"
             },
             "16:30": {
-                "module": "5COSC023C Computer Networks TUT",
+                "module": "5COSC023C",
                 "room": "SP -\n                    3LD",
                 "type": "TUT",
                 "lecturer": "TOR, RUW"
@@ -7538,50 +7538,50 @@
         },
         "Wednesday": {
             "08:30": {
-                "module": "5CCGD010C Game Dev LEC",
+                "module": "5CCGD010C",
                 "room": "SP - 7LB",
                 "type": "LEC",
                 "lecturer": "SAP"
             },
             "09:30": {
-                "module": "5CCGD010C Game Dev LEC",
+                "module": "5CCGD010C",
                 "room": "SP - 7LB",
                 "type": "LEC",
                 "lecturer": "SAP"
             },
             "10:30": {
-                "module": "5CCGD010C Game Dev TUT",
+                "module": "5CCGD010C",
                 "room": "SP -\n                    7LB",
                 "type": "TUT",
                 "lecturer": "SAP"
             },
             "11:30": {
-                "module": "5CCGD010C Game Dev TUT",
+                "module": "5CCGD010C",
                 "room": "SP -\n                    7LB",
                 "type": "TUT",
                 "lecturer": "SAP"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC022C Programming II TUT",
+                "module": "5COSC022C",
                 "room": "SP -\n                    4LC",
                 "type": "TUT",
                 "lecturer": "BIWI, SAJA"
             },
             "14:30": {
-                "module": "5COSC022C Programming II TUT",
+                "module": "5COSC022C",
                 "room": "SP -\n                    4LC",
                 "type": "TUT",
                 "lecturer": "BIWI, SAJA"
             },
             "15:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP - 7LC",
                 "type": "TUT",
                 "lecturer": "DIPA, TBA\n                    2"
             },
             "16:30": {
-                "module": "5DATA001C Database Systems TUT",
+                "module": "5DATA001C",
                 "room": "SP - 7LC",
                 "type": "TUT",
                 "lecturer": "DIPA, TBA\n                    2"
@@ -7594,38 +7594,38 @@
         },
         "Thursday": {
             "08:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "09:30": {
-                "module": "5DATA001C Database Systems LEC",
+                "module": "5DATA001C",
                 "room": "SP - 7LA",
                 "type": "LEC",
                 "lecturer": "SAHP"
             },
             "10:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "11:30": {
-                "module": "5COSC024C Algorithms LEC",
+                "module": "5COSC024C",
                 "room": "SP - 6LA",
                 "type": "LEC",
                 "lecturer": "THE"
             },
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
             },
             "14:30": {
-                "module": "5COSC022C Programming II LEC",
+                "module": "5COSC022C",
                 "room": "SP - 4LA",
                 "type": "LEC",
                 "lecturer": "CAS"
@@ -7655,13 +7655,13 @@
             "11:30": "Free",
             "12:30": "Free",
             "13:30": {
-                "module": "5COSC024C Algorithms TUT",
+                "module": "5COSC024C",
                 "room": "SP\n                    - 4LA",
                 "type": "TUT",
                 "lecturer": "KELUM,\n                    DASU"
             },
             "14:30": {
-                "module": "5COSC024C Algorithms TUT",
+                "module": "5COSC024C",
                 "room": "SP\n                    - 4LA",
                 "type": "TUT",
                 "lecturer": "KELUM,\n                    DASU"

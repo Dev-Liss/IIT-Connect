@@ -59,7 +59,8 @@ function processLocalData(groupReq, targetDay) {
         currentEntry = {
           _id: Math.random().toString(),
           courseCode: slot.module,
-          courseName: slot.type,
+          courseName: slot.type, // keeping for backward compatibility in TodayClassCard
+          type: slot.type,
           day: shortDay,
           startTime: time,
           endTime: nextHour,

@@ -238,7 +238,10 @@ export default function TimetableScreen() {
         >
           <ClassCard
             courseCode={entry.courseCode}
+            type={entry.type}
             startTime={entry.startTime}
+            endTime={entry.endTime}
+            lecturer={entry.lecturer}
             location={entry.location}
             color={entry.color}
             height={style.height - 4}
@@ -479,7 +482,7 @@ export default function TimetableScreen() {
       >
         <TouchableWithoutFeedback onPress={() => setSelectedLecture(null)}>
           <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={() => {}}>
+            <TouchableWithoutFeedback onPress={() => { }}>
               <View style={styles.modalContent}>
                 {/* Close Button */}
                 <TouchableOpacity
