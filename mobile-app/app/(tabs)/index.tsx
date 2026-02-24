@@ -63,6 +63,7 @@ export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [containerHeight, setContainerHeight] = useState<number>(0);
 
   // ====================================
   // FETCH POSTS
@@ -74,9 +75,9 @@ export default function HomeScreen() {
       }
       setError(null);
 
-      console.log("📡 Fetching posts from:", POST_ENDPOINTS.GET_ALL);
+      console.log("📡 Fetching feed posts from:", POST_ENDPOINTS.GET_FEED());
 
-      const response = await fetch(POST_ENDPOINTS.GET_ALL);
+      const response = await fetch(POST_ENDPOINTS.GET_FEED());
       const data = await response.json();
 
       console.log("📥 Received posts:", data);
@@ -215,7 +216,10 @@ export default function HomeScreen() {
       <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Conditional Content — flex: 1 gives a bounded height for paging */}
-      <View style={{ flex: 1 }}>
+      <View
+        style={{ flex: 1 }}
+        onLayout={(e) => setContainerHeight(e.nativeEvent.layout.height)}
+      >
         {activeTab === "feed" ? (
           <FlatList
             data={posts}
@@ -243,7 +247,7 @@ export default function HomeScreen() {
             }
           />
         ) : (
-          <ReelsFeed />
+          <ReelsFeed availableHeight={containerHeight} />
         )}
       </View>
     </SafeAreaView>

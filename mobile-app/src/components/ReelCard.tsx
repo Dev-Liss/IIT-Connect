@@ -173,7 +173,7 @@ export default function ReelCard({ reel, isActive, height }: ReelCardProps) {
           ref={videoRef}
           source={{ uri: reel.media.url }}
           style={styles.video}
-          resizeMode={ResizeMode.COVER}
+          resizeMode={ResizeMode.CONTAIN}
           isLooping
           shouldPlay={isActive}
           isMuted={isMuted}
@@ -278,7 +278,6 @@ export default function ReelCard({ reel, isActive, height }: ReelCardProps) {
 const styles = StyleSheet.create({
   container: {
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
     backgroundColor: "#000",
     position: "relative",
   },

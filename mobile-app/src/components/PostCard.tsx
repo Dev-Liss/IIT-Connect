@@ -69,8 +69,15 @@ export default function PostCard({ post, onLike, onShare }: PostCardProps) {
 
   // Calculate dynamic image height based on aspect ratio
   // Formula: height = width / aspectRatio
+  // Clamp to reasonable bounds so images don't overflow the card
   const aspectRatio = post.media?.aspectRatio || 1;
-  const imageHeight = SCREEN_WIDTH / aspectRatio;
+  const rawHeight = SCREEN_WIDTH / aspectRatio;
+  const MAX_IMAGE_HEIGHT = SCREEN_WIDTH * 1.25; // Cap portrait images
+  const MIN_IMAGE_HEIGHT = SCREEN_WIDTH * 0.5; // Floor for very wide images
+  const imageHeight = Math.min(
+    Math.max(rawHeight, MIN_IMAGE_HEIGHT),
+    MAX_IMAGE_HEIGHT,
+  );
 
   // Get username with fallback
   const username = post.user?.username || "Unknown User";
@@ -154,7 +161,7 @@ export default function PostCard({ post, onLike, onShare }: PostCardProps) {
       <Image
         source={{ uri: post.media.url }}
         style={[styles.postImage, { height: imageHeight }]}
-        resizeMode="cover"
+        resizeMode="contain"
       />
 
       {/* ========== ACTION BAR ========== */}
@@ -269,7 +276,7 @@ const styles = StyleSheet.create({
   // Image styles
   postImage: {
     width: SCREEN_WIDTH,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#1a1a1a",
   },
   // Action bar styles
   actionBar: {

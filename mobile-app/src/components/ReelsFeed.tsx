@@ -33,9 +33,9 @@ import { POST_ENDPOINTS } from "../config/api";
 // ====================================
 // DIMENSIONS
 // ====================================
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-// Tab bar height (must match _layout.tsx)
+// Fallback tab bar height (used only if availableHeight is not provided)
 const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 68;
 
 // ====================================
@@ -65,7 +65,11 @@ interface Reel {
 // ====================================
 // COMPONENT
 // ====================================
-export default function ReelsFeed() {
+interface ReelsFeedProps {
+  availableHeight?: number;
+}
+
+export default function ReelsFeed({ availableHeight }: ReelsFeedProps) {
   const insets = useSafeAreaInsets();
 
   // ── State ──
@@ -76,11 +80,13 @@ export default function ReelsFeed() {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
 
   // ── Calculated item height ──
-  // Full screen minus tab bar and bottom safe area
+  // Use measured availableHeight from parent if provided
+  // Otherwise fall back to screen-based calculation
   const ITEM_HEIGHT =
-    SCREEN_HEIGHT -
-    TAB_BAR_HEIGHT -
-    (Platform.OS === "ios" ? 0 : insets.bottom);
+    availableHeight ||
+    Dimensions.get("window").height -
+      TAB_BAR_HEIGHT -
+      (Platform.OS === "ios" ? 0 : insets.bottom);
 
   // ====================================
   // DATA FETCHING
