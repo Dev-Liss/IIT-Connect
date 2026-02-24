@@ -24,6 +24,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Video, ResizeMode } from "expo-av";
 import { useAuth } from "../src/context/AuthContext";
+import { POST_ENDPOINTS } from "../src/config/api";
 
 export default function PreviewReelScreen() {
   const router = useRouter();
@@ -46,12 +47,66 @@ export default function PreviewReelScreen() {
 
   // Handle post upload
   const handlePostNow = async () => {
-    // Show coming soon message for reel uploads
-    Alert.alert(
-      "Coming Soon",
-      "Reel upload functionality will be available soon!",
-      [{ text: "OK" }],
-    );
+    if (!user) {
+      Alert.alert("Error", "You must be logged in to post.");
+      return;
+    }
+
+    if (!params.video) {
+      Alert.alert("Error", "No video to upload.");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("caption", params.caption || "");
+      formData.append("userId", user.id);
+
+      if (params.tags) {
+        formData.append("tags", params.tags);
+      }
+
+      // Add video media
+      const filename = params.video.split("/").pop() || "reel.mp4";
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `video/${match[1]}` : "video/mp4";
+
+      // @ts-ignore
+      formData.append("media", {
+        uri: params.video,
+        name: filename,
+        type: type,
+      });
+
+      const response = await fetch(POST_ENDPOINTS.CREATE, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        Alert.alert("🎉 Success!", "Your reel has been shared!", [
+          {
+            text: "OK",
+            onPress: () => {
+              // Navigate back to home
+              router.dismissAll();
+              router.replace("/(tabs)");
+            },
+          },
+        ]);
+      } else {
+        Alert.alert("Upload Failed", data.message || "Something went wrong");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      Alert.alert("Connection Error", "Could not connect to server.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // Get user display name and initial

@@ -4,13 +4,13 @@
  * ====================================
  * Modal-card style post creation with:
  * - Caption text input
- * - Media picker (image or video) via expo-image-picker
+ * - Media picker (images only) via expo-image-picker
  * - Category selector with brand-red highlight
- * - Video/Image preview with clear button
+ * - Image preview with clear button
  * - Navigation to preview-post screen
  */
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -28,7 +28,6 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { Video, ResizeMode } from "expo-av";
 import { useAuth } from "../src/context/AuthContext";
 import { POST_ENDPOINTS } from "../src/config/api";
 
@@ -47,12 +46,10 @@ const CATEGORIES = [
 export default function CreatePostNewScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const videoRef = useRef<Video>(null);
 
   // ── Form state ──
   const [caption, setCaption] = useState("");
   const [media, setMedia] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [category, setCategory] = useState("General");
   const [tags, setTags] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -98,7 +95,7 @@ export default function CreatePostNewScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 0.8,
       });
@@ -107,17 +104,7 @@ export default function CreatePostNewScreen() {
         const asset = result.assets[0];
         setMedia(asset.uri);
 
-        // Detect media type from the picker result
-        // expo-image-picker returns asset.type as "image" or "video"
-        if (asset.type === "video") {
-          setMediaType("video");
-        } else {
-          setMediaType("image");
-        }
-
-        console.log(
-          `📎 Media selected: ${asset.type || "image"} — ${asset.uri.slice(-30)}`,
-        );
+        console.log(`📎 Image selected: ${asset.uri.slice(-30)}`);
       }
     } catch (error) {
       console.error("Media pick error:", error);
@@ -130,7 +117,6 @@ export default function CreatePostNewScreen() {
   // ====================================
   const clearMedia = () => {
     setMedia(null);
-    setMediaType("image");
   };
 
   // ====================================
@@ -151,7 +137,7 @@ export default function CreatePostNewScreen() {
       params: {
         content: caption,
         media: media || "",
-        mediaType: mediaType,
+        mediaType: "image",
         category: category,
         tags: tags,
       },
@@ -169,7 +155,7 @@ export default function CreatePostNewScreen() {
     }
 
     if (!media) {
-      Alert.alert("Media Required", "Please select a photo or video to share.");
+      Alert.alert("Media Required", "Please select a photo to share.");
       return;
     }
 
@@ -187,7 +173,7 @@ export default function CreatePostNewScreen() {
       // uri, name, and type — not as a Blob.
       const filename = media.split("/").pop() || "upload.jpg";
       const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `${mediaType}/${match[1]}` : `${mediaType}/jpeg`;
+      const type = match ? `image/${match[1]}` : "image/jpeg";
 
       formData.append("media", {
         uri: media,
@@ -195,7 +181,7 @@ export default function CreatePostNewScreen() {
         type: type,
       } as any);
 
-      console.log(`📤 Uploading ${mediaType}: ${filename} (${type})`);
+      console.log(`📤 Uploading image: ${filename} (${type})`);
 
       // POST to backend
       const response = await fetch(POST_ENDPOINTS.CREATE, {
@@ -209,26 +195,21 @@ export default function CreatePostNewScreen() {
       const data = await response.json();
 
       if (data.success) {
-        Alert.alert(
-          "🎉 Success!",
-          `Your ${mediaType === "video" ? "reel" : "post"} has been shared!`,
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                // Clear all states
-                setCaption("");
-                setMedia(null);
-                setMediaType("image");
-                setCategory("General");
-                setTags("");
+        Alert.alert("🎉 Success!", "Your post has been shared!", [
+          {
+            text: "OK",
+            onPress: () => {
+              // Clear all states
+              setCaption("");
+              setMedia(null);
+              setCategory("General");
+              setTags("");
 
-                // Navigate back to feed
-                router.replace("/");
-              },
+              // Navigate back to feed
+              router.replace("/");
             },
-          ],
-        );
+          },
+        ]);
       } else {
         Alert.alert(
           "Upload Failed",
@@ -288,35 +269,13 @@ export default function CreatePostNewScreen() {
             />
           </View>
 
-          {/* ========== MEDIA PICKER ========== */}
+          {/* ========== MEDIA PICKER (Images Only) ========== */}
           <View style={styles.inputSection}>
-            <Text style={styles.label}>Media (Optional)</Text>
+            <Text style={styles.label}>Photo (Optional)</Text>
             <TouchableOpacity style={styles.mediaPicker} onPress={pickMedia}>
               {media ? (
                 <View style={styles.mediaPreviewContainer}>
-                  {/* Show Image or Video preview based on mediaType */}
-                  {mediaType === "video" ? (
-                    <View style={styles.videoPreviewWrapper}>
-                      <Video
-                        ref={videoRef}
-                        source={{ uri: media }}
-                        style={styles.mediaPreview}
-                        resizeMode={ResizeMode.COVER}
-                        shouldPlay={false}
-                        isMuted
-                      />
-                      {/* Video badge overlay */}
-                      <View style={styles.videoBadge}>
-                        <Ionicons name="videocam" size={14} color="#fff" />
-                        <Text style={styles.videoBadgeText}>Video</Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <Image
-                      source={{ uri: media }}
-                      style={styles.mediaPreview}
-                    />
-                  )}
+                  <Image source={{ uri: media }} style={styles.mediaPreview} />
 
                   {/* X button to clear selection */}
                   <TouchableOpacity
@@ -329,7 +288,7 @@ export default function CreatePostNewScreen() {
               ) : (
                 <View style={styles.mediaPlaceholder}>
                   <Ionicons name="images-outline" size={32} color="#999" />
-                  <Text style={styles.mediaText}>Add photos or videos</Text>
+                  <Text style={styles.mediaText}>Add a photo</Text>
                   <Text style={styles.mediaSubtext}>
                     Tap to select from gallery
                   </Text>
@@ -537,30 +496,10 @@ const styles = StyleSheet.create({
   mediaPreviewContainer: {
     position: "relative",
   },
-  videoPreviewWrapper: {
-    position: "relative",
-  },
   mediaPreview: {
     width: "100%",
     height: 200,
     resizeMode: "cover",
-  },
-  videoBadge: {
-    position: "absolute",
-    bottom: 8,
-    left: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    gap: 4,
-  },
-  videoBadgeText: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: "600",
   },
   removeMedia: {
     position: "absolute",

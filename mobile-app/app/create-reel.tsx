@@ -3,9 +3,14 @@
  * CREATE REEL SCREEN
  * ====================================
  * Modal-card style reel creation with:
- * - Video upload (required)
+ * - Video upload (required) via expo-image-picker
  * - Caption input
+ * - Category selector with brand-red highlight
  * - Tags input
+ * - Direct "Share Reel" upload button
+ * - Preview navigation button
+ *
+ * Matches the Create Post screen design.
  */
 
 import React, { useState } from "react";
@@ -27,18 +32,34 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { Video, ResizeMode } from "expo-av";
 import { useAuth } from "../src/context/AuthContext";
+import { POST_ENDPOINTS } from "../src/config/api";
+
+// ====================================
+// CONSTANTS
+// ====================================
+const CATEGORIES = [
+  "General",
+  "Academic",
+  "Events",
+  "Sports",
+  "Clubs",
+  "Memes",
+];
 
 export default function CreateReelScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  // Form state
+  // ── Form state ──
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
+  const [category, setCategory] = useState("General");
   const [tags, setTags] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auth guard
+  // ====================================
+  // AUTH GUARD
+  // ====================================
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
@@ -49,17 +70,19 @@ export default function CreateReelScreen() {
             Please log in to create a reel
           </Text>
           <TouchableOpacity
-            style={styles.previewButton}
+            style={styles.shareButton}
             onPress={() => router.replace("/")}
           >
-            <Text style={styles.previewButtonText}>Go to Login</Text>
+            <Text style={styles.shareButtonText}>Go to Login</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Pick video from gallery
+  // ====================================
+  // PICK VIDEO FROM GALLERY
+  // ====================================
   const pickVideo = async () => {
     try {
       const permissionResult =
@@ -82,6 +105,7 @@ export default function CreateReelScreen() {
 
       if (!result.canceled && result.assets[0]) {
         setSelectedVideo(result.assets[0].uri);
+        console.log(`📎 Video selected: ${result.assets[0].uri.slice(-30)}`);
       }
     } catch (error) {
       console.error("Video pick error:", error);
@@ -89,7 +113,16 @@ export default function CreateReelScreen() {
     }
   };
 
-  // Handle preview - navigate to preview screen
+  // ====================================
+  // CLEAR SELECTED VIDEO
+  // ====================================
+  const clearVideo = () => {
+    setSelectedVideo(null);
+  };
+
+  // ====================================
+  // HANDLE PREVIEW NAVIGATION
+  // ====================================
   const handlePreview = () => {
     if (!selectedVideo) {
       Alert.alert("Required Field", "Please select a video before continuing.");
@@ -107,6 +140,92 @@ export default function CreateReelScreen() {
     });
   };
 
+  // ====================================
+  // HANDLE SHARE REEL (UPLOAD)
+  // ====================================
+  const handleShareReel = async () => {
+    // Validate
+    if (!user) {
+      Alert.alert("Error", "You must be logged in to post.");
+      return;
+    }
+
+    if (!selectedVideo) {
+      Alert.alert("Video Required", "Please select a video to share.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Build FormData
+      const formData = new FormData();
+      formData.append("userId", user.id);
+      formData.append("caption", caption);
+      formData.append("category", category);
+
+      // CRITICAL ANDROID FIX:
+      // Android requires the file to be appended as an object with
+      // uri, name, and type — not as a Blob.
+      const filename = selectedVideo.split("/").pop() || "upload.mp4";
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `video/${match[1]}` : "video/mp4";
+
+      formData.append("media", {
+        uri: selectedVideo,
+        name: filename,
+        type: type,
+      } as any);
+
+      console.log(`📤 Uploading video: ${filename} (${type})`);
+
+      // POST to backend
+      const response = await fetch(POST_ENDPOINTS.CREATE, {
+        method: "POST",
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        Alert.alert("🎉 Success!", "Your reel has been shared!", [
+          {
+            text: "OK",
+            onPress: () => {
+              // Clear all states
+              setSelectedVideo(null);
+              setCaption("");
+              setCategory("General");
+              setTags("");
+
+              // Navigate back to feed
+              router.replace("/");
+            },
+          },
+        ]);
+      } else {
+        Alert.alert(
+          "Upload Failed",
+          data.message || "Something went wrong. Please try again.",
+        );
+      }
+    } catch (error) {
+      console.error("❌ Upload error:", error);
+      Alert.alert(
+        "Connection Error",
+        "Could not connect to the server. Please check your connection and try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ====================================
+  // RENDER
+  // ====================================
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f5f7fa" />
@@ -129,49 +248,7 @@ export default function CreateReelScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Video Picker */}
-          <View style={styles.inputSection}>
-            <Text style={styles.label}>
-              Video <Text style={styles.required}>*</Text>
-            </Text>
-            <TouchableOpacity style={styles.videoPicker} onPress={pickVideo}>
-              {selectedVideo ? (
-                <View style={styles.videoPreviewContainer}>
-                  <Video
-                    source={{ uri: selectedVideo }}
-                    style={styles.videoPreview}
-                    resizeMode={ResizeMode.COVER}
-                    shouldPlay={false}
-                    isLooping={false}
-                    isMuted
-                  />
-                  <View style={styles.videoOverlay}>
-                    <Ionicons name="play-circle" size={48} color="#fff" />
-                  </View>
-                  <TouchableOpacity
-                    style={styles.removeVideo}
-                    onPress={() => setSelectedVideo(null)}
-                  >
-                    <Ionicons name="close-circle" size={24} color="#f9252b" />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <View style={styles.videoPlaceholder}>
-                  <Ionicons
-                    name="cloud-upload-outline"
-                    size={36}
-                    color="#999"
-                  />
-                  <Text style={styles.videoText}>Click to upload video</Text>
-                  <Text style={styles.videoSubtext}>
-                    MP4, MOV, AVI up to 100MB
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {/* Caption Input */}
+          {/* ========== CAPTION INPUT ========== */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Caption</Text>
             <TextInput
@@ -181,12 +258,83 @@ export default function CreateReelScreen() {
               value={caption}
               onChangeText={setCaption}
               multiline
-              numberOfLines={3}
+              numberOfLines={4}
               textAlignVertical="top"
             />
           </View>
 
-          {/* Tags Input */}
+          {/* ========== VIDEO PICKER ========== */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>
+              Video <Text style={styles.required}>*</Text>
+            </Text>
+            <TouchableOpacity style={styles.mediaPicker} onPress={pickVideo}>
+              {selectedVideo ? (
+                <View style={styles.mediaPreviewContainer}>
+                  <Video
+                    source={{ uri: selectedVideo }}
+                    style={styles.mediaPreview}
+                    resizeMode={ResizeMode.COVER}
+                    shouldPlay={false}
+                    isLooping={false}
+                    isMuted
+                  />
+                  {/* Play icon overlay */}
+                  <View style={styles.videoOverlay}>
+                    <Ionicons name="play-circle" size={48} color="#fff" />
+                  </View>
+
+                  {/* X button to clear selection */}
+                  <TouchableOpacity
+                    style={styles.removeMedia}
+                    onPress={clearVideo}
+                  >
+                    <Ionicons name="close-circle" size={26} color="#f9252b" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.mediaPlaceholder}>
+                  <Ionicons name="videocam-outline" size={32} color="#999" />
+                  <Text style={styles.mediaText}>Add a video</Text>
+                  <Text style={styles.mediaSubtext}>
+                    Tap to select from gallery (max 60s)
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* ========== CATEGORY SELECTOR ========== */}
+          <View style={styles.inputSection}>
+            <Text style={styles.label}>Category</Text>
+            <View style={styles.categoryRow}>
+              {CATEGORIES.map((cat) => {
+                const isSelected = category === cat;
+                return (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[
+                      styles.categoryChip,
+                      isSelected && styles.categoryChipActive,
+                    ]}
+                    onPress={() => setCategory(cat)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        isSelected && styles.categoryChipTextActive,
+                      ]}
+                    >
+                      {cat}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* ========== TAGS INPUT ========== */}
           <View style={styles.inputSection}>
             <Text style={styles.label}>Tags</Text>
             <TextInput
@@ -199,29 +347,50 @@ export default function CreateReelScreen() {
             <Text style={styles.hint}>Separate tags with commas</Text>
           </View>
 
-          {/* Action Buttons */}
+          {/* ========== ACTION BUTTONS ========== */}
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => router.back()}
+              disabled={isSubmitting}
             >
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
                 styles.previewButton,
-                isUploading && styles.buttonDisabled,
+                styles.previewButtonOutline,
+                isSubmitting && styles.buttonDisabledOutline,
               ]}
               onPress={handlePreview}
-              disabled={isUploading}
+              disabled={isSubmitting}
             >
-              {isUploading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.previewButtonText}>Preview</Text>
-              )}
+              <Text style={styles.previewButtonTextOutline}>Preview</Text>
             </TouchableOpacity>
           </View>
+
+          {/* ========== SHARE REEL BUTTON ========== */}
+          <TouchableOpacity
+            style={[
+              styles.shareButton,
+              (!selectedVideo || isSubmitting) && styles.buttonDisabled,
+            ]}
+            onPress={handleShareReel}
+            disabled={!selectedVideo || isSubmitting}
+            activeOpacity={0.8}
+          >
+            {isSubmitting ? (
+              <View style={styles.shareButtonContent}>
+                <ActivityIndicator color="#fff" size="small" />
+                <Text style={styles.shareButtonText}>Uploading...</Text>
+              </View>
+            ) : (
+              <View style={styles.shareButtonContent}>
+                <Ionicons name="paper-plane" size={18} color="#fff" />
+                <Text style={styles.shareButtonText}>Share Reel</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -290,7 +459,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 15,
-    minHeight: 80,
+    minHeight: 100,
     textAlignVertical: "top",
     color: "#262626",
   },
@@ -308,33 +477,33 @@ const styles = StyleSheet.create({
     color: "#999",
     marginTop: 6,
   },
-  // Video Picker
-  videoPicker: {
+  // Media Picker (matches Create Post)
+  mediaPicker: {
     borderWidth: 1,
     borderColor: "#e0e0e0",
     borderStyle: "dashed",
     borderRadius: 8,
     overflow: "hidden",
   },
-  videoPlaceholder: {
+  mediaPlaceholder: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 40,
+    paddingVertical: 30,
   },
-  videoText: {
+  mediaText: {
     fontSize: 14,
     color: "#666",
-    marginTop: 10,
+    marginTop: 8,
   },
-  videoSubtext: {
+  mediaSubtext: {
     fontSize: 12,
     color: "#999",
-    marginTop: 4,
+    marginTop: 2,
   },
-  videoPreviewContainer: {
+  mediaPreviewContainer: {
     position: "relative",
   },
-  videoPreview: {
+  mediaPreview: {
     width: "100%",
     height: 200,
   },
@@ -348,14 +517,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  removeVideo: {
+  removeMedia: {
     position: "absolute",
     top: 8,
     right: 8,
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 13,
   },
-  // Buttons
+  // Category Selector (matches Create Post)
+  categoryRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  categoryChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    backgroundColor: "#fff",
+  },
+  categoryChipActive: {
+    backgroundColor: "#f9252b",
+    borderColor: "#f9252b",
+  },
+  categoryChipText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#666",
+  },
+  categoryChipTextActive: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  // Buttons (matches Create Post)
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -382,13 +578,39 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9252b",
     alignItems: "center",
   },
-  previewButtonText: {
+  previewButtonOutline: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#f9252b",
+  },
+  previewButtonTextOutline: {
     fontSize: 15,
     fontWeight: "600",
+    color: "#f9252b",
+  },
+  // Share Reel Button (matches Create Post)
+  shareButton: {
+    marginTop: 12,
+    paddingVertical: 16,
+    borderRadius: 8,
+    backgroundColor: "#f9252b",
+    alignItems: "center",
+  },
+  shareButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  shareButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
     color: "#fff",
   },
   buttonDisabled: {
     backgroundColor: "#fca5a5",
+  },
+  buttonDisabledOutline: {
+    borderColor: "#fca5a5",
   },
   // Auth Guard
   guardContainer: {

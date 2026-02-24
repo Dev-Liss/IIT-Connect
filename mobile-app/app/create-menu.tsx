@@ -27,20 +27,20 @@ const CARD_WIDTH = (width - 60) / 2; // 2 columns with padding
 // Menu options configuration
 const MENU_OPTIONS = [
   {
-    id: "reel",
-    title: "Create Reel",
-    subtitle: "Share a short video",
-    icon: "videocam-outline",
-    iconType: "ionicons",
-    action: "create-reel",
-  },
-  {
     id: "post",
     title: "Create Post",
     subtitle: "Share a photo or update",
     icon: "image-outline",
     iconType: "ionicons",
     action: "create-post",
+  },
+  {
+    id: "reel",
+    title: "Create Reel",
+    subtitle: "Share a short video",
+    icon: "videocam-outline",
+    iconType: "ionicons",
+    action: "create-reel",
   },
   {
     id: "event",
