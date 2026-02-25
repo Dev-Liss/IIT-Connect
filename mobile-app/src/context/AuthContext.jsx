@@ -8,54 +8,18 @@
  * Features:
  * - Store logged-in user data globally
  * - Provide login/logout functions
- * - Persist session using AsyncStorage (optional)
- * - TypeScript types for User object
+ * - Persist session using AsyncStorage
  */
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// ====================================
-// TYPE DEFINITIONS
-// ====================================
-
-/**
- * User object structure
- * Matches the backend API response (auth routes return 'id', not '_id')
- */
-export interface User {
-  id: string;
-  username: string;
-  email: string;
-  studentId?: string;
-  role?: string;
-  profilePicture?: string;
-  bio?: string;
-  createdAt?: string;
-}
-
-/**
- * Auth Context value type
- */
-interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  login: (userData: User) => Promise<void>;
-  logout: () => Promise<void>;
-}
 
 // ====================================
 // CONTEXT CREATION
 // ====================================
 
 // Create context with undefined default
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext(undefined);
 
 // Storage key for persisting user data
 const USER_STORAGE_KEY = "@iit_connect_user";
@@ -64,13 +28,9 @@ const USER_STORAGE_KEY = "@iit_connect_user";
 // AUTH PROVIDER COMPONENT
 // ====================================
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ children }) {
   // State
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // ====================================
@@ -88,7 +48,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const storedUser = await AsyncStorage.getItem(USER_STORAGE_KEY);
       if (storedUser) {
-        const userData: User = JSON.parse(storedUser);
+        const userData = JSON.parse(storedUser);
         setUser(userData);
         console.log("✅ User session restored:", userData.username);
       }
@@ -106,7 +66,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Login user - saves to state and AsyncStorage
    * @param userData - User object from API response
    */
-  const login = async (userData: User) => {
+  const login = async (userData) => {
     try {
       // Save to AsyncStorage for persistence
       await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
@@ -141,7 +101,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // ====================================
   // CONTEXT VALUE
   // ====================================
-  const value: AuthContextType = {
+  const value = {
     user,
     isLoading,
     login,
@@ -158,7 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
  * Custom hook to access auth context
  * Throws error if used outside AuthProvider
  */
-export function useAuth(): AuthContextType {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");

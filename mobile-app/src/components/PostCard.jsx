@@ -30,34 +30,7 @@ import { POST_ENDPOINTS } from "../config/api";
 // Get screen width for dynamic image sizing
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
-// Post type definition
-interface Post {
-  _id: string;
-  user?: {
-    _id: string;
-    username: string;
-    email?: string;
-  };
-  caption?: string;
-  category?: string;
-  media: {
-    url: string;
-    aspectRatio?: number;
-    width?: number;
-    height?: number;
-  };
-  likes?: string[];
-  comments?: any[];
-  createdAt: string;
-}
-
-interface PostCardProps {
-  post: Post;
-  onLike?: (postId: string) => void;
-  onShare?: (postId: string) => void;
-}
-
-export default function PostCard({ post, onLike, onShare }: PostCardProps) {
+export default function PostCard({ post, onLike, onShare }) {
   const { user } = useAuth();
   const router = useRouter();
 
@@ -86,7 +59,7 @@ export default function PostCard({ post, onLike, onShare }: PostCardProps) {
   const avatarUrl = `https://i.pravatar.cc/150?u=${post.user?._id || post._id}`;
 
   // Format relative timestamp
-  const getRelativeTime = (dateString: string): string => {
+  const getRelativeTime = (dateString) => {
     const now = new Date();
     const date = new Date(dateString);
     const diffMs = now.getTime() - date.getTime();
@@ -175,7 +148,7 @@ export default function PostCard({ post, onLike, onShare }: PostCardProps) {
             />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => router.push(`/comments/${post._id}` as any)}
+            onPress={() => router.push(`/comments/${post._id}`)}
             style={styles.actionButton}
           >
             <Ionicons name="chatbubble-outline" size={24} color="#262626" />
@@ -201,12 +174,10 @@ export default function PostCard({ post, onLike, onShare }: PostCardProps) {
 
       {/* ========== COMMENT COUNT ========== */}
       {(post.comments?.length || 0) > 0 && (
-        <TouchableOpacity
-          onPress={() => router.push(`/comments/${post._id}` as any)}
-        >
+        <TouchableOpacity onPress={() => router.push(`/comments/${post._id}`)}>
           <Text style={styles.commentCount}>
-            View all {post.comments!.length}{" "}
-            {post.comments!.length === 1 ? "comment" : "comments"}
+            View all {post.comments.length}{" "}
+            {post.comments.length === 1 ? "comment" : "comments"}
           </Text>
         </TouchableOpacity>
       )}

@@ -7,15 +7,7 @@ import {
   Platform,
 } from "react-native";
 
-interface ContentSwitcherProps {
-  activeTab: "feed" | "reels";
-  onTabChange: (tab: "feed" | "reels") => void;
-}
-
-const ContentSwitcher: React.FC<ContentSwitcherProps> = ({
-  activeTab,
-  onTabChange,
-}) => {
+const ContentSwitcher = ({ activeTab, onTabChange }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity

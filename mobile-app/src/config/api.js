@@ -25,17 +25,17 @@ export const POST_ENDPOINTS = {
   GET_ALL: `${API_BASE_URL}/posts`,
   GET_FEED: () => `${API_BASE_URL}/posts?mediaType=image`,
   GET_REELS: () => `${API_BASE_URL}/posts?mediaType=video`,
-  GET_BY_ID: (id: string) => `${API_BASE_URL}/posts/${id}`,
-  TOGGLE_LIKE: (id: string) => `${API_BASE_URL}/posts/${id}/like`,
-  ADD_COMMENT: (id: string) => `${API_BASE_URL}/posts/${id}/comment`,
-  GET_COMMENTS: (id: string) => `${API_BASE_URL}/posts/${id}/comments`,
+  GET_BY_ID: (id) => `${API_BASE_URL}/posts/${id}`,
+  TOGGLE_LIKE: (id) => `${API_BASE_URL}/posts/${id}/like`,
+  ADD_COMMENT: (id) => `${API_BASE_URL}/posts/${id}/comment`,
+  GET_COMMENTS: (id) => `${API_BASE_URL}/posts/${id}/comments`,
 };
 
 // Story endpoints
 export const STORY_ENDPOINTS = {
   CREATE: `${API_BASE_URL}/stories`,
   GET_ALL: `${API_BASE_URL}/stories`,
-  MARK_VIEWED: (id: string) => `${API_BASE_URL}/stories/${id}/view`,
+  MARK_VIEWED: (id) => `${API_BASE_URL}/stories/${id}/view`,
 };
 
 // Health check endpoint (for testing connection)

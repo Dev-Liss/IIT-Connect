@@ -38,29 +38,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useAuth } from "../context/AuthContext";
 import { STORY_ENDPOINTS } from "../config/api";
 
-// ─── Types ───────────────────────────────────────────────────
-interface StoryUser {
-  _id: string;
-  username: string;
-  email?: string;
-  profilePicture?: string;
-}
-
-interface Story {
-  _id: string;
-  mediaUrl: string;
-  mediaType?: string;
-  viewed: boolean;
-  createdAt: string;
-}
-
-interface StoryGroup {
-  user: StoryUser;
-  stories: Story[];
-  allViewed: boolean;
-}
-
-// ─── Constants ───────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const CIRCLE_SIZE = 70; // avatar circle diameter
@@ -76,15 +54,10 @@ const DEFAULT_AVATAR =
   "https://ui-avatars.com/api/?background=ccc&color=fff&name=User";
 
 // Instagram-style gradient colors for unviewed ring
-const GRADIENT_COLORS: [string, string, string, string] = [
-  "#f9ce34",
-  "#ee2a7b",
-  "#6228d7",
-  "#f9ce34",
-];
+const GRADIENT_COLORS = ["#f9ce34", "#ee2a7b", "#6228d7", "#f9ce34"];
 
 // ─── Helper: first unviewed or first story thumbnail ─────────
-const getThumbnail = (stories: Story[], fallbackAvatar?: string): string => {
+const getThumbnail = (stories, fallbackAvatar) => {
   const firstUnviewed = stories.find((s) => !s.viewed);
   if (firstUnviewed) return firstUnviewed.mediaUrl;
   if (stories.length > 0) return stories[0].mediaUrl;
@@ -94,12 +67,7 @@ const getThumbnail = (stories: Story[], fallbackAvatar?: string): string => {
 // =============================================================
 //  StoryCircle — generic friend circle
 // =============================================================
-interface StoryCircleProps {
-  group: StoryGroup;
-  onPress: () => void;
-}
-
-const StoryCircle: React.FC<StoryCircleProps> = ({ group, onPress }) => {
+const StoryCircle = ({ group, onPress }) => {
   const avatar = group.user?.profilePicture || DEFAULT_AVATAR;
   const username = group.user?.username || "Unknown";
   const isViewed = group.allViewed;
@@ -141,17 +109,7 @@ const StoryCircle: React.FC<StoryCircleProps> = ({ group, onPress }) => {
 // =============================================================
 //  MyStoryCircle — current user's circle with (+) badge
 // =============================================================
-interface MyStoryCircleProps {
-  userAvatar?: string;
-  username: string;
-  hasStories: boolean;
-  allViewed: boolean;
-  onPressView: () => void;
-  onPressAdd: () => void;
-  isUploading: boolean;
-}
-
-const MyStoryCircle: React.FC<MyStoryCircleProps> = ({
+const MyStoryCircle = ({
   userAvatar,
   username,
   hasStories,
@@ -252,23 +210,11 @@ const MyStoryCircle: React.FC<MyStoryCircleProps> = ({
 // =============================================================
 //  StoryViewerModal — full-screen sequential viewer
 // =============================================================
-interface StoryViewerModalProps {
-  visible: boolean;
-  group: StoryGroup | null;
-  onClose: () => void;
-  onStoryViewed: (storyId: string) => void;
-}
-
-const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
-  visible,
-  group,
-  onClose,
-  onStoryViewed,
-}) => {
+const StoryViewerModal = ({ visible, group, onClose, onStoryViewed }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef(null);
+  const progressRef = useRef(null);
 
   // Stable callback refs to avoid useEffect re-triggers
   const onCloseRef = useRef(onClose);
@@ -332,7 +278,7 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
   }, [visible, group, currentIndex]);
 
   // Tap handler: left half = previous, right half = next
-  const handleTap = (event: { nativeEvent: { locationX: number } }) => {
+  const handleTap = (event) => {
     const tapX = event.nativeEvent.locationX;
     const half = SCREEN_WIDTH / 2;
 
@@ -431,14 +377,14 @@ const StoryViewerModal: React.FC<StoryViewerModalProps> = ({
 // =============================================================
 //  StoriesRail — main exported component
 // =============================================================
-const StoriesRail: React.FC = () => {
+const StoriesRail = () => {
   const { user } = useAuth();
 
-  const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
-  const [myStoryGroup, setMyStoryGroup] = useState<StoryGroup | null>(null);
+  const [storyGroups, setStoryGroups] = useState([]);
+  const [myStoryGroup, setMyStoryGroup] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<StoryGroup | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   // ── Fetch stories ──────────────────────────────────────────
@@ -452,7 +398,7 @@ const StoriesRail: React.FC = () => {
       const data = await response.json();
 
       if (data.success) {
-        const groups: StoryGroup[] = data.data;
+        const groups = data.data;
         const myGroup = groups.find((g) => g.user?._id === user?.id) || null;
         const otherGroups = groups.filter((g) => g.user?._id !== user?.id);
 
@@ -507,7 +453,7 @@ const StoriesRail: React.FC = () => {
         uri: selectedImage.uri,
         type: selectedImage.mimeType || "image/jpeg",
         name: `story_${Date.now()}.jpg`,
-      } as unknown as Blob);
+      });
 
       const response = await fetch(STORY_ENDPOINTS.CREATE, {
         method: "POST",
@@ -531,7 +477,7 @@ const StoriesRail: React.FC = () => {
   };
 
   // ── View stories ───────────────────────────────────────────
-  const handleViewStories = (group: StoryGroup) => {
+  const handleViewStories = (group) => {
     setSelectedGroup(group);
     setIsModalVisible(true);
   };
@@ -544,7 +490,7 @@ const StoriesRail: React.FC = () => {
   };
 
   const handleStoryViewed = useCallback(
-    async (storyId: string) => {
+    async (storyId) => {
       if (!user) return;
 
       // Fire-and-forget API call
@@ -555,11 +501,10 @@ const StoriesRail: React.FC = () => {
       }).catch((err) => console.error("❌ Failed to mark viewed:", err));
 
       // Optimistic local update
-      const updateStories = (stories: Story[]) =>
+      const updateStories = (stories) =>
         stories.map((s) => (s._id === storyId ? { ...s, viewed: true } : s));
 
-      const recalcAllViewed = (stories: Story[]) =>
-        stories.every((s) => s.viewed);
+      const recalcAllViewed = (stories) => stories.every((s) => s.viewed);
 
       setStoryGroups((prev) =>
         prev.map((g) => {

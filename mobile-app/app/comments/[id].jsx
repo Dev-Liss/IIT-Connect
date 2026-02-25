@@ -35,37 +35,22 @@ import { useAuth } from "../../src/context/AuthContext";
 import { POST_ENDPOINTS } from "../../src/config/api";
 
 // ====================================
-// TYPE DEFINITIONS
-// ====================================
-interface CommentUser {
-  _id: string;
-  username: string;
-}
-
-interface Comment {
-  _id: string;
-  user: CommentUser;
-  text: string;
-  createdAt: string;
-}
-
-// ====================================
 // MAIN COMPONENT
 // ====================================
 export default function CommentsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams();
   const { user } = useAuth();
   const router = useRouter();
 
   // State
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const inputRef = useRef<TextInput>(null);
-  const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef(null);
+  const flatListRef = useRef(null);
 
   // ====================================
   // FETCH COMMENTS
@@ -74,7 +59,7 @@ export default function CommentsScreen() {
     try {
       if (showRefresh) setIsRefreshing(true);
 
-      const response = await fetch(POST_ENDPOINTS.GET_COMMENTS(id!));
+      const response = await fetch(POST_ENDPOINTS.GET_COMMENTS(id));
       const data = await response.json();
 
       if (data.success) {
@@ -106,7 +91,7 @@ export default function CommentsScreen() {
     setCommentText("");
 
     try {
-      const response = await fetch(POST_ENDPOINTS.ADD_COMMENT(id!), {
+      const response = await fetch(POST_ENDPOINTS.ADD_COMMENT(id), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -143,7 +128,7 @@ export default function CommentsScreen() {
   // ====================================
   // FORMAT RELATIVE TIME
   // ====================================
-  const getRelativeTime = (dateString: string): string => {
+  const getRelativeTime = (dateString) => {
     const now = new Date();
     const date = new Date(dateString);
     const diffMs = now.getTime() - date.getTime();
@@ -163,7 +148,7 @@ export default function CommentsScreen() {
   // ====================================
   // RENDER COMMENT ITEM
   // ====================================
-  const renderComment = ({ item }: { item: Comment }) => {
+  const renderComment = ({ item }) => {
     const avatarUrl = `https://i.pravatar.cc/150?u=${item.user?._id || item._id}`;
 
     return (

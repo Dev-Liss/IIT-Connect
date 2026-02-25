@@ -21,7 +21,6 @@ import {
   Dimensions,
   ActivityIndicator,
   Platform,
-  ViewToken,
   RefreshControl,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
@@ -39,45 +38,17 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const TAB_BAR_HEIGHT = Platform.OS === "ios" ? 88 : 68;
 
 // ====================================
-// TYPE DEFINITIONS
-// ====================================
-interface Reel {
-  _id: string;
-  user?: {
-    _id: string;
-    username: string;
-    email?: string;
-  };
-  caption?: string;
-  category?: string;
-  media: {
-    url: string;
-    aspectRatio?: number;
-    width?: number;
-    height?: number;
-    type?: string;
-  };
-  likes?: string[];
-  comments?: any[];
-  createdAt: string;
-}
-
-// ====================================
 // COMPONENT
 // ====================================
-interface ReelsFeedProps {
-  availableHeight?: number;
-}
-
-export default function ReelsFeed({ availableHeight }: ReelsFeedProps) {
+export default function ReelsFeed({ availableHeight }) {
   const insets = useSafeAreaInsets();
 
   // ── State ──
-  const [reels, setReels] = useState<Reel[]>([]);
+  const [reels, setReels] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [error, setError] = useState(null);
+  const [activeVideoId, setActiveVideoId] = useState(null);
 
   // ── Calculated item height ──
   // Use measured availableHeight from parent if provided
@@ -141,22 +112,20 @@ export default function ReelsFeed({ availableHeight }: ReelsFeedProps) {
   }).current;
 
   // When viewable items change, set the first fully visible item as active
-  const onViewableItemsChanged = useRef(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0) {
-        const firstVisible = viewableItems[0];
-        if (firstVisible.item?._id) {
-          setActiveVideoId(firstVisible.item._id);
-        }
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      const firstVisible = viewableItems[0];
+      if (firstVisible.item?._id) {
+        setActiveVideoId(firstVisible.item._id);
       }
-    },
-  ).current;
+    }
+  }).current;
 
   // ====================================
   // ITEM LAYOUT — Optimization for paging
   // ====================================
   const getItemLayout = useCallback(
-    (_: any, index: number) => ({
+    (_, index) => ({
       length: ITEM_HEIGHT,
       offset: ITEM_HEIGHT * index,
       index,
@@ -168,7 +137,7 @@ export default function ReelsFeed({ availableHeight }: ReelsFeedProps) {
   // RENDER ITEM
   // ====================================
   const renderItem = useCallback(
-    ({ item }: { item: Reel }) => (
+    ({ item }) => (
       <ReelCard
         reel={item}
         isActive={item._id === activeVideoId}
@@ -181,7 +150,7 @@ export default function ReelsFeed({ availableHeight }: ReelsFeedProps) {
   // ====================================
   // KEY EXTRACTOR
   // ====================================
-  const keyExtractor = useCallback((item: Reel) => item._id, []);
+  const keyExtractor = useCallback((item) => item._id, []);
 
   // ====================================
   // LOADING STATE

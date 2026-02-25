@@ -36,34 +36,16 @@ import ContentSwitcher from "../../src/components/ContentSwitcher";
 import ReelsFeed from "../../src/components/ReelsFeed";
 import { POST_ENDPOINTS } from "../../src/config/api";
 
-// Post type (matches backend response)
-interface Post {
-  _id: string;
-  user?: {
-    _id: string;
-    username: string;
-    email?: string;
-  };
-  caption?: string;
-  category?: string;
-  media: {
-    url: string;
-    aspectRatio?: number;
-  };
-  likes?: string[];
-  createdAt: string;
-}
-
 export default function HomeScreen() {
   const router = useRouter();
 
   // State
-  const [activeTab, setActiveTab] = useState<"feed" | "reels">("feed");
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [activeTab, setActiveTab] = useState("feed");
+  const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [containerHeight, setContainerHeight] = useState<number>(0);
+  const [error, setError] = useState(null);
+  const [containerHeight, setContainerHeight] = useState(0);
 
   // ====================================
   // FETCH POSTS
@@ -268,7 +250,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10,
+    paddingTop:
+      Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 10 : 10,
     paddingBottom: 12,
     backgroundColor: "#fff",
     borderBottomWidth: 1,

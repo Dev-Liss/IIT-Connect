@@ -19,7 +19,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Ionicons, Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 60) / 2; // 2 columns with padding
@@ -64,7 +64,7 @@ export default function CreateMenuScreen() {
   const router = useRouter();
 
   // Handle option press
-  const handleOptionPress = (option: (typeof MENU_OPTIONS)[0]) => {
+  const handleOptionPress = (option) => {
     switch (option.action) {
       case "create-post":
         router.push("/create-post");
@@ -82,7 +82,7 @@ export default function CreateMenuScreen() {
   };
 
   // Render a single menu option card
-  const renderOptionCard = (option: (typeof MENU_OPTIONS)[0]) => (
+  const renderOptionCard = (option) => (
     <TouchableOpacity
       key={option.id}
       style={styles.card}
@@ -90,7 +90,7 @@ export default function CreateMenuScreen() {
       activeOpacity={0.7}
     >
       <View style={styles.iconContainer}>
-        <Ionicons name={option.icon as any} size={36} color="#f9252b" />
+        <Ionicons name={option.icon} size={36} color="#f9252b" />
       </View>
       <Text style={styles.cardTitle}>{option.title}</Text>
       <Text style={styles.cardSubtitle}>{option.subtitle}</Text>

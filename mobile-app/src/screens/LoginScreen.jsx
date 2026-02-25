@@ -1,34 +1,13 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  Alert,
-  StyleSheet,
-  NativeSyntheticEvent,
-  TextInputChangeEventData,
-} from "react-native";
+import React from "react";
+import { View, Text, TextInput, Button, Alert, StyleSheet } from "react-native";
 import { AUTH_ENDPOINTS } from "../config/api";
 
-// Type for the API response
-interface AuthResponse {
-  success: boolean;
-  message?: string;
-  user?: {
-    id: string;
-    email: string;
-    name?: string;
-  };
-  token?: string;
-}
+export default function LoginScreen() {
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
 
-export default function LoginScreen(): React.JSX.Element {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const handleLogin = async (): Promise<void> => {
+  const handleLogin = async () => {
     // 1. Basic validation
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields");
@@ -52,7 +31,7 @@ export default function LoginScreen(): React.JSX.Element {
         }),
       });
 
-      const data: AuthResponse = await response.json();
+      const data = await response.json();
 
       // 3. Handle Response
       if (data.success) {
@@ -81,7 +60,7 @@ export default function LoginScreen(): React.JSX.Element {
         style={styles.input}
         placeholder="Enter Email"
         value={email}
-        onChangeText={(text: string) => setEmail(text)}
+        onChangeText={(text) => setEmail(text)}
         autoCapitalize="none"
         keyboardType="email-address"
         editable={!isLoading}
@@ -91,7 +70,7 @@ export default function LoginScreen(): React.JSX.Element {
         style={styles.input}
         placeholder="Enter Password"
         value={password}
-        onChangeText={(text: string) => setPassword(text)}
+        onChangeText={(text) => setPassword(text)}
         secureTextEntry={true}
         editable={!isLoading}
       />

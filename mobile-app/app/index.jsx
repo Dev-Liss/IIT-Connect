@@ -118,7 +118,7 @@ export default function AuthScreen() {
         "Could not connect to server.\n\n" +
           "Check:\n" +
           "1. Backend is running (node server.js)\n" +
-          "2. IP address in src/config/api.ts is correct\n" +
+          "2. IP address in src/config/api.js is correct\n" +
           "3. Phone and laptop on same WiFi",
       );
     } finally {
@@ -142,7 +142,7 @@ export default function AuthScreen() {
     } catch (error) {
       Alert.alert(
         "❌ Connection Failed",
-        "Cannot reach the backend server.\nCheck the IP in src/config/api.ts",
+        "Cannot reach the backend server.\nCheck the IP in src/config/api.js",
       );
     } finally {
       setIsLoading(false);

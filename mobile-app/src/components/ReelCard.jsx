@@ -24,7 +24,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { Video, ResizeMode, AVPlaybackStatus } from "expo-av";
+import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -37,44 +37,14 @@ import { POST_ENDPOINTS } from "../config/api";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 // ====================================
-// TYPE DEFINITIONS
-// ====================================
-interface Reel {
-  _id: string;
-  user?: {
-    _id: string;
-    username: string;
-    email?: string;
-  };
-  caption?: string;
-  category?: string;
-  media: {
-    url: string;
-    aspectRatio?: number;
-    width?: number;
-    height?: number;
-    type?: string;
-  };
-  likes?: string[];
-  comments?: any[];
-  createdAt: string;
-}
-
-interface ReelCardProps {
-  reel: Reel;
-  isActive: boolean;
-  height?: number;
-}
-
-// ====================================
 // COMPONENT
 // ====================================
-export default function ReelCard({ reel, isActive, height }: ReelCardProps) {
+export default function ReelCard({ reel, isActive, height }) {
   // Use provided height or fallback to full screen
   const containerHeight = height || SCREEN_HEIGHT;
   const { user } = useAuth();
   const router = useRouter();
-  const videoRef = useRef<Video>(null);
+  const videoRef = useRef(null);
 
   // ── Like state (optimistic UI) ──
   const [isLiked, setIsLiked] = useState(
@@ -96,7 +66,7 @@ export default function ReelCard({ reel, isActive, height }: ReelCardProps) {
   // ====================================
   // FORMAT COUNTS (e.g., 1.2K, 3.4M)
   // ====================================
-  const formatCount = (count: number): string => {
+  const formatCount = (count) => {
     if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
     if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
     return count.toString();
@@ -146,13 +116,13 @@ export default function ReelCard({ reel, isActive, height }: ReelCardProps) {
   // HANDLE COMMENT NAVIGATION
   // ====================================
   const handleComment = () => {
-    router.push(`/comments/${reel._id}` as any);
+    router.push(`/comments/${reel._id}`);
   };
 
   // ====================================
   // HANDLE VIDEO PLAYBACK STATUS
   // ====================================
-  const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
+  const onPlaybackStatusUpdate = (status) => {
     if (status.isLoaded) {
       setIsBuffering(status.isBuffering);
     }

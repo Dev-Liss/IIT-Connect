@@ -21,14 +21,7 @@ import {
 import { Feather } from "@expo/vector-icons";
 
 // ── Tile Data ──────────────────────────────────────
-interface TileItem {
-  label: string;
-  icon: keyof typeof Feather.glyphMap;
-  themeColor: string;
-  background: string;
-}
-
-const TILES: TileItem[] = [
+const TILES = [
   {
     label: "Anonymous\nReport",
     icon: "flag",

@@ -1,9 +1,9 @@
 /**
  * ====================================
- * MESSAGES SCREEN (PLACEHOLDER)
+ * ACADEMIC SCREEN (PLACEHOLDER)
  * ====================================
- * Tab for direct messaging and chats.
- * TODO: Implement messaging features in future phases.
+ * Tab for academic resources and features.
+ * TODO: Implement academic features in future phases.
  */
 
 import React from "react";
@@ -15,28 +15,24 @@ import {
   Platform,
   StatusBar,
 } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 
-export default function MessagesScreen() {
+export default function AcademicScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
+        <Text style={styles.headerTitle}>Academic</Text>
       </View>
 
       {/* Placeholder Content */}
       <View style={styles.content}>
-        <MaterialCommunityIcons
-          name="message-minus-outline"
-          size={80}
-          color="#c7c7c7"
-        />
-        <Text style={styles.title}>Your Messages</Text>
+        <Ionicons name="book" size={80} color="#c7c7c7" />
+        <Text style={styles.title}>Academic Hub</Text>
         <Text style={styles.subtitle}>
-          Connect with friends and classmates through private messages.
+          Course materials, schedules, and academic resources will appear here.
         </Text>
         <View style={styles.comingSoonBadge}>
           <Text style={styles.comingSoonText}>Coming Soon</Text>
@@ -53,7 +49,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight! + 10 : 10,
+    paddingTop:
+      Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 10 : 10,
     paddingBottom: 12,
     backgroundColor: "#fff",
     borderBottomWidth: 1,

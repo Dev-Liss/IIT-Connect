@@ -1,9 +1,9 @@
 /**
  * ====================================
- * REEL PREVIEW SCREEN
+ * POST PREVIEW SCREEN
  * ====================================
- * Shows a preview of the reel before publishing.
- * Displays user info, video preview, caption, and tags.
+ * Shows a preview of the post before publishing.
+ * Displays user info, content, media, and tags.
  */
 
 import React, { useState } from "react";
@@ -22,18 +22,13 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Video, ResizeMode } from "expo-av";
 import { useAuth } from "../src/context/AuthContext";
 import { POST_ENDPOINTS } from "../src/config/api";
 
-export default function PreviewReelScreen() {
+export default function PreviewPostScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const params = useLocalSearchParams<{
-    video: string;
-    caption?: string;
-    tags?: string;
-  }>();
+  const params = useLocalSearchParams();
 
   const [isUploading, setIsUploading] = useState(false);
 
@@ -52,33 +47,29 @@ export default function PreviewReelScreen() {
       return;
     }
 
-    if (!params.video) {
-      Alert.alert("Error", "No video to upload.");
-      return;
-    }
-
     setIsUploading(true);
 
     try {
       const formData = new FormData();
-      formData.append("caption", params.caption || "");
+      formData.append("caption", params.content || "");
       formData.append("userId", user.id);
 
       if (params.tags) {
         formData.append("tags", params.tags);
       }
 
-      // Add video media
-      const filename = params.video.split("/").pop() || "reel.mp4";
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `video/${match[1]}` : "video/mp4";
+      // Add media if present
+      if (params.media) {
+        const filename = params.media.split("/").pop() || "photo.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : "image/jpeg";
 
-      // @ts-ignore
-      formData.append("media", {
-        uri: params.video,
-        name: filename,
-        type: type,
-      });
+        formData.append("media", {
+          uri: params.media,
+          name: filename,
+          type: type,
+        });
+      }
 
       const response = await fetch(POST_ENDPOINTS.CREATE, {
         method: "POST",
@@ -88,11 +79,11 @@ export default function PreviewReelScreen() {
       const data = await response.json();
 
       if (data.success) {
-        Alert.alert("🎉 Success!", "Your reel has been shared!", [
+        Alert.alert("🎉 Success!", "Your post has been shared!", [
           {
             text: "OK",
             onPress: () => {
-              // Navigate back to home
+              // Navigate back to home (go back multiple screens)
               router.dismissAll();
               router.replace("/(tabs)");
             },
@@ -126,7 +117,7 @@ export default function PreviewReelScreen() {
         <View style={styles.card}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Preview Your Reel</Text>
+            <Text style={styles.headerTitle}>Preview Your Post</Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => router.back()}
@@ -135,8 +126,8 @@ export default function PreviewReelScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Reel Preview Card */}
-          <View style={styles.reelPreview}>
+          {/* Post Preview Card */}
+          <View style={styles.postPreview}>
             {/* User Info Row */}
             <View style={styles.userRow}>
               {user?.profilePicture ? (
@@ -155,26 +146,16 @@ export default function PreviewReelScreen() {
               </View>
             </View>
 
-            {/* Video Preview */}
-            {params.video && (
-              <View style={styles.videoContainer}>
-                <Video
-                  source={{ uri: params.video }}
-                  style={styles.videoPreview}
-                  resizeMode={ResizeMode.COVER}
-                  shouldPlay={false}
-                  isLooping={false}
-                  isMuted
-                />
-                <View style={styles.videoOverlay}>
-                  <Ionicons name="play-circle" size={48} color="#fff" />
-                </View>
-              </View>
-            )}
+            {/* Post Content */}
+            <Text style={styles.postContent}>{params.content}</Text>
 
-            {/* Caption */}
-            {params.caption && (
-              <Text style={styles.caption}>{params.caption}</Text>
+            {/* Media Preview (if any) */}
+            {params.media && (
+              <Image
+                source={{ uri: params.media }}
+                style={styles.mediaImage}
+                resizeMode="cover"
+              />
             )}
 
             {/* Tags */}
@@ -191,7 +172,7 @@ export default function PreviewReelScreen() {
 
           {/* Footer Text */}
           <Text style={styles.footerText}>
-            This is how your reel will appear in the feed
+            This is how your post will appear in the feed
           </Text>
 
           {/* Action Buttons */}
@@ -262,8 +243,8 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 4,
   },
-  // Reel Preview
-  reelPreview: {
+  // Post Preview
+  postPreview: {
     backgroundColor: "#fff",
     borderRadius: 12,
     borderWidth: 1,
@@ -307,33 +288,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
   },
-  // Video
-  videoContainer: {
-    position: "relative",
-    borderRadius: 8,
-    overflow: "hidden",
-    marginBottom: 12,
-  },
-  videoPreview: {
-    width: "100%",
-    height: 200,
-    backgroundColor: "#000",
-  },
-  videoOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  // Caption
-  caption: {
+  // Post Content
+  postContent: {
     fontSize: 15,
     color: "#262626",
     lineHeight: 22,
+    marginBottom: 12,
+  },
+  // Media
+  mediaImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 8,
     marginBottom: 12,
   },
   // Tags
