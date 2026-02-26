@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -19,38 +19,43 @@ export default function RoleSelectionScreen({ onRoleSelect, onBack }) {
 
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-            {/* Back Button */}
-            {onBack && (
-                <TouchableOpacity style={styles.backButton} onPress={onBack}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
-                </TouchableOpacity>
-            )}
-
-            {/* Logo and Title Combined */}
-            <View style={styles.logoContainer}>
-                <Image
-                    source={require("../../assets/images/connect-logo-full.png")}
-                    style={styles.logoFull}
-                    resizeMode="contain"
-                />
-            </View>
-
-            {/* Heading */}
-            <Text style={styles.heading}>Who you are</Text>
-
-            {/* Role Selection Buttons */}
-            <View style={styles.rolesContainer}>
-                {roles.map((role) => (
-                    <TouchableOpacity
-                        key={role.id}
-                        style={styles.roleButton}
-                        onPress={() => handleRolePress(role.id)}
-                    >
-                        <Text style={styles.roleButtonText}>{role.label}</Text>
-                        <Ionicons name="chevron-forward" size={24} color="#000" />
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Back Button */}
+                {onBack && (
+                    <TouchableOpacity style={styles.backButton} onPress={onBack}>
+                        <Ionicons name="arrow-back" size={24} color="#000" />
                     </TouchableOpacity>
-                ))}
-            </View>
+                )}
+
+                {/* Logo and Title Combined */}
+                <View style={styles.logoContainer}>
+                    <Image
+                        source={require("../../assets/images/connect-logo-full.png")}
+                        style={styles.logoFull}
+                        resizeMode="contain"
+                    />
+                </View>
+
+                {/* Heading */}
+                <Text style={styles.heading}>Who you are</Text>
+
+                {/* Role Selection Buttons */}
+                <View style={styles.rolesContainer}>
+                    {roles.map((role) => (
+                        <TouchableOpacity
+                            key={role.id}
+                            style={styles.roleButton}
+                            onPress={() => handleRolePress(role.id)}
+                        >
+                            <Text style={styles.roleButtonText}>{role.label}</Text>
+                            <Ionicons name="chevron-forward" size={24} color="#000" />
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </ScrollView>
         </SafeAreaView>
     );
 }
@@ -59,8 +64,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#FFF",
-        padding: 40,
-        alignItems: "center",
+    },
+    scrollContent: {
+        padding: 24,
     },
     backButton: {
         position: "absolute",
@@ -72,6 +78,7 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     logoContainer: {
+        marginTop: 40,
         marginBottom: 40,
         alignItems: "center",
     },
