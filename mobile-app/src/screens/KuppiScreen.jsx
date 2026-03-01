@@ -10,7 +10,6 @@ import {
   Alert,
   RefreshControl,
   Linking,
-  Animated, // Add Animated
   Platform,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -378,11 +377,7 @@ export default function KuppiScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true },
-        )}
-        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
       >
         <Text style={styles.sectionTitle}>Upcoming Sessions</Text>
         {upcomingSessions.length === 0 ? (
