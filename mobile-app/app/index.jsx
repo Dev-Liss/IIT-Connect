@@ -19,11 +19,21 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { useRouter } from "expo-router";
 
 // Import API configuration - TEAM: Update the IP in this file!
 import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
 
+// Import Auth Context for session management
+import { useAuth } from "../src/context/AuthContext";
+
 export default function AuthScreen() {
+  // ====================================
+  // HOOKS
+  // ====================================
+  const router = useRouter();
+  const { login } = useAuth();
+
   // ====================================
   // STATE MANAGEMENT
   // ====================================
@@ -92,9 +102,11 @@ export default function AuthScreen() {
           // Clear form for login
           setPassword("");
         } else {
-          Alert.alert("👋 Welcome!", `Hello, ${data.user.username}!`);
+          // Save user to global auth state
+          await login(data.user);
           console.log("✅ Logged in user:", data.user);
-          // TODO: Navigate to home screen in Phase 3
+          // Navigate to home (tabs)
+          router.replace("/(tabs)");
         }
       } else {
         Alert.alert("❌ Error", data.message);
@@ -106,7 +118,7 @@ export default function AuthScreen() {
         "Could not connect to server.\n\n" +
           "Check:\n" +
           "1. Backend is running (node server.js)\n" +
-          "2. IP address in src/config/api.ts is correct\n" +
+          "2. IP address in src/config/api.js is correct\n" +
           "3. Phone and laptop on same WiFi",
       );
     } finally {
@@ -130,7 +142,7 @@ export default function AuthScreen() {
     } catch (error) {
       Alert.alert(
         "❌ Connection Failed",
-        "Cannot reach the backend server.\nCheck the IP in src/config/api.ts",
+        "Cannot reach the backend server.\nCheck the IP in src/config/api.js",
       );
     } finally {
       setIsLoading(false);
@@ -346,5 +358,20 @@ const styles = StyleSheet.create({
   debugText: {
     color: "#666",
     fontSize: 14,
+  },
+  createPostButton: {
+    marginTop: 15,
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#e63946",
+    borderRadius: 12,
+  },
+  createPostText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  feedButton: {
+    backgroundColor: "#457b9d",
   },
 });

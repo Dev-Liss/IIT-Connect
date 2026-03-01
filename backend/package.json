@@ -8,10 +8,16 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "cheerio": "^1.2.0",
+    "cloudinary": "^1.41.3",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^4.22.1",
-    "mongoose": "^7.8.8"
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^7.8.8",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
+    "node-cron": "^4.2.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.0"
