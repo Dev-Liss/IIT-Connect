@@ -1,0 +1,823 @@
+import React, { useEffect, useState, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  Animated, // Added
+  Modal,
+  TouchableWithoutFeedback,
+} from "react-native";
+// ... imports (keep existing) -- Removing this comment line
+import { Ionicons } from "@expo/vector-icons";
+import { API_BASE_URL } from "../config/api";
+import ClassCard from "../components/ClassCard";
+import TodayClassCard from "../components/TodayClassCard";
+import KuppiScreen from "./KuppiScreen";
+import ResourcesScreen from "./ResourcesScreen";
+import AcademicNavBar from "../components/AcademicNavBar";
+import ModalDropdown from "../components/ModalDropdown";
+
+const HOURS = [
+  "08:30",
+  "09:30",
+  "10:30",
+  "11:30",
+  "12:30",
+  "13:30",
+  "14:30",
+  "15:30",
+  "16:30",
+  "17:30",
+  "18:30",
+  "19:30",
+];
+
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+const SLOT_HEIGHT = 80;
+
+export default function TimetableScreen() {
+  const [timetable, setTimetable] = useState([]);
+  const [todayClasses, setTodayClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState("weekly");
+  const [activeTab, setActiveTab] = useState("Timetable");
+  const [groups, setGroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState("");
+  const [selectedLecture, setSelectedLecture] = useState(null);
+
+  const todayIndex = new Date().getDay();
+  const currentDay = DAYS[todayIndex - 1] || "";
+
+  // Animation Logic
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+
+  // Track scroll direction for smart hide/show
+  const lastScrollY = useRef(0);
+  const isHeaderHidden = useRef(false);
+
+  useEffect(() => {
+    const listenerId = scrollY.addListener(({ value }) => {
+      const currentY = value;
+      const diff = currentY - lastScrollY.current;
+      lastScrollY.current = currentY; // Update lastScrollY first
+
+      // Ignore bounce/scroll-to-top glitch or negative values
+      if (currentY <= 0) {
+        // If at very top, ensure header is shown
+        if (isHeaderHidden.current) {
+          Animated.timing(headerTranslateY, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
+          isHeaderHidden.current = false;
+        }
+        return;
+      }
+
+      // Scroll Down -> Hide
+      // diff > 0 means scrolling down.
+      // Hide if we are past a threshold (e.g. 60px) and not already hidden.
+      if (diff > 0 && currentY > 60 && !isHeaderHidden.current) {
+        // "Hide" means translate UP by 120px (negative Y)
+        Animated.timing(headerTranslateY, {
+          toValue: -120,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+        isHeaderHidden.current = true;
+      }
+      // Scroll Up -> Show
+      // diff < 0 means scrolling up.
+      else if (diff < -5 && isHeaderHidden.current) {
+        Animated.timing(headerTranslateY, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }).start();
+        isHeaderHidden.current = false;
+      }
+    });
+
+    return () => {
+      scrollY.removeListener(listenerId);
+    };
+  }, [scrollY]);
+
+  // Header Height Calculation
+  // Header (50) + NavBar (50) + Margins (~30) = ~130.
+  // We want to hide the whole block.
+  // Constants for Layout
+  const STATUS_BAR_HEIGHT = 50;
+  const HEADER_TITLE_HEIGHT = 60; // 50 height + 10 margin
+  const TOTAL_HEADER_HEIGHT = 200; // Increased spacing for better readability
+  const SCROLL_DISTANCE = HEADER_TITLE_HEIGHT; // 60
+
+  // Use SCROLL_DISTANCE instead of HEADER_HEIGHT
+  const HEADER_HEIGHT = SCROLL_DISTANCE; // Alias for safety during transition
+
+  // Fixed or Auto-Hide Header
+  // We use headerTranslateY to animate position
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedGroup) return;
+    if (view === "weekly") {
+      fetchTimetable(selectedGroup);
+    } else {
+      fetchTodayTimetable(selectedGroup);
+    }
+  }, [view, selectedGroup]);
+
+  const fetchGroups = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/timetable/groups/all`);
+      const result = await response.json();
+      if (result.success && result.data.length > 0) {
+        setGroups(result.data);
+        if (!selectedGroup) setSelectedGroup(result.data[0]);
+      }
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    }
+  };
+
+  const fetchTimetable = async (group) => {
+    setLoading(true);
+    try {
+      const encodeGroup = encodeURIComponent(group);
+      const response = await fetch(
+        `${API_BASE_URL}/timetable?tutGroup=${encodeGroup}`,
+      );
+      const result = await response.json();
+      if (result.success) {
+        setTimetable(result.data);
+      } else {
+        setTimetable([]);
+        Alert.alert(
+          "Notice",
+          result.message || "No timetable found for this group",
+        );
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      setTimetable([]); // Prevent blank screen crash
+      Alert.alert("Error", "No timetable found for this group");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTodayTimetable = async (group) => {
+    setLoading(true);
+    try {
+      const encodeGroup = encodeURIComponent(group);
+      const response = await fetch(
+        `${API_BASE_URL}/timetable/today?tutGroup=${encodeGroup}`,
+      );
+      const result = await response.json();
+      if (result.success) {
+        setTodayClasses(result.classes);
+      } else {
+        setTodayClasses([]);
+        Alert.alert(
+          "Notice",
+          result.message || "No timetable found for this group",
+        );
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      setTodayClasses([]); // Prevent blank screen crash
+      Alert.alert("Error", "No timetable found for this group");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ... styles helper (keep)
+  const getPositionStyle = (startTime, endTime) => {
+    const startHour = parseInt(startTime.split(":")[0]);
+    const startMin = parseInt(startTime.split(":")[1]);
+    const endHour = parseInt(endTime.split(":")[0]);
+    const endMin = parseInt(endTime.split(":")[1]);
+
+    const startOffset = startHour - 8 + (startMin - 30) / 60;
+    const duration = endHour - startHour + (endMin - startMin) / 60;
+
+    return {
+      top: startOffset * SLOT_HEIGHT,
+      height: duration * SLOT_HEIGHT,
+    };
+  };
+
+  const renderClassCards = (day) => {
+    const daysClasses = timetable.filter((t) => t.day === day);
+
+    return daysClasses.map((entry) => {
+      const style = getPositionStyle(entry.startTime, entry.endTime);
+      return (
+        // ... keep existing render
+        <TouchableOpacity
+          key={entry._id}
+          style={{
+            position: "absolute",
+            top: style.top,
+            left: 2,
+            right: 2,
+            height: style.height,
+          }}
+          onPress={() => setSelectedLecture(entry)}
+          activeOpacity={0.8}
+        >
+          <ClassCard
+            courseCode={entry.courseCode}
+            type={entry.type}
+            startTime={entry.startTime}
+            endTime={entry.endTime}
+            lecturer={entry.lecturer}
+            location={entry.location}
+            color={entry.color}
+            height={style.height - 4}
+          />
+        </TouchableOpacity>
+      );
+    });
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Status Bar Background - Stays Fixed */}
+      <View
+        style={[styles.statusBarBackground, { height: STATUS_BAR_HEIGHT }]}
+      />
+
+      {/* Animated Header Block - Now Fixed */}
+      <Animated.View
+        style={[
+          styles.animatedHeaderContainer,
+          {
+            top: STATUS_BAR_HEIGHT,
+            transform: [{ translateY: headerTranslateY }],
+          },
+        ]}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.titleContainer}>
+            <Text style={styles.headerTitle}>
+              {activeTab === "Kuppi"
+                ? "Kuppi Sessions"
+                : activeTab === "Resources"
+                  ? "Resource Library"
+                  : "My Timetable"}
+            </Text>
+          </View>
+          {activeTab === "Timetable" ? (
+            <TouchableOpacity
+              style={styles.calendarButton}
+              onPress={() => setView(view === "weekly" ? "today" : "weekly")}
+            >
+              <Ionicons
+                name={view === "weekly" ? "list-outline" : "grid-outline"}
+                size={24}
+                color="#555"
+              />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 40 }} />
+          )}
+        </View>
+
+        {/* Tabs */}
+        <AcademicNavBar activeTab={activeTab} onTabPress={setActiveTab} />
+      </Animated.View>
+
+      {/* Content - Wrapper paddingTop is 0 to allow scroll under header. */}
+      <View style={{ flex: 1 }}>
+        {activeTab === "Timetable" ? (
+          <>
+            {loading ? (
+              <ActivityIndicator
+                size="large"
+                color="#f9252b"
+                style={{ marginTop: TOTAL_HEADER_HEIGHT + 50 }}
+              />
+            ) : view === "weekly" ? (
+              // WEEKLY GRID VIEW
+              <View style={styles.gridContainer}>
+                <Animated.ScrollView
+                  contentContainerStyle={{
+                    paddingTop: TOTAL_HEADER_HEIGHT,
+                    paddingBottom: 80,
+                  }}
+                  onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: true },
+                  )}
+                  scrollEventThrottle={16}
+                >
+                  {/* Moved Filter Inside ScrollView */}
+                  <View style={[styles.filterContainer, { marginBottom: 10 }]}>
+                    <View style={styles.pickerWrapper}>
+                      <ModalDropdown
+                        options={groups}
+                        defaultValue={selectedGroup || "Select Your Group"}
+                        onSelect={(index, value) => setSelectedGroup(value)}
+                        showSearch={true}
+                        searchPlaceholder="Search Group..."
+                        style={styles.dropdownButton}
+                        textStyle={styles.dropdownButtonText}
+                        dropdownStyle={styles.dropdownList}
+                        dropdownTextStyle={styles.dropdownListText}
+                        dropdownTextHighlightStyle={
+                          styles.dropdownHighlightText
+                        }
+                      >
+                        <View style={styles.dropdownContainer}>
+                          <Text style={styles.badgeText}>
+                            Group: {selectedGroup || "Select"}
+                          </Text>
+                          <Ionicons
+                            name="chevron-down"
+                            size={12}
+                            color="#f9252b"
+                            style={{ marginLeft: 4 }}
+                          />
+                        </View>
+                      </ModalDropdown>
+                    </View>
+                  </View>
+
+                  {/* Moved HeaderRow Inside ScrollView */}
+                  <View style={styles.headerRow}>
+                    <View style={styles.timeColumnHeader} />
+                    {DAYS.map((day) => (
+                      <View key={day} style={styles.dayHeader}>
+                        <Text
+                          style={[
+                            styles.dayText,
+                            day === currentDay && styles.currentDayText,
+                          ]}
+                        >
+                          {day}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <View style={{ flexDirection: "row" }}>
+                    {/* Time Column */}
+                    <View style={styles.timeColumn}>
+                      {HOURS.map((time) => (
+                        <View key={time} style={styles.timeSlot}>
+                          <Text style={styles.timeText}>
+                            {parseInt(time.split(":")[0]) >= 12
+                              ? `${parseInt(time.split(":")[0]) === 12 ? 12 : parseInt(time.split(":")[0]) - 12}:${time.split(":")[1]} PM`
+                              : `${parseInt(time.split(":")[0])}:${time.split(":")[1]} AM`}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    {/* Grid Columns */}
+                    {DAYS.map((day) => (
+                      <View key={day} style={styles.dayColumn}>
+                        {/* Grid Lines */}
+                        {HOURS.map((h, i) => (
+                          <View key={i} style={styles.gridLine} />
+                        ))}
+                        {/* Cards */}
+                        {renderClassCards(day)}
+                      </View>
+                    ))}
+                  </View>
+                </Animated.ScrollView>
+              </View>
+            ) : (
+              // TODAY LIST VIEW
+              <View style={styles.listContainer}>
+                <Animated.ScrollView
+                  contentContainerStyle={{
+                    paddingTop: TOTAL_HEADER_HEIGHT,
+                    paddingBottom: 80,
+                  }}
+                  onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: true },
+                  )}
+                  scrollEventThrottle={16}
+                >
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                      color: "#f9252b",
+                      marginBottom: 15,
+                      fontSize: 20,
+                    }}
+                  >
+                    Today's Sessions
+                  </Text>
+
+                  {todayClasses.length > 0 ? (
+                    todayClasses.map((entry) => (
+                      <TouchableOpacity
+                        key={entry._id}
+                        onPress={() => setSelectedLecture(entry)}
+                        activeOpacity={0.8}
+                      >
+                        <TodayClassCard
+                          courseCode={entry.courseCode}
+                          courseName={entry.courseName || ""}
+                          startTime={entry.startTime}
+                          endTime={entry.endTime}
+                          location={entry.location}
+                        />
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <View style={styles.emptyState}>
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          color: "#888",
+                          textAlign: "center",
+                        }}
+                      >
+                        No sessions scheduled for today.
+                      </Text>
+                    </View>
+                  )}
+                </Animated.ScrollView>
+              </View>
+            )}
+          </>
+        ) : activeTab === "Kuppi" ? (
+          <KuppiScreen scrollY={scrollY} />
+        ) : (
+          <ResourcesScreen scrollY={scrollY} />
+        )}
+      </View>
+
+      {/* Detail Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={!!selectedLecture}
+        onRequestClose={() => setSelectedLecture(null)}
+      >
+        <TouchableWithoutFeedback onPress={() => setSelectedLecture(null)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback onPress={() => { }}>
+              <View style={styles.modalContent}>
+                {/* Close Button */}
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setSelectedLecture(null)}
+                >
+                  <Ionicons name="close-circle" size={28} color="#ccc" />
+                </TouchableOpacity>
+
+                {/* Header Section */}
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalCode}>
+                    {selectedLecture?.courseCode}
+                  </Text>
+                  <Text style={styles.modalTitle}>
+                    {selectedLecture?.courseName || "Module Name"}
+                  </Text>
+                </View>
+
+                {/* Details Body */}
+                <View>
+                  {/* Time */}
+                  <View style={styles.modalDetailRow}>
+                    <Ionicons name="time-outline" size={22} color="#f9252b" />
+                    <Text style={styles.modalDetailText}>
+                      <Text style={styles.modalLabel}>Time Slot: </Text>
+                      {selectedLecture?.startTime} - {selectedLecture?.endTime}
+                    </Text>
+                  </View>
+
+                  {/* Location */}
+                  <View style={styles.modalDetailRow}>
+                    <Ionicons
+                      name="location-outline"
+                      size={22}
+                      color="#f9252b"
+                    />
+
+                    <Text style={styles.modalDetailText}>
+                      <Text style={styles.modalLabel}>Location: </Text>
+                      {selectedLecture?.location}
+                    </Text>
+                  </View>
+
+                  {/* Lecturer */}
+                  <View style={styles.modalDetailRow}>
+                    <Ionicons name="person-outline" size={22} color="#f9252b" />
+                    <Text style={styles.modalDetailText}>
+                      <Text style={styles.modalLabel}>Lecturer: </Text>
+                      {selectedLecture?.lecturer || "Unknown Lecturer"}
+                    </Text>
+                  </View>
+
+                  {/* Tutorial Group */}
+                  <View style={styles.modalDetailRow}>
+                    <Ionicons name="people-outline" size={22} color="#f9252b" />
+                    <Text style={styles.modalDetailText}>
+                      <Text style={styles.modalLabel}>Group: </Text>
+                      {selectedLecture?.tutorialGroup || selectedGroup}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    // paddingTop: 50, -- Removed, handled by Animated.View top
+    paddingTop: 0,
+  },
+  statusBarBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    zIndex: 2000,
+    elevation: 10,
+  },
+  animatedHeaderContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backgroundColor: "#fff",
+    elevation: 4, // Shadow for depth
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    paddingBottom: 20, // Increased bottom padding for breathing room
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginTop: 10,
+    height: 50, // Fixed height
+  },
+  titleContainer: {
+    flex: 1, // Ensure title is centered relative to full width
+    justifyContent: "center",
+  },
+  headerTitle: {
+    fontSize: 28, // Standardized font size
+    fontWeight: "bold",
+    color: "#000",
+    lineHeight: 34,
+  },
+  badge: {
+    backgroundColor: "#FFEBEB",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+    marginTop: 4,
+  },
+  badgeText: {
+    color: "#f9252b",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  calendarButton: {
+    padding: 8,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    marginBottom: 10,
+    justifyContent: "space-between",
+  },
+  tabButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "#f7f7f7",
+  },
+  activeTabButton: {
+    backgroundColor: "#f9252b",
+  },
+  tabText: {
+    color: "#777",
+    fontWeight: "600",
+  },
+  activeTabText: {
+    color: "#fff",
+  },
+  gridContainer: {
+    flex: 1,
+  },
+  headerRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingBottom: 8,
+  },
+  timeColumnHeader: {
+    width: 60,
+  },
+  dayHeader: {
+    flex: 1,
+    alignItems: "center",
+  },
+  dayText: {
+    fontWeight: "bold",
+    color: "#333",
+  },
+  currentDayText: {
+    color: "#f9252b",
+  },
+  timeColumn: {
+    width: 60,
+  },
+  timeSlot: {
+    height: SLOT_HEIGHT,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    paddingTop: 8,
+  },
+  timeText: {
+    fontSize: 12,
+    color: "#999",
+  },
+  dayColumn: {
+    flex: 1,
+    borderLeftWidth: 1,
+    borderLeftColor: "#eee",
+    position: "relative",
+  },
+  gridLine: {
+    height: SLOT_HEIGHT,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  listContainer: {
+    flex: 1,
+    backgroundColor: "#f5f5f5", // Light gray background for today's view
+    paddingHorizontal: 20,
+  },
+  dayHeaderSection: {
+    marginVertical: 16,
+  },
+  dayTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#f9252b",
+  },
+  classCount: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 100,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: "#888",
+  },
+  dropdownButton: {
+    marginTop: 4,
+    alignSelf: "flex-start",
+  },
+  dropdownContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(249, 37, 43, 0.1)", // Light red background
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#f9252b",
+  },
+  dropdownButtonText: {
+    fontSize: 14,
+  },
+  dropdownList: {
+    width: 180,
+    height: "auto",
+    maxHeight: 300, // Increased limit for better scrolling
+    borderRadius: 8,
+    marginTop: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  dropdownListText: {
+    fontSize: 14,
+    color: "#333",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  dropdownHighlightText: {
+    color: "#f9252b",
+    fontWeight: "bold",
+  },
+  filterContainer: {
+    paddingHorizontal: 20,
+    marginVertical: 10, // Added top and bottom margin
+    height: 40, // Fixed height specifically
+    justifyContent: "center",
+    zIndex: 10, // Ensure dropdown goes over content
+  },
+  pickerWrapper: {
+    // Absolute position to keep it from pushing ONLY if requested via absolute
+    // position: 'absolute',
+    // top: 0,
+    // left: 20,
+    // But user said "absolute OR specifically padded container". Fixed height container is safer for layout.
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    width: "85%",
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 10,
+    borderLeftWidth: 6, // Accent strip
+    borderLeftColor: "#f9252b",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 15,
+    right: 15,
+    padding: 5,
+    zIndex: 1,
+  },
+  modalHeader: {
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingBottom: 10,
+  },
+  modalCode: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#f9252b",
+    marginBottom: 4,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  modalDetailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalDetailText: {
+    fontSize: 16,
+    color: "#555",
+    marginLeft: 12,
+    flex: 1,
+  },
+  modalLabel: {
+    fontWeight: "600",
+    color: "#333",
+  },
+});

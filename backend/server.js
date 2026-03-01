@@ -42,6 +42,19 @@ app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/stories", storyRoutes);
 
+// Timetable routes
+const timetableRoutes = require("./routes/timetable");
+app.use("/api/timetable", timetableRoutes);
+
+// Kuppi routes
+const kuppiRoutes = require("./routes/kuppi");
+app.use("/api/kuppi", kuppiRoutes);
+
+// Resource routes
+const resourceRoutes = require("./routes/resources");
+app.use("/api/resources", resourceRoutes);
+
+
 // ====================================
 // DATABASE CONNECTION & SERVER START
 // ====================================
@@ -58,6 +71,17 @@ connectDB()
 
       // Start the story cleanup CRON job (deletes expired Cloudinary media)
       startStoryCleanupJob();
+
+      // Check timetable JSON data on startup
+      const fs = require('fs');
+      const path = require('path');
+      const dataPath = path.join(__dirname, 'data/timetable.json');
+      if (fs.existsSync(dataPath)) {
+        const data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+        const keys = Object.keys(data).slice(0, 2);
+        console.log("Timetable JSON initialized completely!");
+        console.log(`JSON mapping check: { "${keys[0] || 'empty'}": [...], "${keys[1] || 'empty'}": [...] }`);
+      }
     });
   })
   .catch((err) => {

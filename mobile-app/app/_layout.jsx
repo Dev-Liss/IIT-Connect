@@ -16,7 +16,11 @@ export default function RootLayout() {
         screenOptions={{
           headerShown: false,
         }}
-      />
+      >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="timetable" options={{ headerShown: false }} />
+      </Stack>
     </AuthProvider>
   );
 }

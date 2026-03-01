@@ -38,6 +38,26 @@ export const STORY_ENDPOINTS = {
   MARK_VIEWED: (id) => `${API_BASE_URL}/stories/${id}/view`,
 };
 
+// Timetable endpoints
+export const TIMETABLE_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/timetable`,
+  GET_BY_GROUP: (group) => `${API_BASE_URL}/timetable/${group}`,
+};
+
+// Kuppi endpoints
+export const KUPPI_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/kuppi`,
+  MY_SESSIONS: `${API_BASE_URL}/kuppi/my-sessions`,
+  CREATE: `${API_BASE_URL}/kuppi/create`,
+  JOIN: (id) => `${API_BASE_URL}/kuppi/join/${id}`,
+};
+
+// Resource endpoints
+export const RESOURCE_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/resources/all`,
+  UPLOAD: `${API_BASE_URL}/resources/upload`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
@@ -46,6 +66,9 @@ export default {
   AUTH_ENDPOINTS,
   POST_ENDPOINTS,
   STORY_ENDPOINTS,
+  TIMETABLE_ENDPOINTS,
+  KUPPI_ENDPOINTS,
+  RESOURCE_ENDPOINTS,
   HEALTH_CHECK_URL,
   LAPTOP_IP,
   PORT,
