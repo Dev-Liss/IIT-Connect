@@ -10,7 +10,7 @@ import {
   Alert,
   ScrollView,
   Platform,
-  Animated,
+  FlatList,
   useWindowDimensions,
 } from "react-native";
 import {
@@ -124,7 +124,7 @@ const getMimeType = (fileName) => {
   }
 };
 
-export default function ResourcesScreen({ scrollY }) {
+export default function ResourcesScreen() {
   const { width } = useWindowDimensions();
   const numColumns = 2; // Fixed to 2 columns to match design
   const cardWidth = width / numColumns - 20;
@@ -412,7 +412,7 @@ export default function ResourcesScreen({ scrollY }) {
           style={{ marginTop: 20 }}
         />
       ) : (
-        <Animated.FlatList
+        <FlatList
           data={filteredResources}
           renderItem={renderResourceItem}
           ListHeaderComponent={
@@ -458,11 +458,6 @@ export default function ResourcesScreen({ scrollY }) {
           columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : null}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: true },
-          )}
-          scrollEventThrottle={16}
           ListEmptyComponent={
             <Text style={styles.emptyText}>No resources found.</Text>
           }
@@ -695,7 +690,7 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    paddingTop: 200, // Matched updated header height
+    paddingTop: 16,
     paddingHorizontal: 10,
     paddingBottom: 80,
   },

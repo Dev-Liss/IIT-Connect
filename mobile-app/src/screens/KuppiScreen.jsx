@@ -34,7 +34,7 @@ const COLORS = {
 
 // Types
 
-export default function KuppiScreen({ scrollY }) {
+export default function KuppiScreen() {
   const router = useRouter();
   // Removed snapToHeader logic as header is now fixed
   const [sessions, setSessions] = useState([]);
@@ -373,11 +373,7 @@ export default function KuppiScreen({ scrollY }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        {/* Header logic removed as per request */}
-      </View>
-
-      <Animated.ScrollView
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -405,7 +401,7 @@ export default function KuppiScreen({ scrollY }) {
         ) : (
           mySessions.map((s) => renderSessionCard(s, true))
         )}
-      </Animated.ScrollView>
+      </ScrollView>
 
       {/* FAB */}
       <TouchableOpacity
@@ -913,7 +909,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   scrollContent: {
-    paddingTop: 200, // Matched updated header height
+    paddingTop: 16,
     paddingBottom: 40,
     paddingHorizontal: 20, // Align text and cards with page margins
   },
