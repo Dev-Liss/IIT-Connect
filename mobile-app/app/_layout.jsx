@@ -24,7 +24,6 @@ export default function RootLayout() {
         <Stack.Screen name="create-event" options={{ headerShown: false }} />
         <Stack.Screen name="create-announcement" options={{ headerShown: false }} />
         <Stack.Screen name="anonymous-report" options={{ headerShown: false }} />
-        <Stack.Screen name="admin" options={{ headerShown: false }} />
       </Stack>
     </AuthProvider>
-  );
+  );}

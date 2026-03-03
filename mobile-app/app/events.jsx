@@ -268,30 +268,14 @@ export default function EventsAnnouncementsScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerTop}>
-                    <TouchableOpacity style={styles.backButton}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                         <Ionicons name="arrow-back" size={24} color="#000" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Events & Announcements</Text>
-                    <TouchableOpacity style={styles.bellButton}>
-                        <Ionicons name="notifications-outline" size={24} color="#333" />
-                    </TouchableOpacity>
                 </View>
                 <Text style={styles.headerSubtitle}>
                     Stay updated with campus activities
                 </Text>
-
-                {/* Action Buttons */}
-                <View style={styles.actionButtons}>
-                    <TouchableOpacity style={styles.actionButtonActive}>
-                        <Text style={styles.actionButtonTextActive}>Events</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.actionButton}
-                        onPress={() => router.push("/admin")}
-                    >
-                        <Text style={styles.actionButtonText}>Admin</Text>
-                    </TouchableOpacity>
-                </View>
             </View>
 
             {/* Tab Switch */}
@@ -392,42 +376,10 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#000000",
     },
-    bellButton: {
-        padding: 8,
-        backgroundColor: "#f0f0f0",
-        borderRadius: 20,
-    },
     headerSubtitle: {
         fontSize: 14,
         color: "#666",
         marginTop: 4,
-    },
-    actionButtons: {
-        flexDirection: "row",
-        marginTop: 15,
-        gap: 10,
-    },
-    actionButtonActive: {
-        backgroundColor: "#e63946",
-        paddingVertical: 8,
-        paddingHorizontal: 18,
-        borderRadius: 20,
-    },
-    actionButtonTextActive: {
-        color: "#fff",
-        fontWeight: "600",
-        fontSize: 14,
-    },
-    actionButton: {
-        backgroundColor: "#f0f0f0",
-        paddingVertical: 8,
-        paddingHorizontal: 18,
-        borderRadius: 20,
-    },
-    actionButtonText: {
-        color: "#333",
-        fontWeight: "500",
-        fontSize: 14,
     },
     tabContainer: {
         flexDirection: "row",
