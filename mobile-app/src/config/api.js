@@ -58,6 +58,33 @@ export const RESOURCE_ENDPOINTS = {
   UPLOAD: `${API_BASE_URL}/resources/upload`,
 };
 
+// Events endpoints
+export const EVENTS_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/events`,
+  GET_ONE: (id) => `${API_BASE_URL}/events/${id}`,
+  CREATE: `${API_BASE_URL}/events`,
+  UPDATE: (id) => `${API_BASE_URL}/events/${id}`,
+  DELETE: (id) => `${API_BASE_URL}/events/${id}`,
+};
+
+// Announcements endpoints
+export const ANNOUNCEMENTS_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/announcements`,
+  GET_ONE: (id) => `${API_BASE_URL}/announcements/${id}`,
+  CREATE: `${API_BASE_URL}/announcements`,
+  UPDATE: (id) => `${API_BASE_URL}/announcements/${id}`,
+  DELETE: (id) => `${API_BASE_URL}/announcements/${id}`,
+};
+
+// Reports endpoints (anonymous)
+export const REPORTS_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/reports`,
+  GET_ONE: (id) => `${API_BASE_URL}/reports/${id}`,
+  CREATE: `${API_BASE_URL}/reports`,
+  UPDATE: (id) => `${API_BASE_URL}/reports/${id}`,
+  DELETE: (id) => `${API_BASE_URL}/reports/${id}`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
@@ -69,6 +96,9 @@ export default {
   TIMETABLE_ENDPOINTS,
   KUPPI_ENDPOINTS,
   RESOURCE_ENDPOINTS,
+  EVENTS_ENDPOINTS,
+  ANNOUNCEMENTS_ENDPOINTS,
+  REPORTS_ENDPOINTS,
   HEALTH_CHECK_URL,
   LAPTOP_IP,
   PORT,

@@ -19,6 +19,7 @@ import {
   Alert,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 // ── Tile Data ──────────────────────────────────────
 const TILES = [
@@ -27,25 +28,41 @@ const TILES = [
     icon: "flag",
     themeColor: "#f9252b",
     background: "#fff3f3",
+    route: "/anonymous-report",
   },
   {
     label: "Empty Hall\nFinder",
     icon: "map-pin",
     themeColor: "#007AFF",
     background: "#f0f6ff",
+    route: null,
   },
   {
     label: "Clubs",
     icon: "users",
     themeColor: "#34C759",
     background: "#f2fbf4",
+    route: null,
+  },
+  {
+    label: "Events &\nAnnouncements",
+    icon: "calendar",
+    themeColor: "#FF9500",
+    background: "#fff8f0",
+    route: "/events",
   },
 ];
 
 // ── Screen Component ───────────────────────────────
 export default function MoreScreen() {
-  const handleTilePress = () => {
-    Alert.alert("Coming Soon");
+  const router = useRouter();
+
+  const handleTilePress = (tile) => {
+    if (tile.route) {
+      router.push(tile.route);
+    } else {
+      Alert.alert("Coming Soon");
+    }
   };
 
   return (
@@ -63,7 +80,7 @@ export default function MoreScreen() {
           <TouchableOpacity
             key={tile.label}
             activeOpacity={0.7}
-            onPress={handleTilePress}
+            onPress={() => handleTilePress(tile)}
             style={[
               styles.tile,
               {
