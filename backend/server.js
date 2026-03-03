@@ -16,6 +16,9 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const postRoutes = require("./routes/posts");
 const storyRoutes = require("./routes/stories");
+const eventsRoutes = require("./routes/events");
+const announcementsRoutes = require("./routes/announcements");
+const reportsRoutes = require("./routes/reports");
 const { startStoryCleanupJob } = require("./jobs/storyCleanup");
 
 // Initialize Express App
@@ -54,6 +57,15 @@ app.use("/api/kuppi", kuppiRoutes);
 const resourceRoutes = require("./routes/resources");
 app.use("/api/resources", resourceRoutes);
 
+
+// Events routes
+app.use("/api/events", eventsRoutes);
+
+// Announcements routes
+app.use("/api/announcements", announcementsRoutes);
+
+// Reports routes (anonymous)
+app.use("/api/reports", reportsRoutes);
 
 // ====================================
 // DATABASE CONNECTION & SERVER START

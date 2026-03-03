@@ -48,7 +48,7 @@ const MENU_OPTIONS = [
     subtitle: "Organize a campus event",
     icon: "calendar-outline",
     iconType: "ionicons",
-    action: "coming-soon",
+    action: "create-event",
   },
   {
     id: "announcement",
@@ -56,7 +56,7 @@ const MENU_OPTIONS = [
     subtitle: "Broadcast to community",
     icon: "megaphone-outline",
     iconType: "ionicons",
-    action: "coming-soon",
+    action: "create-announcement",
   },
 ];
 
@@ -71,6 +71,12 @@ export default function CreateMenuScreen() {
         break;
       case "create-reel":
         router.push("/create-reel");
+        break;
+      case "create-event":
+        router.push("/create-event");
+        break;
+      case "create-announcement":
+        router.push("/create-announcement");
         break;
       default:
         Alert.alert(
