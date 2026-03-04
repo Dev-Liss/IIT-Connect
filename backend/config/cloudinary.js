@@ -23,20 +23,38 @@ cloudinary.config({
 });
 
 // ====================================
-// STORAGE: Posts & Stories (images/videos)
+// STORAGE: Posts & Stories & Reels (images/videos)
 // ====================================
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
+    let folderName = "misc";
+
+    if (req.uploadFolder === "stories") {
+      folderName = "stories";
+    } else if (req.uploadFolder === "posts_or_reels") {
+      const mimeType = file.mimetype || "";
+      if (mimeType.startsWith("video")) {
+        folderName = "reels";
+      } else {
+        folderName = "posts";
+      }
+    } else if (req.uploadFolder) {
+      folderName = req.uploadFolder;
+    }
+
+    const uniqueSuffix = Date.now() + "-" + file.originalname.split(".")[0];
+
     return {
-      folder: "iit-connect-posts + stories",
+      folder: `content-media/${folderName}`,
       allowed_formats: ["jpg", "jpeg", "png", "gif", "mp4", "mov"],
       resource_type: "auto",
+      public_id: uniqueSuffix,
     };
   },
 });
 
-// Create multer upload instance for posts/stories
+// Create multer upload instance for posts/stories/reels
 const upload = multer({
   storage: storage,
   limits: {
@@ -52,8 +70,16 @@ const resourceStorage = new CloudinaryStorage({
   params: {
     folder: "IIT-Connect-Resources",
     allowed_formats: [
-      "pdf", "doc", "docx", "ppt", "pptx", "zip",
-      "jpg", "jpeg", "png", "txt",
+      "pdf",
+      "doc",
+      "docx",
+      "ppt",
+      "pptx",
+      "zip",
+      "jpg",
+      "jpeg",
+      "png",
+      "txt",
     ],
     resource_type: "raw",
     use_filename: true,

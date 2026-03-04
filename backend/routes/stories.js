@@ -31,47 +31,55 @@ const { upload, cloudinary } = require("../config/cloudinary");
 // CREATE STORY
 // POST /api/stories
 // ====================================
-router.post("/", upload.single("media"), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
+router.post(
+  "/",
+  (req, res, next) => {
+    req.uploadFolder = "stories";
+    next();
+  },
+  upload.single("media"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No media file uploaded. Please attach an image or video.",
+        });
+      }
+
+      console.log("📖 Story file received:", req.file);
+
+      const { path: cloudinaryUrl, filename: publicId } = req.file;
+      const mimeType = req.file.mimetype || "";
+      const mediaType = mimeType.startsWith("video") ? "video" : "image";
+
+      const newStory = new Story({
+        user: req.body.userId,
+        mediaUrl: cloudinaryUrl,
+        mediaPublicId: publicId,
+        mediaType: mediaType,
+        viewers: [],
+      });
+
+      await newStory.save();
+      await newStory.populate("user", "username email profilePicture");
+
+      console.log("✅ Story created successfully:", newStory._id);
+
+      res.status(201).json({
+        success: true,
+        message: "Story uploaded successfully!",
+        story: newStory,
+      });
+    } catch (error) {
+      console.error("❌ Story Upload Error:", error);
+      res.status(500).json({
         success: false,
-        message: "No media file uploaded. Please attach an image or video.",
+        message: error.message || "Failed to upload story",
       });
     }
-
-    console.log("📖 Story file received:", req.file);
-
-    const { path: cloudinaryUrl, filename: publicId } = req.file;
-    const mimeType = req.file.mimetype || "";
-    const mediaType = mimeType.startsWith("video") ? "video" : "image";
-
-    const newStory = new Story({
-      user: req.body.userId,
-      mediaUrl: cloudinaryUrl,
-      mediaPublicId: publicId,
-      mediaType: mediaType,
-      viewers: [],
-    });
-
-    await newStory.save();
-    await newStory.populate("user", "username email profilePicture");
-
-    console.log("✅ Story created successfully:", newStory._id);
-
-    res.status(201).json({
-      success: true,
-      message: "Story uploaded successfully!",
-      story: newStory,
-    });
-  } catch (error) {
-    console.error("❌ Story Upload Error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to upload story",
-    });
-  }
-});
+  },
+);
 
 // ====================================
 // GET ALL ACTIVE STORIES (GROUPED BY USER)

@@ -73,22 +73,28 @@ async function cleanupExpiredStories() {
     for (const story of expiredStories) {
       // Delete Cloudinary asset if we have the public ID
       if (story.mediaPublicId) {
-        const resourceType = story.mediaType === "video" ? "video" : "image";
-        const result = await deleteCloudinaryAsset(
-          story.mediaPublicId,
-          resourceType,
-        );
-
-        if (result && result.result === "ok") {
-          deletedCount++;
-          console.log(`  ✅ Deleted media: ${story.mediaPublicId}`);
-        } else if (result && result.result === "not found") {
-          // Already deleted or doesn't exist — that's fine
-          deletedCount++;
-          console.log(`  ⚠️ Already gone: ${story.mediaPublicId}`);
+        if (!story.mediaPublicId.startsWith("content-media/stories/")) {
+          console.log(
+            `  ⏭️ Skipping delete: ${story.mediaPublicId} (not in stories folder)`,
+          );
         } else {
-          failedCount++;
-          console.log(`  ❌ Failed to delete: ${story.mediaPublicId}`);
+          const resourceType = story.mediaType === "video" ? "video" : "image";
+          const result = await deleteCloudinaryAsset(
+            story.mediaPublicId,
+            resourceType,
+          );
+
+          if (result && result.result === "ok") {
+            deletedCount++;
+            console.log(`  ✅ Deleted media: ${story.mediaPublicId}`);
+          } else if (result && result.result === "not found") {
+            // Already deleted or doesn't exist — that's fine
+            deletedCount++;
+            console.log(`  ⚠️ Already gone: ${story.mediaPublicId}`);
+          } else {
+            failedCount++;
+            console.log(`  ❌ Failed to delete: ${story.mediaPublicId}`);
+          }
         }
       }
 

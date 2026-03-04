@@ -14,6 +14,7 @@
 const express = require("express");
 const router = express.Router();
 const Post = require("../models/Post");
+const Reel = require("../models/Reel");
 const { upload, cloudinary } = require("../config/cloudinary");
 
 // ====================================
@@ -23,123 +24,138 @@ const { upload, cloudinary } = require("../config/cloudinary");
 // Use upload.single('media') - expects form field named 'media'
 // multer-storage-cloudinary uploads directly to Cloudinary
 // with resource_type: "auto" (supports images AND videos)
-router.post("/", upload.single("media"), async (req, res) => {
-  // Track the Cloudinary public ID so we can clean up on failure
-  let uploadedPublicId = null;
-
-  try {
-    // Validate: Ensure a file was uploaded
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "No media file uploaded. Please attach an image or video.",
-      });
-    }
-
-    console.log("📷 File received:", req.file);
-
-    // Extract Cloudinary response data
-    // multer-storage-cloudinary adds these to req.file
-    const { path: cloudinaryUrl, filename: publicId } = req.file;
-    uploadedPublicId = publicId;
-
-    // Fetch the uploaded resource details from Cloudinary
-    // Using resource_type: "auto" so it works for both images and videos
-    let width = 1;
-    let height = 1;
-    let aspectRatio = 1;
-    let detectedMediaType = "image"; // Default fallback
+router.post(
+  "/",
+  (req, res, next) => {
+    req.uploadFolder = "posts_or_reels";
+    next();
+  },
+  upload.single("media"),
+  async (req, res) => {
+    // Track the Cloudinary public ID so we can clean up on failure
+    let uploadedPublicId = null;
 
     try {
-      // Try fetching as image first
-      const result = await cloudinary.api.resource(publicId, {
-        resource_type: "image",
-      });
-      width = result.width || 1;
-      height = result.height || 1;
-      aspectRatio = width / height;
-      detectedMediaType = "image";
-      console.log(
-        `📐 Image dimensions: ${width}x${height}, AR: ${aspectRatio.toFixed(2)}`,
-      );
-    } catch (imgError) {
-      // If image fetch fails, try as video
+      // Validate: Ensure a file was uploaded
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No media file uploaded. Please attach an image or video.",
+        });
+      }
+
+      console.log("📷 File received:", req.file);
+
+      // Extract Cloudinary response data
+      // multer-storage-cloudinary adds these to req.file
+      const { path: cloudinaryUrl, filename: publicId } = req.file;
+      uploadedPublicId = publicId;
+
+      // Fetch the uploaded resource details from Cloudinary
+      // Using resource_type: "auto" so it works for both images and videos
+      let width = 1;
+      let height = 1;
+      let aspectRatio = 1;
+      let detectedMediaType = "image"; // Default fallback
+
       try {
+        // Try fetching as image first
         const result = await cloudinary.api.resource(publicId, {
-          resource_type: "video",
+          resource_type: "image",
         });
         width = result.width || 1;
         height = result.height || 1;
         aspectRatio = width / height;
-        detectedMediaType = "video";
+        detectedMediaType = "image";
         console.log(
-          `🎬 Video dimensions: ${width}x${height}, AR: ${aspectRatio.toFixed(2)}`,
+          `📐 Image dimensions: ${width}x${height}, AR: ${aspectRatio.toFixed(2)}`,
         );
-      } catch (vidError) {
-        console.log("⚠️ Could not fetch media dimensions, using defaults");
-        // Fallback: guess type from file mimetype
-        const mime = req.file.mimetype || "";
-        detectedMediaType = mime.startsWith("video") ? "video" : "image";
-      }
-    }
-
-    // Create the new post document
-    const newPost = new Post({
-      user: req.body.userId, // Sent from frontend (will be JWT user in future)
-      caption: req.body.caption || "",
-      category: req.body.category || "General",
-      media: {
-        url: cloudinaryUrl,
-        publicId: publicId,
-        type: detectedMediaType,
-        width: width,
-        height: height,
-        aspectRatio: aspectRatio,
-      },
-    });
-
-    // Save to MongoDB
-    await newPost.save();
-
-    // Populate user data before returning
-    await newPost.populate("user", "username email studentId");
-
-    console.log(
-      `✅ ${detectedMediaType === "video" ? "🎬 Reel" : "📷 Post"} created successfully:`,
-      newPost._id,
-    );
-
-    res.status(201).json({
-      success: true,
-      message: `${detectedMediaType === "video" ? "Reel" : "Post"} created successfully!`,
-      post: newPost,
-    });
-  } catch (error) {
-    console.error("❌ Post Upload Error:", error);
-
-    // Cleanup: Delete the uploaded asset from Cloudinary if it exists
-    if (uploadedPublicId) {
-      try {
-        // Try deleting as image first, then as video
-        await cloudinary.uploader
-          .destroy(uploadedPublicId, { resource_type: "image" })
-          .catch(() =>
-            cloudinary.uploader.destroy(uploadedPublicId, {
-              resource_type: "video",
-            }),
+      } catch (imgError) {
+        // If image fetch fails, try as video
+        try {
+          const result = await cloudinary.api.resource(publicId, {
+            resource_type: "video",
+          });
+          width = result.width || 1;
+          height = result.height || 1;
+          aspectRatio = width / height;
+          detectedMediaType = "video";
+          console.log(
+            `🎬 Video dimensions: ${width}x${height}, AR: ${aspectRatio.toFixed(2)}`,
           );
-        console.log("🧹 Cleaned up Cloudinary asset:", uploadedPublicId);
-      } catch (cleanupError) {
-        console.error("⚠️ Cloudinary cleanup failed:", cleanupError);
+        } catch (vidError) {
+          console.log("⚠️ Could not fetch media dimensions, using defaults");
+          // Fallback: guess type from file mimetype
+          const mime = req.file.mimetype || "";
+          detectedMediaType = mime.startsWith("video") ? "video" : "image";
+        }
       }
-    }
 
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to create post",
-    });
-  }
-});
+      // Create the new post document
+      let newPost;
+      const postData = {
+        user: req.body.userId, // Sent from frontend (will be JWT user in future)
+        caption: req.body.caption || "",
+        category: req.body.category || "General",
+        media: {
+          url: cloudinaryUrl,
+          publicId: publicId,
+          type: detectedMediaType,
+          width: width,
+          height: height,
+          aspectRatio: aspectRatio,
+        },
+      };
+
+      if (detectedMediaType === "video") {
+        newPost = new Reel(postData);
+      } else {
+        newPost = new Post(postData);
+      }
+
+      // Save to MongoDB
+      await newPost.save();
+
+      // Populate user data before returning
+      await newPost.populate("user", "username email studentId");
+
+      console.log(
+        `✅ ${detectedMediaType === "video" ? "🎬 Reel" : "📷 Post"} created successfully:`,
+        newPost._id,
+      );
+
+      res.status(201).json({
+        success: true,
+        message: `${detectedMediaType === "video" ? "Reel" : "Post"} created successfully!`,
+        post: newPost,
+      });
+    } catch (error) {
+      console.error("❌ Post Upload Error:", error);
+
+      // Cleanup: Delete the uploaded asset from Cloudinary if it exists
+      if (uploadedPublicId) {
+        try {
+          // Try deleting as image first, then as video
+          await cloudinary.uploader
+            .destroy(uploadedPublicId, { resource_type: "image" })
+            .catch(() =>
+              cloudinary.uploader.destroy(uploadedPublicId, {
+                resource_type: "video",
+              }),
+            );
+          console.log("🧹 Cleaned up Cloudinary asset:", uploadedPublicId);
+        } catch (cleanupError) {
+          console.error("⚠️ Cloudinary cleanup failed:", cleanupError);
+        }
+      }
+
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to create post",
+      });
+    }
+  },
+);
 
 // ====================================
 // GET ALL POSTS (with optional mediaType filter)
@@ -148,19 +164,26 @@ router.post("/", upload.single("media"), async (req, res) => {
 // ====================================
 router.get("/", async (req, res) => {
   try {
-    // Build the query filter
-    // If ?mediaType=video is passed, only return video posts
-    const filter = {};
-    if (req.query.mediaType) {
-      filter["media.type"] = req.query.mediaType; // e.g. 'video'
-    }
+    let posts = [];
 
-    // Fetch posts (filtered or all)
-    // .populate() replaces user ObjectId with actual user data
-    // .sort({ createdAt: -1 }) = newest first
-    const posts = await Post.find(filter)
-      .populate("user", "username email studentId") // Only include these user fields
-      .sort({ createdAt: -1 });
+    if (req.query.mediaType === "video") {
+      posts = await Reel.find()
+        .populate("user", "username email studentId")
+        .sort({ createdAt: -1 });
+    } else if (req.query.mediaType === "image") {
+      posts = await Post.find()
+        .populate("user", "username email studentId")
+        .sort({ createdAt: -1 });
+    } else {
+      const [imagePosts, videoReels] = await Promise.all([
+        Post.find().populate("user", "username email studentId"),
+        Reel.find().populate("user", "username email studentId"),
+      ]);
+
+      posts = [...imagePosts, ...videoReels].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      );
+    }
 
     res.json({
       success: true,
@@ -182,10 +205,17 @@ router.get("/", async (req, res) => {
 // ====================================
 router.get("/:id", async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id).populate(
+    let post = await Post.findById(req.params.id).populate(
       "user",
       "username email",
     );
+
+    if (!post) {
+      post = await Reel.findById(req.params.id).populate(
+        "user",
+        "username email",
+      );
+    }
 
     if (!post) {
       return res.status(404).json({
@@ -222,7 +252,11 @@ router.put("/:id/like", async (req, res) => {
       });
     }
 
-    const post = await Post.findById(req.params.id);
+    let post = await Post.findById(req.params.id);
+
+    if (!post) {
+      post = await Reel.findById(req.params.id);
+    }
 
     if (!post) {
       return res.status(404).json({
@@ -281,7 +315,11 @@ router.post("/:id/comment", async (req, res) => {
       });
     }
 
-    const post = await Post.findById(req.params.id);
+    let post = await Post.findById(req.params.id);
+
+    if (!post) {
+      post = await Reel.findById(req.params.id);
+    }
 
     if (!post) {
       return res.status(404).json({
@@ -334,10 +372,17 @@ router.post("/:id/comment", async (req, res) => {
 // ====================================
 router.get("/:id/comments", async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id).populate(
+    let post = await Post.findById(req.params.id).populate(
       "comments.user",
       "username",
     );
+
+    if (!post) {
+      post = await Reel.findById(req.params.id).populate(
+        "comments.user",
+        "username",
+      );
+    }
 
     if (!post) {
       return res.status(404).json({
