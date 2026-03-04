@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
     View,
     Text,
@@ -11,7 +11,7 @@ import {
     ActivityIndicator,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 
 import { useAuth } from "../../../src/context/AuthContext";
 import { API_BASE_URL as API_URL } from "../../../src/config/api";
@@ -28,43 +28,52 @@ export default function LecturerProfile({ user }) {
     const [userPosts, setUserPosts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchAllData = async () => {
-            const userId = user?.id || user?._id;
-            if (!userId) {
-                setLoading(false);
-                return;
-            }
-
-            try {
-                const profileResponse = await fetch(`${API_URL}/users/profile/${userId}`);
-                if (profileResponse.ok) {
-                    const profileJson = await profileResponse.json();
-                    setProfileData(profileJson);
+    // useFocusEffect re-runs every time this screen comes into focus.
+    // This ensures that after saving in Edit Profile and navigating back,
+    // the latest profile data and posts are always shown.
+    useFocusEffect(
+        useCallback(() => {
+            const fetchAllData = async () => {
+                const userId = user?.id || user?._id;
+                if (!userId) {
+                    setLoading(false);
+                    return;
                 }
 
-                const postsResponse = await fetch(`${API_URL}/posts`);
-                if (postsResponse.ok) {
-                    const allPosts = await postsResponse.json();
+                setLoading(true);
+                try {
+                    const profileResponse = await fetch(`${API_URL}/users/profile/${userId}`);
+                    if (profileResponse.ok) {
+                        const profileJson = await profileResponse.json();
+                        setProfileData(profileJson);
+                    }
 
-                    const filteredPosts = allPosts.filter(post => {
-                        const postUserId = typeof post.user === 'object' ? post.user._id : post.user;
-                        return postUserId === userId;
-                    });
+                    const postsResponse = await fetch(`${API_URL}/posts`);
+                    if (postsResponse.ok) {
+                        const postsJson = await postsResponse.json();
+                        const allPosts = postsJson.data || [];
 
-                    filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    setUserPosts(filteredPosts);
+                        const filteredPosts = allPosts.filter(post => {
+                            const postUserId = typeof post.user === 'object'
+                                ? post.user._id?.toString()
+                                : post.user?.toString();
+                            return postUserId === userId.toString();
+                        });
+
+                        filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        setUserPosts(filteredPosts);
+                    }
+
+                } catch (error) {
+                    console.error("Data Fetch Error:", error);
+                } finally {
+                    setLoading(false);
                 }
+            };
 
-            } catch (error) {
-                console.error("Data Fetch Error:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAllData();
-    }, [user]);
+            fetchAllData();
+        }, [user])
+    );
 
     const handleLogout = async () => {
         await logout();
