@@ -29,6 +29,7 @@ import {
   Pressable,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import Animated, {
@@ -60,7 +61,7 @@ const CATEGORIES = [
 ];
 
 const SPRING_CONFIG = { damping: 15, stiffness: 200 };
-const TAG_SPRING = { damping: 15, stiffness: 180 };
+const TAG_SPRING = { damping: 30, stiffness: 300 };
 
 // ────────────────────────────────────────────
 // MAIN COMPONENT
@@ -68,6 +69,7 @@ const TAG_SPRING = { damping: 15, stiffness: 180 };
 export default function CreatePostScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // ── Form state ──
   const [title, setTitle] = useState("");
@@ -279,7 +281,7 @@ export default function CreatePostScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         {/* ═══════════════ TOP BAR ═══════════════ */}
         <View style={styles.topBar}>
@@ -398,49 +400,51 @@ export default function CreatePostScreen() {
               style={styles.categoryMenuContainer}
               exiting={SlideOutDown.duration(200)}
             >
-              {CATEGORIES.map((cat, index) => {
-                const isSelected = category === cat.label;
-                return (
-                  <Animated.View
-                    key={cat.label}
-                    entering={FadeInUp.springify()
-                      .damping(16)
-                      .stiffness(180)
-                      .delay((CATEGORIES.length - 1 - index) * 35)}
-                  >
-                    <TouchableOpacity
-                      style={[
-                        styles.categoryMenuItem,
-                        isSelected && styles.categoryMenuItemSelected,
-                      ]}
-                      onPress={() => selectCategory(cat.label)}
-                      activeOpacity={0.7}
+              <View style={styles.categoryMenuInner}>
+                {CATEGORIES.map((cat, index) => {
+                  const isSelected = category === cat.label;
+                  return (
+                    <Animated.View
+                      key={cat.label}
+                      entering={FadeInUp.springify()
+                        .damping(30)
+                        .stiffness(300)
+                        .delay((CATEGORIES.length - 1 - index) * 25)}
                     >
-                      <Ionicons
-                        name={cat.icon}
-                        size={20}
-                        color={isSelected ? "#2e7d32" : "#666"}
-                      />
-                      <Text
+                      <TouchableOpacity
                         style={[
-                          styles.categoryMenuLabel,
-                          isSelected && styles.categoryMenuLabelSelected,
+                          styles.categoryMenuItem,
+                          isSelected && styles.categoryMenuItemSelected,
                         ]}
+                        onPress={() => selectCategory(cat.label)}
+                        activeOpacity={0.7}
                       >
-                        {cat.label}
-                      </Text>
-                      {isSelected && (
                         <Ionicons
-                          name="checkmark-circle"
-                          size={18}
-                          color="#2e7d32"
-                          style={{ marginLeft: "auto" }}
+                          name={cat.icon}
+                          size={20}
+                          color={isSelected ? "#2e7d32" : "#666"}
                         />
-                      )}
-                    </TouchableOpacity>
-                  </Animated.View>
-                );
-              })}
+                        <Text
+                          style={[
+                            styles.categoryMenuLabel,
+                            isSelected && styles.categoryMenuLabelSelected,
+                          ]}
+                        >
+                          {cat.label}
+                        </Text>
+                        {isSelected && (
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={18}
+                            color="#2e7d32"
+                            style={{ marginLeft: "auto" }}
+                          />
+                        )}
+                      </TouchableOpacity>
+                    </Animated.View>
+                  );
+                })}
+              </View>
             </Animated.View>
           </>
         )}
@@ -463,7 +467,12 @@ export default function CreatePostScreen() {
         )}
 
         {/* ═══════════════ BOTTOM ACTION BAR ═══════════════ */}
-        <View style={styles.bottomBar}>
+        <View
+          style={[
+            styles.bottomBar,
+            { paddingBottom: Math.max(insets.bottom, 12) },
+          ]}
+        >
           {/* Photo */}
           <TouchableOpacity
             style={styles.bottomTab}
@@ -704,12 +713,11 @@ const styles = StyleSheet.create({
   // ── Category Drop-Up Menu ──
   categoryMenuContainer: {
     position: "absolute",
-    bottom: 60,
+    bottom: 80,
     left: 16,
     right: 16,
     backgroundColor: "#fff",
     borderRadius: 16,
-    paddingVertical: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.12,
@@ -717,6 +725,11 @@ const styles = StyleSheet.create({
     elevation: 16,
     borderWidth: 1,
     borderColor: "#f0f0f0",
+  },
+  categoryMenuInner: {
+    overflow: "hidden",
+    borderRadius: 16,
+    paddingVertical: 8,
   },
   categoryMenuItem: {
     flexDirection: "row",
@@ -770,7 +783,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     paddingVertical: 12,
     paddingHorizontal: 8,
-    paddingBottom: Platform.OS === "ios" ? 28 : 12,
+    paddingBottom: 12,
   },
   bottomTab: {
     flex: 1,
