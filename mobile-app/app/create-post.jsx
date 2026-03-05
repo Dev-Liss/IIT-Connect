@@ -1,16 +1,16 @@
 /**
  * ====================================
- * CREATE POST SCREEN
+ * CREATE POST SCREEN — Social-media style
  * ====================================
- * Modal-card style post creation with:
- * - Caption text input
- * - Media picker (images only) via expo-image-picker
- * - Category selector with brand-red highlight
- * - Image preview with clear button
- * - Navigation to preview-post screen
+ * Clean, minimal post creation with:
+ * - Top bar  (back arrow + "Post" button)
+ * - User avatar + username
+ * - Title + body text inputs
+ * - Fixed bottom action bar (Photo / Category / Tags)
+ * - Animated drop-up category menu & expanding tags input
  */
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -24,36 +24,71 @@ import {
   StatusBar,
   SafeAreaView,
   ActivityIndicator,
+  Dimensions,
+  KeyboardAvoidingView,
+  Pressable,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  FadeIn,
+  FadeOut,
+  FadeInUp,
+  SlideOutDown,
+  runOnJS,
+} from "react-native-reanimated";
 import { useAuth } from "../src/context/AuthContext";
 import { POST_ENDPOINTS } from "../src/config/api";
 
-// ====================================
+// ────────────────────────────────────────────
 // CONSTANTS
-// ====================================
+// ────────────────────────────────────────────
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
 const CATEGORIES = [
-  "General",
-  "Academic",
-  "Events",
-  "Sports",
-  "Clubs",
-  "Memes",
+  { label: "Memes", icon: "happy-outline" },
+  { label: "Clubs", icon: "people-outline" },
+  { label: "Sports", icon: "football-outline" },
+  { label: "Events", icon: "calendar-outline" },
+  { label: "Academic", icon: "school-outline" },
+  { label: "General", icon: "stats-chart" },
 ];
 
-export default function CreatePostNewScreen() {
+const SPRING_CONFIG = { damping: 15, stiffness: 200 };
+const TAG_SPRING = { damping: 15, stiffness: 180 };
+
+// ────────────────────────────────────────────
+// MAIN COMPONENT
+// ────────────────────────────────────────────
+export default function CreatePostScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
   // ── Form state ──
-  const [caption, setCaption] = useState("");
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
   const [media, setMedia] = useState(null);
   const [category, setCategory] = useState("General");
   const [tags, setTags] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ── Bottom bar panel state ──
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [showTagsInput, setShowTagsInput] = useState(false);
+
+  // ── Reanimated values for tags box ──
+  const tagsHeight = useSharedValue(0);
+
+  const tagsAnimatedStyle = useAnimatedStyle(() => ({
+    height: tagsHeight.value,
+    opacity: tagsHeight.value > 10 ? 1 : 0,
+    overflow: "hidden",
+  }));
 
   // ====================================
   // AUTH GUARD
@@ -68,10 +103,10 @@ export default function CreatePostNewScreen() {
             Please log in to create a post
           </Text>
           <TouchableOpacity
-            style={styles.previewButton}
+            style={styles.loginButton}
             onPress={() => router.replace("/")}
           >
-            <Text style={styles.previewButtonText}>Go to Login</Text>
+            <Text style={styles.loginButtonText}>Go to Login</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -103,7 +138,6 @@ export default function CreatePostNewScreen() {
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         setMedia(asset.uri);
-
         console.log(`📎 Image selected: ${asset.uri.slice(-30)}`);
       }
     } catch (error) {
@@ -115,40 +149,12 @@ export default function CreatePostNewScreen() {
   // ====================================
   // CLEAR SELECTED MEDIA
   // ====================================
-  const clearMedia = () => {
-    setMedia(null);
-  };
+  const clearMedia = () => setMedia(null);
 
   // ====================================
-  // HANDLE PREVIEW NAVIGATION
-  // ====================================
-  const handlePreview = () => {
-    if (!caption.trim() && !media) {
-      Alert.alert(
-        "Required",
-        "Please add a caption or select media before continuing.",
-      );
-      return;
-    }
-
-    // Navigate to preview screen with post data
-    router.push({
-      pathname: "/preview-post",
-      params: {
-        content: caption,
-        media: media || "",
-        mediaType: "image",
-        category: category,
-        tags: tags,
-      },
-    });
-  };
-
-  // ====================================
-  // HANDLE SHARE POST (UPLOAD)
+  // HANDLE POST UPLOAD
   // ====================================
   const handleSharePost = async () => {
-    // Validate
     if (!user) {
       Alert.alert("Error", "You must be logged in to post.");
       return;
@@ -162,15 +168,15 @@ export default function CreatePostNewScreen() {
     setIsSubmitting(true);
 
     try {
-      // Build FormData
+      // Build caption from title + body
+      const caption = [title.trim(), body.trim()].filter(Boolean).join("\n\n");
+
       const formData = new FormData();
       formData.append("userId", user.id);
       formData.append("caption", caption);
       formData.append("category", category);
 
-      // CRITICAL ANDROID FIX:
-      // Android requires the file to be appended as an object with
-      // uri, name, and type — not as a Blob.
+      // Android needs file as { uri, name, type } object
       const filename = media.split("/").pop() || "upload.jpg";
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : "image/jpeg";
@@ -183,12 +189,9 @@ export default function CreatePostNewScreen() {
 
       console.log(`📤 Uploading image: ${filename} (${type})`);
 
-      // POST to backend
       const response = await fetch(POST_ENDPOINTS.CREATE, {
         method: "POST",
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
         body: formData,
       });
 
@@ -199,14 +202,12 @@ export default function CreatePostNewScreen() {
           {
             text: "OK",
             onPress: () => {
-              // Clear all states
-              setCaption("");
+              setTitle("");
+              setBody("");
               setMedia(null);
               setCategory("General");
               setTags("");
-
-              // Navigate back to feed
-              router.replace("/");
+              router.replace("/(tabs)");
             },
           },
         ]);
@@ -228,164 +229,300 @@ export default function CreatePostNewScreen() {
   };
 
   // ====================================
+  // BOTTOM BAR TAB HANDLERS
+  // ====================================
+  const handlePhotoTab = () => {
+    // Close other panels
+    setShowCategoryMenu(false);
+    closeTags();
+    pickMedia();
+  };
+
+  const handleCategoryTab = () => {
+    closeTags();
+    setShowCategoryMenu((prev) => !prev);
+  };
+
+  const handleTagsTab = () => {
+    setShowCategoryMenu(false);
+    if (showTagsInput) {
+      closeTags();
+    } else {
+      setShowTagsInput(true);
+      tagsHeight.value = withSpring(110, TAG_SPRING);
+    }
+  };
+
+  const closeTags = () => {
+    tagsHeight.value = withSpring(0, TAG_SPRING);
+    // Delay hiding until animation completes
+    setTimeout(() => setShowTagsInput(false), 250);
+  };
+
+  const selectCategory = (cat) => {
+    setCategory(cat);
+    setShowCategoryMenu(false);
+  };
+
+  // ====================================
+  // HELPERS
+  // ====================================
+  const displayName = user?.username || "Your Name";
+  const userInitial = displayName.charAt(0).toUpperCase();
+
+  // ====================================
   // RENDER
   // ====================================
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f5f7fa" />
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        {/* Modal Card */}
-        <View style={styles.card}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Create Post</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => router.back()}
-            >
-              <Ionicons name="close" size={24} color="#262626" />
-            </TouchableOpacity>
-          </View>
-
-          {/* ========== CAPTION INPUT ========== */}
-          <View style={styles.inputSection}>
-            <Text style={styles.label}>
-              What's on your mind? <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.textArea}
-              placeholder="Share your thoughts..."
-              placeholderTextColor="#999"
-              value={caption}
-              onChangeText={setCaption}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* ========== MEDIA PICKER (Images Only) ========== */}
-          <View style={styles.inputSection}>
-            <Text style={styles.label}>Photo (Optional)</Text>
-            <TouchableOpacity style={styles.mediaPicker} onPress={pickMedia}>
-              {media ? (
-                <View style={styles.mediaPreviewContainer}>
-                  <Image source={{ uri: media }} style={styles.mediaPreview} />
-
-                  {/* X button to clear selection */}
-                  <TouchableOpacity
-                    style={styles.removeMedia}
-                    onPress={clearMedia}
-                  >
-                    <Ionicons name="close-circle" size={26} color="#f9252b" />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <View style={styles.mediaPlaceholder}>
-                  <Ionicons name="images-outline" size={32} color="#999" />
-                  <Text style={styles.mediaText}>Add a photo</Text>
-                  <Text style={styles.mediaSubtext}>
-                    Tap to select from gallery
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {/* ========== CATEGORY SELECTOR ========== */}
-          <View style={styles.inputSection}>
-            <Text style={styles.label}>Category</Text>
-            <View style={styles.categoryRow}>
-              {CATEGORIES.map((cat) => {
-                const isSelected = category === cat;
-                return (
-                  <TouchableOpacity
-                    key={cat}
-                    style={[
-                      styles.categoryChip,
-                      isSelected && styles.categoryChipActive,
-                    ]}
-                    onPress={() => setCategory(cat)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryChipText,
-                        isSelected && styles.categoryChipTextActive,
-                      ]}
-                    >
-                      {cat}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* ========== TAGS INPUT ========== */}
-          <View style={styles.inputSection}>
-            <Text style={styles.label}>Tags</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="campus, events, community"
-              placeholderTextColor="#999"
-              value={tags}
-              onChangeText={setTags}
-            />
-            <Text style={styles.hint}>Separate tags with commas</Text>
-          </View>
-
-          {/* ========== ACTION BUTTONS ========== */}
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.previewButton,
-                styles.previewButtonOutline,
-                isSubmitting && styles.buttonDisabledOutline,
-              ]}
-              onPress={handlePreview}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.previewButtonTextOutline}>Preview</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* ========== SHARE POST BUTTON ========== */}
+        {/* ═══════════════ TOP BAR ═══════════════ */}
+        <View style={styles.topBar}>
           <TouchableOpacity
-            style={[
-              styles.shareButton,
-              (!media || isSubmitting) && styles.buttonDisabled,
-            ]}
+            onPress={() => router.replace("/(tabs)")}
+            style={styles.backBtn}
+            hitSlop={12}
+          >
+            <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.postBtn, isSubmitting && styles.postBtnDisabled]}
             onPress={handleSharePost}
-            disabled={!media || isSubmitting}
+            disabled={isSubmitting}
             activeOpacity={0.8}
           >
             {isSubmitting ? (
-              <View style={styles.shareButtonContent}>
-                <ActivityIndicator color="#fff" size="small" />
-                <Text style={styles.shareButtonText}>Uploading...</Text>
-              </View>
+              <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <View style={styles.shareButtonContent}>
-                <Ionicons name="paper-plane" size={18} color="#fff" />
-                <Text style={styles.shareButtonText}>Share Post</Text>
-              </View>
+              <Text style={styles.postBtnText}>Post</Text>
             )}
           </TouchableOpacity>
         </View>
-      </ScrollView>
+
+        {/* ═══════════════ SCROLLABLE CONTENT ═══════════════ */}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* ── User Info ── */}
+          <View style={styles.userRow}>
+            {user?.profilePicture ? (
+              <Image
+                source={{ uri: user.profilePicture }}
+                style={styles.avatar}
+              />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>{userInitial}</Text>
+              </View>
+            )}
+            <Text style={styles.userName}>{displayName}</Text>
+          </View>
+
+          {/* ── Title Input ── */}
+          <TextInput
+            style={styles.titleInput}
+            placeholder="Post Title"
+            placeholderTextColor="#b0b0b0"
+            value={title}
+            onChangeText={setTitle}
+            maxLength={120}
+          />
+
+          {/* ── Body Input ── */}
+          <TextInput
+            style={styles.bodyInput}
+            placeholder="Add more details of your question or hack. Don't worry if you don't have extra thoughts, it's optional."
+            placeholderTextColor="#c0c0c0"
+            value={body}
+            onChangeText={setBody}
+            multiline
+            textAlignVertical="top"
+          />
+
+          {/* ── Inline Image Preview ── */}
+          {media && (
+            <View style={styles.inlineMediaContainer}>
+              <Image source={{ uri: media }} style={styles.inlineMedia} />
+              <TouchableOpacity
+                style={styles.removeMediaBtn}
+                onPress={clearMedia}
+              >
+                <Ionicons name="close-circle" size={26} color="#f9252b" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* ── Selected Category Badge ── */}
+          <View style={styles.metaRow}>
+            <View style={styles.categoryBadge}>
+              <Ionicons
+                name={
+                  CATEGORIES.find((c) => c.label === category)?.icon ||
+                  "pricetag"
+                }
+                size={14}
+                color="#f9252b"
+              />
+              <Text style={styles.categoryBadgeText}>{category}</Text>
+            </View>
+
+            {tags.trim().length > 0 && (
+              <View style={styles.tagsBadge}>
+                <Ionicons name="pricetags-outline" size={14} color="#666" />
+                <Text style={styles.tagsBadgeText} numberOfLines={1}>
+                  {tags}
+                </Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        {/* ═══════════════ CATEGORY DROP-UP MENU ═══════════════ */}
+        {showCategoryMenu && (
+          <>
+            {/* Dismiss overlay */}
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setShowCategoryMenu(false)}
+            />
+            <Animated.View
+              style={styles.categoryMenuContainer}
+              exiting={SlideOutDown.duration(200)}
+            >
+              {CATEGORIES.map((cat, index) => {
+                const isSelected = category === cat.label;
+                return (
+                  <Animated.View
+                    key={cat.label}
+                    entering={FadeInUp.springify()
+                      .damping(16)
+                      .stiffness(180)
+                      .delay((CATEGORIES.length - 1 - index) * 35)}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        styles.categoryMenuItem,
+                        isSelected && styles.categoryMenuItemSelected,
+                      ]}
+                      onPress={() => selectCategory(cat.label)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name={cat.icon}
+                        size={20}
+                        color={isSelected ? "#2e7d32" : "#666"}
+                      />
+                      <Text
+                        style={[
+                          styles.categoryMenuLabel,
+                          isSelected && styles.categoryMenuLabelSelected,
+                        ]}
+                      >
+                        {cat.label}
+                      </Text>
+                      {isSelected && (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={18}
+                          color="#2e7d32"
+                          style={{ marginLeft: "auto" }}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  </Animated.View>
+                );
+              })}
+            </Animated.View>
+          </>
+        )}
+
+        {/* ═══════════════ TAGS EXPANDING INPUT ═══════════════ */}
+        {showTagsInput && (
+          <Animated.View
+            style={[styles.tagsExpandContainer, tagsAnimatedStyle]}
+          >
+            <TextInput
+              style={styles.tagsTextInput}
+              placeholder="campus, events, community"
+              placeholderTextColor="#b0b0b0"
+              value={tags}
+              onChangeText={setTags}
+              autoFocus
+            />
+            <Text style={styles.tagsHelper}>Separate tags with commas</Text>
+          </Animated.View>
+        )}
+
+        {/* ═══════════════ BOTTOM ACTION BAR ═══════════════ */}
+        <View style={styles.bottomBar}>
+          {/* Photo */}
+          <TouchableOpacity
+            style={styles.bottomTab}
+            onPress={handlePhotoTab}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="image-outline" size={20} color="#666" />
+            <Text style={styles.bottomTabLabel}>Photo</Text>
+          </TouchableOpacity>
+
+          {/* Separator */}
+          <View style={styles.bottomSeparator} />
+
+          {/* Category */}
+          <TouchableOpacity
+            style={styles.bottomTab}
+            onPress={handleCategoryTab}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="folder-outline"
+              size={20}
+              color={showCategoryMenu ? "#f9252b" : "#666"}
+            />
+            <Text
+              style={[
+                styles.bottomTabLabel,
+                showCategoryMenu && { color: "#f9252b" },
+              ]}
+            >
+              Category
+            </Text>
+          </TouchableOpacity>
+
+          {/* Separator */}
+          <View style={styles.bottomSeparator} />
+
+          {/* Tags */}
+          <TouchableOpacity
+            style={styles.bottomTab}
+            onPress={handleTagsTab}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="pricetags-outline"
+              size={20}
+              color={showTagsInput ? "#f9252b" : "#666"}
+            />
+            <Text
+              style={[
+                styles.bottomTabLabel,
+                showTagsInput && { color: "#f9252b" },
+              ]}
+            >
+              Tags
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -394,214 +531,267 @@ export default function CreatePostNewScreen() {
 // STYLES
 // ====================================
 const styles = StyleSheet.create({
+  // ── Layout ──
   container: {
     flex: 1,
-    backgroundColor: "#f5f7fa",
+    backgroundColor: "#ffffff",
   },
+
+  // ── Top Bar ──
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingTop:
+      Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 12 : 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#f0f0f0",
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  postBtn: {
+    backgroundColor: "#f9252b",
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 24,
+    minWidth: 80,
+    alignItems: "center",
+  },
+  postBtnDisabled: {
+    backgroundColor: "#fca5a5",
+  },
+  postBtnText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
+
+  // ── Scroll ──
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
-    paddingTop:
-      Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 20 : 20,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
-  // Card
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  // Header
-  header: {
+
+  // ── User Row ──
+  userRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     marginBottom: 24,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#262626",
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
-  closeButton: {
-    padding: 4,
-  },
-  // Form
-  inputSection: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#262626",
-    marginBottom: 8,
-  },
-  required: {
-    color: "#f9252b",
-  },
-  textArea: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 15,
-    minHeight: 100,
-    textAlignVertical: "top",
-    color: "#262626",
-  },
-  input: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 15,
-    color: "#262626",
-  },
-  hint: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 6,
-  },
-  // Media Picker
-  mediaPicker: {
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderStyle: "dashed",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  mediaPlaceholder: {
-    alignItems: "center",
+  avatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#f9252b",
     justifyContent: "center",
-    paddingVertical: 30,
+    alignItems: "center",
   },
-  mediaText: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 8,
+  avatarText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
   },
-  mediaSubtext: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 2,
+  userName: {
+    marginLeft: 12,
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    letterSpacing: 0.1,
   },
-  mediaPreviewContainer: {
+
+  // ── Title Input ──
+  titleInput: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    letterSpacing: 0.2,
+    marginBottom: 12,
+    paddingVertical: 4,
+  },
+
+  // ── Body Input ──
+  bodyInput: {
+    fontSize: 15,
+    color: "#444",
+    lineHeight: 22,
+    minHeight: 120,
+    paddingVertical: 4,
+  },
+
+  // ── Inline Media Preview ──
+  inlineMediaContainer: {
+    marginTop: 16,
+    borderRadius: 12,
+    overflow: "hidden",
     position: "relative",
   },
-  mediaPreview: {
+  inlineMedia: {
     width: "100%",
     height: 200,
+    borderRadius: 12,
     resizeMode: "cover",
   },
-  removeMedia: {
+  removeMediaBtn: {
     position: "absolute",
     top: 8,
     right: 8,
     backgroundColor: "#fff",
     borderRadius: 13,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  // Category Selector
-  categoryRow: {
+
+  // ── Meta Row (category badge + tags badge) ──
+  metaRow: {
     flexDirection: "row",
+    alignItems: "center",
     flexWrap: "wrap",
     gap: 8,
+    marginTop: 20,
   },
-  categoryChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    backgroundColor: "#fff",
-  },
-  categoryChipActive: {
-    backgroundColor: "#f9252b",
-    borderColor: "#f9252b",
-  },
-  categoryChipText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#666",
-  },
-  categoryChipTextActive: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  // Buttons
-  buttonRow: {
+  categoryBadge: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-    gap: 12,
-  },
-  backButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
     alignItems: "center",
-  },
-  backButtonText: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#262626",
-  },
-  previewButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    backgroundColor: "#f9252b",
-    alignItems: "center",
-  },
-  previewButtonOutline: {
-    backgroundColor: "#fff",
+    gap: 5,
+    backgroundColor: "#fff3f3",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#f9252b",
+    borderColor: "#f9252b20",
   },
-  previewButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#fff",
-  },
-  previewButtonTextOutline: {
-    fontSize: 15,
+  categoryBadgeText: {
+    fontSize: 13,
     fontWeight: "600",
     color: "#f9252b",
   },
-  // Share Post Button
-  shareButton: {
-    marginTop: 12,
-    paddingVertical: 16,
-    borderRadius: 8,
-    backgroundColor: "#f9252b",
-    alignItems: "center",
-  },
-  shareButtonContent: {
+  tagsBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 5,
+    backgroundColor: "#f5f5f5",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
-  shareButtonText: {
-    fontSize: 16,
+  tagsBadgeText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#666",
+    maxWidth: 150,
+  },
+
+  // ── Category Drop-Up Menu ──
+  categoryMenuContainer: {
+    position: "absolute",
+    bottom: 60,
+    left: 16,
+    right: 16,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 16,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+  },
+  categoryMenuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    gap: 14,
+  },
+  categoryMenuItemSelected: {
+    backgroundColor: "#f0faf0",
+  },
+  categoryMenuLabel: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#333",
+  },
+  categoryMenuLabelSelected: {
     fontWeight: "700",
-    color: "#fff",
+    color: "#2e7d32",
   },
-  buttonDisabled: {
-    backgroundColor: "#fca5a5",
+
+  // ── Tags Expanding Input ──
+  tagsExpandContainer: {
+    paddingHorizontal: 20,
+    backgroundColor: "#fafafa",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#e8e8e8",
   },
-  buttonDisabledOutline: {
-    borderColor: "#fca5a5",
+  tagsTextInput: {
+    fontSize: 15,
+    color: "#333",
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#e0e0e0",
   },
-  // Auth Guard
+  tagsHelper: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 6,
+    paddingHorizontal: 4,
+  },
+
+  // ── Bottom Action Bar ──
+  bottomBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#e8e8e8",
+    backgroundColor: "#fff",
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    paddingBottom: Platform.OS === "ios" ? 28 : 12,
+  },
+  bottomTab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 6,
+  },
+  bottomTabLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+  },
+  bottomSeparator: {
+    width: StyleSheet.hairlineWidth,
+    height: 24,
+    backgroundColor: "#e0e0e0",
+  },
+
+  // ── Auth Guard ──
   guardContainer: {
     flex: 1,
     justifyContent: "center",
@@ -615,12 +805,24 @@ const styles = StyleSheet.create({
   guardTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#262626",
+    color: "#1a1a1a",
     marginBottom: 8,
   },
   guardSubtitle: {
     fontSize: 15,
     color: "#666",
     marginBottom: 24,
+  },
+  loginButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 24,
+    backgroundColor: "#f9252b",
+    alignItems: "center",
+  },
+  loginButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#fff",
   },
 });
