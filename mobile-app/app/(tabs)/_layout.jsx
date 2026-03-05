@@ -434,13 +434,16 @@ const styles = StyleSheet.create({
 
   sheet: {
     position: "absolute",
-    bottom: 0,
+    // Extend 80px BELOW the screen so spring-overshoot (negative translateY)
+    // never reveals the background beneath the card.
+    bottom: -80,
     left: 0,
     right: 0,
     backgroundColor: "#fff",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    paddingBottom: Platform.OS === "ios" ? 36 : 24,
+    // Compensate the -80 bottom offset so visible content still sits correctly.
+    paddingBottom: Platform.OS === "ios" ? 140 : 128,
     paddingHorizontal: 20,
     paddingTop: 12,
     // Shadow above sheet
