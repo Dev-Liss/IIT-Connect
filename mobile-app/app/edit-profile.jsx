@@ -7,6 +7,7 @@ import { useAuth } from '../src/context/AuthContext';
 // Import the specific edit screens
 import EditStudentProfile from '../src/screens/profiles/EditStudentProfile';
 import EditLecturerProfile from '../src/screens/profiles/EditLecturerProfile';
+import EditAlumniProfile from '../src/screens/profiles/EditAlumniProfile';
 
 export default function EditProfileSwitcher() {
     const { user } = useAuth();
@@ -27,6 +28,9 @@ export default function EditProfileSwitcher() {
 
         case 'lecturer':
             return <EditLecturerProfile user={user} />;
+
+        case 'alumni':
+            return <EditAlumniProfile user={user} />;
 
         case 'admin':
             // return <EditAdminProfile user={user} />;

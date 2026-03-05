@@ -5,6 +5,7 @@ import { useAuth } from '../../src/context/AuthContext';
 // Import the actual UI screens
 import StudentProfile from '../../src/screens/profiles/StudentProfile';
 import LecturerProfile from '../../src/screens/profiles/LecturerProfile';
+import AlumniProfile from '../../src/screens/profiles/AlumniProfile';
 
 export default function ProfileSwitcher() {
   const { user, isLoading } = useAuth(); // useAuth provides a loading state
@@ -25,6 +26,9 @@ export default function ProfileSwitcher() {
 
     case 'lecturer':
       return <LecturerProfile user={user} />;
+
+    case 'alumni':
+      return <AlumniProfile user={user} />;
 
     case 'admin':
       return <AdminProfile user={user} />;
