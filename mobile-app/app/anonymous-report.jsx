@@ -45,7 +45,7 @@ export default function AnonymousReportScreen() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    subject: subject.trim(),
+                    title: subject.trim(),
                     description: description.trim(),
                 }),
             });

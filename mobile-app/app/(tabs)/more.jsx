@@ -51,6 +51,13 @@ const TILES = [
     background: "#fff8f0",
     route: "/events",
   },
+  {
+    label: "Admin\nDashboard",
+    icon: "shield",
+    themeColor: "#8B5CF6",
+    background: "#f3f0ff",
+    route: "/admin-dashboard",
+  },
 ];
 
 // ── Screen Component ───────────────────────────────

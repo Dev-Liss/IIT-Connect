@@ -85,6 +85,15 @@ export const REPORTS_ENDPOINTS = {
   DELETE: (id) => `${API_BASE_URL}/reports/${id}`,
 };
 
+// Report endpoints (Admin Dashboard for Lecturers)
+export const REPORT_ENDPOINTS = {
+  CREATE: `${API_BASE_URL}/reports`,
+  GET_ALL: `${API_BASE_URL}/reports`,
+  GET_BY_ID: (id) => `${API_BASE_URL}/reports/${id}`,
+  UPDATE_STATUS: (id) => `${API_BASE_URL}/reports/${id}/status`,
+  ADD_RESPONSE: (id) => `${API_BASE_URL}/reports/${id}/response`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
@@ -99,6 +108,7 @@ export default {
   EVENTS_ENDPOINTS,
   ANNOUNCEMENTS_ENDPOINTS,
   REPORTS_ENDPOINTS,
+  REPORT_ENDPOINTS,
   HEALTH_CHECK_URL,
   LAPTOP_IP,
   PORT,
