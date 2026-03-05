@@ -85,7 +85,7 @@ const CREATE_TILES = [
     icon: "calendar",
     themeColor: "#34C759",
     background: "#f2fbf4",
-    route: null,
+    route: "/create-event",
   },
   {
     label: "Announcement",
@@ -93,7 +93,7 @@ const CREATE_TILES = [
     icon: "megaphone",
     themeColor: "#FF9500",
     background: "#fff8f0",
-    route: null,
+    route: "/create-announcement",
   },
 ];
 
