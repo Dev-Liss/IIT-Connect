@@ -10,7 +10,7 @@
  * - Animated drop-up category menu & expanding tags input
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Pressable,
+  Keyboard,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -82,6 +83,8 @@ export default function CreatePostScreen() {
   // ── Bottom bar panel state ──
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [showTagsInput, setShowTagsInput] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const tagsCloseTimeoutRef = useRef(null);
 
   // ── Reanimated values for tags box ──
   const tagsHeight = useSharedValue(0);
@@ -91,6 +94,37 @@ export default function CreatePostScreen() {
     opacity: tagsHeight.value > 10 ? 1 : 0,
     overflow: "hidden",
   }));
+
+  const clearTagsCloseTimeout = useCallback(() => {
+    if (tagsCloseTimeoutRef.current) {
+      clearTimeout(tagsCloseTimeoutRef.current);
+      tagsCloseTimeoutRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return undefined;
+
+    const keyboardShowSub = Keyboard.addListener("keyboardDidShow", (event) => {
+      const nextHeight = Math.max(0, event.endCoordinates.height - insets.bottom);
+      setKeyboardHeight(nextHeight);
+    });
+
+    const keyboardHideSub = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      keyboardShowSub.remove();
+      keyboardHideSub.remove();
+    };
+  }, [insets.bottom]);
+
+  useEffect(() => {
+    return () => {
+      clearTagsCloseTimeout();
+    };
+  }, [clearTagsCloseTimeout]);
 
   // ====================================
   // AUTH GUARD
@@ -250,15 +284,21 @@ export default function CreatePostScreen() {
     if (showTagsInput) {
       closeTags();
     } else {
+      clearTagsCloseTimeout();
       setShowTagsInput(true);
       tagsHeight.value = withSpring(110, TAG_SPRING);
     }
   };
 
   const closeTags = () => {
+    clearTagsCloseTimeout();
+    Keyboard.dismiss();
     tagsHeight.value = withSpring(0, TAG_SPRING);
     // Delay hiding until animation completes
-    setTimeout(() => setShowTagsInput(false), 250);
+    tagsCloseTimeoutRef.current = setTimeout(() => {
+      setShowTagsInput(false);
+      tagsCloseTimeoutRef.current = null;
+    }, 250);
   };
 
   const selectCategory = (cat) => {
@@ -280,8 +320,12 @@ export default function CreatePostScreen() {
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={[
+          styles.keyboardContainer,
+          Platform.OS === "android" && { paddingBottom: keyboardHeight },
+        ]}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        enabled={Platform.OS === "ios"}
       >
         {/* ═══════════════ TOP BAR ═══════════════ */}
         <View style={styles.topBar}>
@@ -544,6 +588,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
+  },
+  keyboardContainer: {
+    flex: 1,
   },
 
   // ── Top Bar ──
