@@ -28,7 +28,7 @@ import {
   SafeAreaView,
   Image,
 } from "react-native";
-import { Ionicons, Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import PostCard from "../../src/components/PostCard";
 import StoriesRail from "../../src/components/StoriesRail";
@@ -104,12 +104,12 @@ export default function HomeScreen() {
 
       {/* Right: Action Icons */}
       <View style={styles.headerActions}>
-        {/* Create Post Button */}
+        {/* Messages Button */}
         <TouchableOpacity
           style={styles.headerButton}
-          onPress={() => router.push("/create-menu")}
+          onPress={() => router.push("/messages")}
         >
-          <Feather name="plus" size={24} color="#262626" />
+          <Ionicons name="chatbubble-outline" size={24} color="#262626" />
         </TouchableOpacity>
 
         {/* Notifications Button */}

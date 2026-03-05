@@ -3,18 +3,21 @@
  * TAB NAVIGATION LAYOUT — Floating Pill Design
  * ====================================
  * Layout:
- *   [  Home | Academic | Messages | Profile  ]  [ + ]
- *   |<-------- White Floating Pill ---------->|  ^Red Circle
+ *   [  Home | Academic | More | Profile  ]  [ + ]
+ *   |<-------- White Floating Pill -------->|  ^Red Circle (opens Create Menu)
  *
  * Tab order in router:  index | academic | more | messages | profile
  * Active Color: #f9252b (Brand Red)
  * Pill BG:      #FFFFFF (White)
+ *
+ * The RED (+) FAB no longer navigates — it opens a "Create Content" bottom sheet.
+ * Messages has moved to the Home screen header.
  */
 
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -22,6 +25,9 @@ import {
   StyleSheet,
   Platform,
   Pressable,
+  Modal,
+  Animated as RNAnimated,
+  TouchableWithoutFeedback,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -32,7 +38,7 @@ import Animated, {
   FadeIn,
 } from "react-native-reanimated";
 
-// ─── Icon map ────────────────────────────────────────────────────────────────
+// ─── Pill Tab Icon Map ────────────────────────────────────────────────────────
 const PILL_TABS = [
   { name: "index", label: "Home", icon: "home", iconOutline: "home-outline" },
   {
@@ -42,10 +48,10 @@ const PILL_TABS = [
     iconOutline: "book-outline",
   },
   {
-    name: "messages",
-    label: "Messages",
-    icon: "chatbubble",
-    iconOutline: "chatbubble-outline",
+    name: "more",
+    label: "More",
+    icon: "grid",
+    iconOutline: "grid-outline",
   },
   {
     name: "profile",
@@ -55,20 +61,52 @@ const PILL_TABS = [
   },
 ];
 
-const ACTION_TAB = { name: "more" };
+// ─── Create Content Tiles ─────────────────────────────────────────────────────
+const CREATE_TILES = [
+  {
+    label: "Create Post",
+    description: "Share a photo or update",
+    icon: "image",
+    themeColor: "#f9252b",
+    background: "#fff3f3",
+    route: "/create-post",
+  },
+  {
+    label: "Create Reel",
+    description: "Share a short video",
+    icon: "videocam",
+    themeColor: "#007AFF",
+    background: "#f0f6ff",
+    route: "/create-reel",
+  },
+  {
+    label: "Create Event",
+    description: "Organize a campus event",
+    icon: "calendar",
+    themeColor: "#34C759",
+    background: "#f2fbf4",
+    route: null,
+  },
+  {
+    label: "Announcement",
+    description: "Broadcast to community",
+    icon: "megaphone",
+    themeColor: "#FF9500",
+    background: "#fff8f0",
+    route: null,
+  },
+];
 
 // ─── Animated Tab Item ───────────────────────────────────────────────────────
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const AnimatedTabItem = ({ tab, focused, onPress }) => {
-  // Shared value for driving color interpolation
   const progress = useSharedValue(focused ? 1 : 0);
 
   useEffect(() => {
     progress.value = withTiming(focused ? 1 : 0, { duration: 250 });
   }, [focused]);
 
-  // Interpolate the pill background smoothly
   const animatedBackground = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       progress.value,
@@ -79,7 +117,6 @@ const AnimatedTabItem = ({ tab, focused, onPress }) => {
 
   return (
     <AnimatedPressable
-      // Beautiful liquid morphing that inherently balances flex layout!
       layout={LinearTransition.duration(250)}
       style={[
         styles.pillItemContainer,
@@ -97,7 +134,6 @@ const AnimatedTabItem = ({ tab, focused, onPress }) => {
           size={22}
           color={focused ? "#1a1a1a" : "#888"}
         />
-        {/* Render text conditionally. LayoutTransition naturally centers it without forced width limits! */}
         {focused && (
           <Animated.Text
             entering={FadeIn.duration(250)}
@@ -112,13 +148,151 @@ const AnimatedTabItem = ({ tab, focused, onPress }) => {
   );
 };
 
+// ─── Create Content Bottom Sheet ─────────────────────────────────────────────
+function CreateContentSheet({ visible, onClose }) {
+  const router = useRouter();
+  const slideAnim = useRef(new RNAnimated.Value(400)).current;
+  const backdropAnim = useRef(new RNAnimated.Value(0)).current;
+
+  // Separate internal state: Modal only unmounts AFTER exit animation completes.
+  // This is the fix — the parent `visible` can go false immediately, but we keep
+  // the Modal mounted until the slide-down finishes so the animation always plays.
+  const [modalVisible, setModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      // 1. Reset to starting position BEFORE making the modal visible,
+      //    so every open always animates in from the bottom.
+      slideAnim.setValue(400);
+      backdropAnim.setValue(0);
+      // 2. Mount the Modal
+      setModalVisible(true);
+      // 3. Play enter animation
+      RNAnimated.parallel([
+        RNAnimated.spring(slideAnim, {
+          toValue: 0,
+          damping: 22,
+          stiffness: 250,
+          useNativeDriver: true,
+        }),
+        RNAnimated.timing(backdropAnim, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Play exit animation first, THEN unmount the Modal in the callback
+      RNAnimated.parallel([
+        RNAnimated.timing(slideAnim, {
+          toValue: 400,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        RNAnimated.timing(backdropAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
+        // Only hide Modal after animation completes (or is interrupted)
+        if (finished) setModalVisible(false);
+      });
+    }
+  }, [visible]);
+
+  const handleTilePress = (tile) => {
+    onClose();
+    if (tile.route) {
+      // Small delay so the sheet closes smoothly before navigating
+      setTimeout(() => router.push(tile.route), 180);
+    }
+  };
+
+  return (
+    <Modal
+      visible={modalVisible}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
+      {/* Backdrop */}
+      <TouchableWithoutFeedback onPress={onClose}>
+        <RNAnimated.View
+          style={[
+            styles.backdrop,
+            {
+              opacity: backdropAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 0.55],
+              }),
+            },
+          ]}
+        />
+      </TouchableWithoutFeedback>
+
+      {/* Sheet */}
+      <RNAnimated.View
+        style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}
+      >
+        {/* Handle bar */}
+        <View style={styles.sheetHandle} />
+
+        {/* Header row */}
+        <View style={styles.sheetHeader}>
+          <Text style={styles.sheetTitle}>Create Content</Text>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.closeButton}
+            hitSlop={10}
+          >
+            <Ionicons name="close" size={22} color="#555" />
+          </TouchableOpacity>
+        </View>
+
+        {/* 2×2 Tile Grid */}
+        <View style={styles.tileGrid}>
+          {CREATE_TILES.map((tile) => (
+            <TouchableOpacity
+              key={tile.label}
+              activeOpacity={0.75}
+              onPress={() => handleTilePress(tile)}
+              style={[
+                styles.createTile,
+                {
+                  backgroundColor: tile.background,
+                  borderColor: tile.themeColor + "55", // 33% opacity border
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.iconCircle,
+                  { backgroundColor: tile.themeColor + "22" },
+                ]}
+              >
+                <Ionicons name={tile.icon} size={30} color={tile.themeColor} />
+              </View>
+              <Text style={[styles.tileLabel, { color: tile.themeColor }]}>
+                {tile.label}
+              </Text>
+              <Text style={styles.tileDescription}>{tile.description}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </RNAnimated.View>
+    </Modal>
+  );
+}
+
 // ─── Custom Tab Bar ───────────────────────────────────────────────────────────
 function CustomTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
+  const [sheetVisible, setSheetVisible] = useState(false);
 
   const bottomOffset = Math.max(insets.bottom, 12);
 
-  // Helper: navigate to a route by name key
   const handlePress = (routeName, isFocused) => {
     const route = state.routes.find((r) => r.name === routeName);
     if (!route) return;
@@ -134,53 +308,50 @@ function CustomTabBar({ state, descriptors, navigation }) {
     }
   };
 
-  // Resolve focused state per route name
   const isFocused = (routeName) => {
     const idx = state.routes.findIndex((r) => r.name === routeName);
     return state.index === idx;
   };
 
-  const actionFocused = isFocused(ACTION_TAB.name);
-
   return (
-    <View
-      style={[styles.outerContainer, { bottom: bottomOffset + 8 }]}
-      pointerEvents="box-none"
-    >
-      {/* ──────────────────── WHITE PILL ──────────────────── */}
-      <View style={styles.pill}>
-        {PILL_TABS.map((tab) => {
-          const focused = isFocused(tab.name);
-          return (
-            <AnimatedTabItem
-              key={tab.name}
-              tab={tab}
-              focused={focused}
-              onPress={() => handlePress(tab.name, focused)}
-            />
-          );
-        })}
+    <>
+      <View
+        style={[styles.outerContainer, { bottom: bottomOffset + 8 }]}
+        pointerEvents="box-none"
+      >
+        {/* ──────────────────── WHITE PILL ──────────────────── */}
+        <View style={styles.pill}>
+          {PILL_TABS.map((tab) => {
+            const focused = isFocused(tab.name);
+            return (
+              <AnimatedTabItem
+                key={tab.name}
+                tab={tab}
+                focused={focused}
+                onPress={() => handlePress(tab.name, focused)}
+              />
+            );
+          })}
+        </View>
+
+        {/* ──────────────────── RED CREATE (+) CIRCLE ──────────────────── */}
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Create Content"
+          onPress={() => setSheetVisible(true)}
+          style={styles.actionButton}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={32} color="#fff" />
+        </TouchableOpacity>
       </View>
 
-      {/* ──────────────────── RED ACTION CIRCLE ──────────────────── */}
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityLabel="More"
-        accessibilityState={actionFocused ? { selected: true } : {}}
-        onPress={() => handlePress(ACTION_TAB.name, actionFocused)}
-        style={[
-          styles.actionButton,
-          actionFocused && styles.actionButtonActive,
-        ]}
-        activeOpacity={0.8}
-      >
-        <Ionicons
-          name={actionFocused ? "grid" : "grid-outline"}
-          size={28}
-          color="#fff"
-        />
-      </TouchableOpacity>
-    </View>
+      {/* Create Content Bottom Sheet */}
+      <CreateContentSheet
+        visible={sheetVisible}
+        onClose={() => setSheetVisible(false)}
+      />
+    </>
   );
 }
 
@@ -193,7 +364,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    // Lift above page content
     zIndex: 999,
   },
 
@@ -207,16 +377,14 @@ const styles = StyleSheet.create({
     marginRight: 14,
     paddingVertical: 8,
     paddingHorizontal: 10,
-    // Shadow — iOS
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
     shadowRadius: 18,
-    // Shadow — Android
     elevation: 10,
   },
 
-  // Animated container for the pill tab
+  // Animated container for each pill tab
   pillItemContainer: {
     borderRadius: 40,
     marginHorizontal: 2,
@@ -243,7 +411,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
 
-  // Red action circle
+  // Red create (+) circle
   actionButton: {
     width: 60,
     height: 60,
@@ -251,18 +419,109 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9252b",
     alignItems: "center",
     justifyContent: "center",
-    // Shadow — iOS
     shadowColor: "#f9252b",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.45,
     shadowRadius: 12,
-    // Shadow — Android
     elevation: 12,
   },
 
-  // Slight scale-down when focused (already on that screen)
-  actionButtonActive: {
-    backgroundColor: "#d41f24",
+  // ── Bottom Sheet ─────────────────────────────────────
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#000",
+  },
+
+  sheet: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingBottom: Platform.OS === "ios" ? 36 : 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    // Shadow above sheet
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 24,
+  },
+
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#e0e0e0",
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+
+  sheetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+
+  sheetTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    letterSpacing: 0.2,
+  },
+
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#f4f4f4",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // ── Tile Grid ────────────────────────────────────────
+  tileGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+
+  createTile: {
+    width: "47%",
+    borderRadius: 24,
+    borderWidth: 1.5,
+    paddingVertical: 20,
+    paddingHorizontal: 14,
+    alignItems: "flex-start",
+    justifyContent: "flex-end",
+    minHeight: 130,
+  },
+
+  iconCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+
+  tileLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 2,
+    letterSpacing: 0.1,
+  },
+
+  tileDescription: {
+    fontSize: 11,
+    color: "#888",
+    lineHeight: 15,
   },
 });
 
@@ -279,10 +538,10 @@ export default function TabLayout() {
       {/* ── Tab 2: Academic ── */}
       <Tabs.Screen name="academic" options={{ title: "Academic" }} />
 
-      {/* ── Tab 3: More (action button) ── */}
+      {/* ── Tab 3: More (now in pill) ── */}
       <Tabs.Screen name="more" options={{ title: "More" }} />
 
-      {/* ── Tab 4: Messages ── */}
+      {/* ── Tab 4: Messages (accessed via header) ── */}
       <Tabs.Screen name="messages" options={{ title: "Messages" }} />
 
       {/* ── Tab 5: Profile ── */}
