@@ -33,7 +33,7 @@ const COLORS = {
 
 // Types
 
-export default function KuppiScreen() {
+export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   const router = useRouter();
   // Removed snapToHeader logic as header is now fixed
   const [sessions, setSessions] = useState([]);
@@ -77,6 +77,14 @@ export default function KuppiScreen() {
       return () => clearInterval(interval);
     }, []),
   );
+
+  // Auto-open the create modal when triggered from the main Create sheet
+  React.useEffect(() => {
+    if (autoOpenCreate) {
+      setCreateModalVisible(true);
+      if (onModalOpened) onModalOpened();
+    }
+  }, [autoOpenCreate]);
 
   const fetchSessions = async () => {
     try {
@@ -397,14 +405,6 @@ export default function KuppiScreen() {
           mySessions.map((s) => renderSessionCard(s, true))
         )}
       </ScrollView>
-
-      {/* FAB */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setCreateModalVisible(true)}
-      >
-        <Ionicons name="add" size={30} color="white" />
-      </TouchableOpacity>
 
       {/* Create Session Modal */}
       <Modal
@@ -881,22 +881,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginHorizontal: 20,
   },
-  fab: {
-    position: "absolute",
-    bottom: 24,
-    right: 24,
-    backgroundColor: COLORS.RED,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-  },
+
   createButtonText: {
     color: "white",
     fontWeight: "bold",

@@ -124,7 +124,7 @@ const getMimeType = (fileName) => {
   }
 };
 
-export default function ResourcesScreen() {
+export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
   const { width } = useWindowDimensions();
   const numColumns = 2; // Fixed to 2 columns to match design
   const cardWidth = width / numColumns - 20;
@@ -151,6 +151,14 @@ export default function ResourcesScreen() {
   useEffect(() => {
     fetchResources();
   }, []);
+
+  // Auto-open the upload modal when triggered from the main Create sheet
+  useEffect(() => {
+    if (autoOpenUpload) {
+      setUploadModalVisible(true);
+      if (onModalOpened) onModalOpened();
+    }
+  }, [autoOpenUpload]);
 
   useEffect(() => {
     filterResources();
@@ -464,14 +472,6 @@ export default function ResourcesScreen() {
         />
       )}
 
-      {/* FAB */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setUploadModalVisible(true)}
-      >
-        <Ionicons name="add" size={30} color="#fff" />
-      </TouchableOpacity>
-
       {/* Upload Modal */}
       <Modal
         visible={uploadModalVisible}
@@ -764,22 +764,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 4,
   },
-  fab: {
-    position: "absolute",
-    bottom: 24,
-    right: 24,
-    backgroundColor: BRAND_RED,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-  },
+
   emptyText: {
     textAlign: "center",
     marginTop: 50,

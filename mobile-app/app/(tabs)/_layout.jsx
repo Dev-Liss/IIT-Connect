@@ -75,8 +75,8 @@ const CREATE_TILES = [
     label: "Create Reel",
     description: "Share a short video",
     icon: "videocam",
-    themeColor: "#007AFF",
-    background: "#f0f6ff",
+    themeColor: "#0EA5E9",
+    background: "#f0f9ff",
     route: "/create-reel",
   },
   {
@@ -94,6 +94,26 @@ const CREATE_TILES = [
     themeColor: "#FF9500",
     background: "#fff8f0",
     route: "/create-announcement",
+  },
+];
+
+// ─── Academic-Only Tiles (shown when on Academic tab) ─────────────────────────
+const ACADEMIC_TILES = [
+  {
+    label: "Create Kuppi",
+    description: "Host a study session",
+    icon: "school",
+    themeColor: "#007AFF",
+    background: "#f0f6ff",
+    action: "kuppi",
+  },
+  {
+    label: "Add Resource",
+    description: "Share notes & papers",
+    icon: "document-text",
+    themeColor: "#8B5CF6",
+    background: "#f5f0ff",
+    action: "resource",
   },
 ];
 
@@ -149,7 +169,7 @@ const AnimatedTabItem = ({ tab, focused, onPress }) => {
 };
 
 // ─── Create Content Bottom Sheet ─────────────────────────────────────────────
-function CreateContentSheet({ visible, onClose }) {
+function CreateContentSheet({ visible, onClose, currentTab }) {
   const router = useRouter();
   const slideAnim = useRef(new RNAnimated.Value(400)).current;
   const backdropAnim = useRef(new RNAnimated.Value(0)).current;
@@ -203,7 +223,15 @@ function CreateContentSheet({ visible, onClose }) {
 
   const handleTilePress = (tile) => {
     onClose();
-    if (tile.route) {
+    if (tile.action) {
+      // Academic tiles — navigate to academic tab with openModal param
+      setTimeout(() => {
+        router.push({
+          pathname: "/(tabs)/academic",
+          params: { openModal: tile.action },
+        });
+      }, 180);
+    } else if (tile.route) {
       // Small delay so the sheet closes smoothly before navigating
       setTimeout(() => router.push(tile.route), 180);
     }
@@ -241,7 +269,9 @@ function CreateContentSheet({ visible, onClose }) {
 
         {/* Header row */}
         <View style={styles.sheetHeader}>
-          <Text style={styles.sheetTitle}>Create Content</Text>
+          <Text style={styles.sheetTitle}>
+            {currentTab === "academic" ? "Create" : "Create Content"}
+          </Text>
           <TouchableOpacity
             onPress={onClose}
             style={styles.closeButton}
@@ -251,9 +281,12 @@ function CreateContentSheet({ visible, onClose }) {
           </TouchableOpacity>
         </View>
 
-        {/* 2×2 Tile Grid */}
+        {/* Tile Grid — 2×2 or 3×2 depending on active tab */}
         <View style={styles.tileGrid}>
-          {CREATE_TILES.map((tile) => (
+          {(currentTab === "academic"
+            ? [...CREATE_TILES, ...ACADEMIC_TILES]
+            : CREATE_TILES
+          ).map((tile) => (
             <TouchableOpacity
               key={tile.label}
               activeOpacity={0.75}
@@ -350,6 +383,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
       <CreateContentSheet
         visible={sheetVisible}
         onClose={() => setSheetVisible(false)}
+        currentTab={state.routes[state.index]?.name}
       />
     </>
   );

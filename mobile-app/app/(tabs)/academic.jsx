@@ -5,9 +5,12 @@
  * Parent wrapper for academic features.
  * Owns the persistent "Academic" header and AcademicNavBar.
  * Renders child content: Timetable | Kuppi | Resources
+ *
+ * Reads `openModal` search param from the Create sheet to auto-open
+ * the Create Kuppi or Add Resource modal on the correct sub-tab.
  */
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -18,6 +21,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import AcademicNavBar from "../../src/components/AcademicNavBar";
 import TimetableScreen from "../../src/screens/TimetableScreen";
 import KuppiScreen from "../../src/screens/KuppiScreen";
@@ -25,8 +29,28 @@ import ResourcesScreen from "../../src/screens/ResourcesScreen";
 
 export default function AcademicScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { openModal } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState("Timetable");
   const [view, setView] = useState("weekly");
+
+  // Pending modal flags — set when navigated here via Create sheet tile
+  const [pendingKuppi, setPendingKuppi] = useState(false);
+  const [pendingResource, setPendingResource] = useState(false);
+
+  // When openModal param arrives, switch to the right sub-tab and set the flag
+  useEffect(() => {
+    if (openModal === "kuppi") {
+      setActiveTab("Kuppi");
+      setPendingKuppi(true);
+      // Clear the param so it doesn't re-trigger on re-render
+      router.setParams({ openModal: undefined });
+    } else if (openModal === "resource") {
+      setActiveTab("Resources");
+      setPendingResource(true);
+      router.setParams({ openModal: undefined });
+    }
+  }, [openModal]);
 
   return (
     <View style={styles.container}>
@@ -40,9 +64,7 @@ export default function AcademicScreen() {
           {activeTab === "Timetable" ? (
             <TouchableOpacity
               style={styles.viewToggle}
-              onPress={() =>
-                setView(view === "weekly" ? "today" : "weekly")
-              }
+              onPress={() => setView(view === "weekly" ? "today" : "weekly")}
             >
               <Ionicons
                 name={view === "weekly" ? "list-outline" : "grid-outline"}
@@ -64,9 +86,15 @@ export default function AcademicScreen() {
         {activeTab === "Timetable" ? (
           <TimetableScreen view={view} />
         ) : activeTab === "Kuppi" ? (
-          <KuppiScreen />
+          <KuppiScreen
+            autoOpenCreate={pendingKuppi}
+            onModalOpened={() => setPendingKuppi(false)}
+          />
         ) : (
-          <ResourcesScreen />
+          <ResourcesScreen
+            autoOpenUpload={pendingResource}
+            onModalOpened={() => setPendingResource(false)}
+          />
         )}
       </View>
     </View>
