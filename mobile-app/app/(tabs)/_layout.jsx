@@ -187,18 +187,22 @@ function CreateContentSheet({ visible, onClose, currentTab }) {
       backdropAnim.setValue(0);
       // 2. Mount the Modal
       setModalVisible(true);
-      // 3. Play enter animation
+      // 3. Play enter animation.
+      //    slideAnim uses useNativeDriver: false so the JS thread tracks
+      //    the current translateY value in real-time. This keeps the tiles'
+      //    touch hit-test rectangles in sync with their visual position
+      //    throughout the animation, making them tappable immediately.
       RNAnimated.parallel([
         RNAnimated.spring(slideAnim, {
           toValue: 0,
           damping: 22,
           stiffness: 250,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         RNAnimated.timing(backdropAnim, {
           toValue: 1,
           duration: 220,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]).start();
     } else {
@@ -207,12 +211,12 @@ function CreateContentSheet({ visible, onClose, currentTab }) {
         RNAnimated.timing(slideAnim, {
           toValue: 400,
           duration: 200,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         RNAnimated.timing(backdropAnim, {
           toValue: 0,
           duration: 200,
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ]).start(({ finished }) => {
         // Only hide Modal after animation completes (or is interrupted)
