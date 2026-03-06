@@ -80,6 +80,8 @@ export const ANNOUNCEMENTS_ENDPOINTS = {
 export const REPORTS_ENDPOINTS = {
   GET_ALL: `${API_BASE_URL}/reports`,
   GET_ONE: (id) => `${API_BASE_URL}/reports/${id}`,
+  GET_BY_ID: (id) => `${API_BASE_URL}/reports/${id}`,
+  BATCH: `${API_BASE_URL}/reports/batch`,
   CREATE: `${API_BASE_URL}/reports`,
   UPDATE: (id) => `${API_BASE_URL}/reports/${id}`,
   DELETE: (id) => `${API_BASE_URL}/reports/${id}`,
