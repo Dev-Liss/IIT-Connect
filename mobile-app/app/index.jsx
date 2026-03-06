@@ -116,10 +116,10 @@ export default function AuthScreen() {
       Alert.alert(
         "🔌 Connection Error",
         "Could not connect to server.\n\n" +
-          "Check:\n" +
-          "1. Backend is running (node server.js)\n" +
-          "2. IP address in src/config/api.js is correct\n" +
-          "3. Phone and laptop on same WiFi",
+        "Check:\n" +
+        "1. Backend is running (node server.js)\n" +
+        "2. IP address in src/config/api.js is correct\n" +
+        "3. Phone and laptop on same WiFi",
       );
     } finally {
       setIsLoading(false);

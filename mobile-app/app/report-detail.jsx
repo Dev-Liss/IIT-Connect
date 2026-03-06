@@ -316,7 +316,7 @@ export default function ReportDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#fafafa" },
+    container: { flex: 1, backgroundColor: "#fff" },
     header: {
         flexDirection: "row",
         alignItems: "center",
@@ -328,16 +328,43 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: "#efefef",
     },
-    backButton: { padding: 4 },
-    headerTitle: { fontSize: 18, fontWeight: "600", color: "#262626" },
+    backButton: {
+        padding: 8,
+        backgroundColor: "#f5f5f5",
+        borderRadius: 8,
+    },
+    headerTitle: { fontSize: 22, fontWeight: "bold", color: "#262626" },
     scrollContent: { padding: 16, paddingBottom: 40 },
+
+    // Report summary card
     reportTitle: { fontSize: 20, fontWeight: "700", color: "#262626", marginBottom: 12, lineHeight: 28 },
-    statusBadge: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, marginBottom: 8 },
+    statusBadge: {
+        alignSelf: "flex-start",
+        paddingHorizontal: 14,
+        paddingVertical: 5,
+        borderRadius: 20,
+        borderWidth: 1,
+        marginBottom: 8,
+    },
     statusText: { fontSize: 12, fontWeight: "700", letterSpacing: 0.5 },
-    timestamp: { fontSize: 13, color: "#8e8e8e", marginBottom: 20 },
-    section: { marginBottom: 24 },
+    timestamp: { fontSize: 13, color: "#888", marginBottom: 20 },
+
+    // Card sections — matches KuppiScreen card
+    section: {
+        backgroundColor: "#f7f7f7",
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: "#f0f0f0",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 2,
+    },
     sectionHeaderRow: { flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 8 },
-    sectionLabel: { fontSize: 14, fontWeight: "600", color: "#262626" },
+    sectionLabel: { fontSize: 15, fontWeight: "600", color: "#1a1a1a", marginBottom: 10 },
     responseBadge: {
         backgroundColor: "#f9252b",
         borderRadius: 10,
@@ -345,9 +372,24 @@ const styles = StyleSheet.create({
         paddingVertical: 2,
     },
     responseBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
-    description: { fontSize: 14, color: "#555", lineHeight: 22, backgroundColor: "#f5f5f5", padding: 16, borderRadius: 8 },
-    actionsContainer: { flexDirection: "row", gap: 8, marginBottom: 24 },
-    actionButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 12, borderRadius: 8, gap: 6 },
+
+    description: {
+        fontSize: 14,
+        color: "#555",
+        lineHeight: 22,
+    },
+
+    // Status action buttons — borderRadius:12 like Kuppi
+    actionsContainer: { flexDirection: "row", gap: 8 },
+    actionButton: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 12,
+        borderRadius: 12,
+        gap: 6,
+    },
     actionButtonOngoing: { backgroundColor: "#1976D2" },
     actionButtonSolved: { backgroundColor: "#388E3C" },
     actionButtonReject: { backgroundColor: "#f9252b" },
@@ -357,8 +399,7 @@ const styles = StyleSheet.create({
     emptyHistory: {
         alignItems: "center",
         paddingVertical: 24,
-        backgroundColor: "#f9f9f9",
-        borderRadius: 10,
+        borderRadius: 12,
         gap: 8,
     },
     emptyHistoryText: { fontSize: 13, color: "#aaa" },
@@ -379,7 +420,7 @@ const styles = StyleSheet.create({
     responseBubble: {
         flex: 1,
         backgroundColor: "#fff",
-        borderRadius: 10,
+        borderRadius: 12,
         padding: 12,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
@@ -399,13 +440,33 @@ const styles = StyleSheet.create({
     responseTime: { fontSize: 11, color: "#aaa" },
     responseText: { fontSize: 14, color: "#444", lineHeight: 20 },
 
-    // Add Response Input
-    responseInput: { backgroundColor: "#fff", borderRadius: 8, borderWidth: 1, borderColor: "#ddd", padding: 12, fontSize: 14, color: "#262626", minHeight: 100, textAlignVertical: "top", marginBottom: 12 },
-    sendButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#f9252b", paddingVertical: 14, borderRadius: 8, gap: 8 },
+    // Add Response Input — matches Kuppi modal input
+    responseInput: {
+        borderWidth: 1,
+        borderColor: "#E5E5E5",
+        borderRadius: 12,
+        padding: 16,
+        fontSize: 14,
+        color: "#262626",
+        backgroundColor: "#fff",
+        minHeight: 100,
+        textAlignVertical: "top",
+        marginBottom: 12,
+    },
+    sendButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#f9252b",
+        paddingVertical: 16,
+        borderRadius: 12,
+        gap: 8,
+    },
     sendButtonDisabled: { opacity: 0.6 },
-    sendButtonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+    sendButtonText: { color: "#fff", fontSize: 15, fontWeight: "bold" },
+
     loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-    loadingText: { marginTop: 12, fontSize: 14, color: "#8e8e8e" },
+    loadingText: { marginTop: 12, fontSize: 14, color: "#888" },
     errorContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-    errorText: { fontSize: 16, color: "#8e8e8e" },
+    errorText: { fontSize: 16, color: "#888" },
 });

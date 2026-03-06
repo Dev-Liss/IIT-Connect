@@ -2,6 +2,7 @@
  * ====================================
  * IIT CONNECT - ANONYMOUS REPORT SCREEN
  * ====================================
+ * Styled to match the Academic feature design language.
  * Two tab sections:
  *   1. Send Anonymous Report (form)
  *   2. My Past Reports (list + detail navigation)
@@ -14,22 +15,31 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    SafeAreaView,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
     ScrollView,
     FlatList,
     ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
     StatusBar,
     RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { REPORTS_ENDPOINTS } from "../src/config/api";
 
 const STORAGE_KEY = "@iit_connect_my_report_ids";
+
+// ── Matches academic COLORS ──
+const COLORS = {
+    RED: "#f9252b",
+    WHITE: "#f7f7f7",
+    GREY: "#888",
+    LIGHT_GREY: "#e0e0e0",
+    TEXT_DARK: "#333",
+};
 
 const STATUS_COLORS = {
     pending: { background: "#FFF3E0", text: "#F57C00" },
@@ -43,47 +53,61 @@ const formatTimeAgo = (dateString) => {
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays === 1) return "1 day ago";
+    return `${diffDays} days ago`;
 };
 
-// ── Defined OUTSIDE the main component so React never remounts it ──
+// ── Outside main component to prevent keyboard dismissal ──
 const ReportItem = ({ item, onPress }) => {
     const statusColor = STATUS_COLORS[item.status] || STATUS_COLORS.pending;
     const responseCount = item.responses?.length ?? 0;
-    const hasResponse = responseCount > 0;
     const displayTitle = item.title || item.subject || "(No title)";
 
     return (
-        <TouchableOpacity style={styles.card} activeOpacity={0.75} onPress={() => onPress(item._id)}>
-            {hasResponse && (
-                <View style={styles.responsePill}>
-                    <Ionicons name="chatbubble" size={11} color="#fff" />
-                    <Text style={styles.responsePillText}>
-                        {responseCount} admin {responseCount === 1 ? "response" : "responses"}
+        <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => onPress(item._id)}>
+            <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>{displayTitle}</Text>
+                {responseCount > 0 && (
+                    <View style={styles.responseBadge}>
+                        <Text style={styles.responseBadgeText}>{responseCount}</Text>
+                    </View>
+                )}
+            </View>
+
+            <View style={styles.tagRow}>
+                <View style={[styles.statusTag, { borderColor: statusColor.text }]}>
+                    <Text style={[styles.statusTagText, { color: statusColor.text }]}>
+                        {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                     </Text>
                 </View>
-            )}
-            <Text style={styles.cardTitle} numberOfLines={2}>{displayTitle}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: statusColor.background }]}>
-                <Text style={[styles.statusText, { color: statusColor.text }]}>
-                    {item.status.toUpperCase()}
-                </Text>
+                {responseCount > 0 && (
+                    <View style={styles.responseTag}>
+                        <Ionicons name="chatbubble" size={11} color={COLORS.RED} />
+                        <Text style={styles.responseTagText}>
+                            {responseCount} {responseCount === 1 ? "response" : "responses"}
+                        </Text>
+                    </View>
+                )}
             </View>
+
             <Text style={styles.cardDescription} numberOfLines={2}>{item.description}</Text>
+
             <View style={styles.cardFooter}>
-                <Ionicons name="time-outline" size={13} color="#aaa" />
+                <Ionicons name="time-outline" size={13} color={COLORS.GREY} />
                 <Text style={styles.cardFooterText}>{formatTimeAgo(item.createdAt)}</Text>
                 <View style={{ flex: 1 }} />
-                <Ionicons name="chevron-forward" size={16} color="#ccc" />
+                <Ionicons name="chevron-forward" size={16} color={COLORS.LIGHT_GREY} />
             </View>
         </TouchableOpacity>
     );
 };
 
 export default function AnonymousReportScreen() {
+    const insets = useSafeAreaInsets();
+
     const [activeTab, setActiveTab] = useState("send");
     const [subject, setSubject] = useState("");
     const [description, setDescription] = useState("");
@@ -114,9 +138,7 @@ export default function AnonymousReportScreen() {
         }
     }, []);
 
-    useFocusEffect(
-        useCallback(() => { loadHistory(); }, [loadHistory])
-    );
+    useFocusEffect(useCallback(() => { loadHistory(); }, [loadHistory]));
 
     const handleSubmit = async () => {
         if (!subject.trim()) { Alert.alert("Error", "Please enter a subject"); return; }
@@ -124,12 +146,12 @@ export default function AnonymousReportScreen() {
 
         setIsLoading(true);
         try {
-            const response = await fetch(REPORTS_ENDPOINTS.CREATE, {
+            const res = await fetch(REPORTS_ENDPOINTS.CREATE, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ title: subject.trim(), description: description.trim() }),
             });
-            const data = await response.json();
+            const data = await res.json();
 
             if (data.success) {
                 try {
@@ -137,14 +159,13 @@ export default function AnonymousReportScreen() {
                     const ids = existing ? JSON.parse(existing) : [];
                     ids.push(data.data._id);
                     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-                } catch (e) {
-                    console.warn("Could not save report ID locally:", e);
-                }
+                } catch (e) { console.warn("Could not save report ID:", e); }
+
                 setSubject("");
                 setDescription("");
                 Alert.alert(
                     "Report Submitted",
-                    "Your anonymous report has been submitted. Track the admin's response under \"My Past Reports\".",
+                    "Your anonymous report has been submitted successfully.",
                     [
                         { text: "View My Reports", onPress: () => { loadHistory(); setActiveTab("history"); } },
                         { text: "OK" },
@@ -153,7 +174,7 @@ export default function AnonymousReportScreen() {
             } else {
                 Alert.alert("Error", data.message || "Failed to submit report");
             }
-        } catch (error) {
+        } catch {
             Alert.alert("Error", "Could not connect to server. Please try again.");
         } finally {
             setIsLoading(false);
@@ -165,107 +186,107 @@ export default function AnonymousReportScreen() {
     }, []);
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-            {/* ── Header ── */}
-            <View style={styles.header}>
-                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
-                </TouchableOpacity>
-                <View style={styles.headerCenter}>
-                    <View style={styles.headerIconCircle}>
-                        <Ionicons name="shield-checkmark" size={18} color="#fff" />
-                    </View>
+            {/* ── Header Block (matches academic.jsx headerBlock) ── */}
+            <View style={[styles.headerBlock, { paddingTop: insets.top + 10 }]}>
+                <View style={styles.titleRow}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                        <Ionicons name="arrow-back" size={22} color={COLORS.TEXT_DARK} />
+                    </TouchableOpacity>
                     <Text style={styles.headerTitle}>Anonymous Report</Text>
+                    <View style={{ width: 38 }} />
                 </View>
-                <View style={{ width: 40 }} />
+
+                {/* ── Tab Pills (matches AcademicNavBar exactly) ── */}
+                <View style={styles.tabBar}>
+                    <TouchableOpacity
+                        onPress={() => setActiveTab("send")}
+                        activeOpacity={0.8}
+                        style={[styles.tabButton, activeTab === "send" ? styles.tabButtonActive : styles.tabButtonInactive]}
+                    >
+                        <Text style={[styles.tabText, activeTab === "send" ? styles.tabTextActive : styles.tabTextInactive]}>
+                            Send Report
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={() => { setActiveTab("history"); loadHistory(); }}
+                        activeOpacity={0.8}
+                        style={[styles.tabButton, activeTab === "history" ? styles.tabButtonActive : styles.tabButtonInactive]}
+                    >
+                        <Text style={[styles.tabText, activeTab === "history" ? styles.tabTextActive : styles.tabTextInactive]}>
+                            My Past Reports
+                        </Text>
+                        {reports.length > 0 && (
+                            <View style={styles.tabCount}>
+                                <Text style={styles.tabCountText}>{reports.length}</Text>
+                            </View>
+                        )}
+                    </TouchableOpacity>
+                </View>
             </View>
 
-            {/* ── Tab Switcher ── */}
-            <View style={styles.tabBar}>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === "send" && styles.tabActive]}
-                    onPress={() => setActiveTab("send")}
-                    activeOpacity={0.8}
-                >
-                    <Ionicons name="send-outline" size={16} color={activeTab === "send" ? "#fff" : "#888"} />
-                    <Text style={[styles.tabText, activeTab === "send" && styles.tabTextActive]}>
-                        Send Report
-                    </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === "history" && styles.tabActive]}
-                    onPress={() => { setActiveTab("history"); loadHistory(); }}
-                    activeOpacity={0.8}
-                >
-                    <Ionicons name="time-outline" size={16} color={activeTab === "history" ? "#fff" : "#888"} />
-                    <Text style={[styles.tabText, activeTab === "history" && styles.tabTextActive]}>
-                        My Past Reports
-                    </Text>
-                    {reports.length > 0 && (
-                        <View style={styles.tabBadge}>
-                            <Text style={styles.tabBadgeText}>{reports.length}</Text>
-                        </View>
-                    )}
-                </TouchableOpacity>
-            </View>
-
-            {/* ── Section 1: Send Report ── */}
+            {/* ══════════════════════════════════════
+                SECTION 1 — Send Report
+            ══════════════════════════════════════ */}
             {activeTab === "send" && (
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                     style={{ flex: 1 }}
                 >
                     <ScrollView
-                        style={styles.sectionScroll}
-                        contentContainerStyle={styles.sectionContent}
+                        style={styles.content}
+                        contentContainerStyle={styles.contentPadding}
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                     >
-                        {/* Anonymity info */}
+                        {/* Info card */}
                         <View style={styles.infoCard}>
-                            <View style={styles.infoHeader}>
-                                <Ionicons name="lock-closed-outline" size={20} color="#1d4ed8" />
-                                <Text style={styles.infoTitle}>Complete Anonymity Guaranteed</Text>
-                                <Ionicons name="eye-off-outline" size={20} color="#1d4ed8" />
+                            <View style={styles.infoCardRow}>
+                                <View style={styles.iconCircle}>
+                                    <Ionicons name="lock-closed" size={20} color={COLORS.GREY} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.infoTitle}>Complete Anonymity Guaranteed</Text>
+                                    <Text style={styles.infoSub}>Your identity is fully protected</Text>
+                                </View>
                             </View>
-                            <View style={styles.infoBullets}>
-                                {[
-                                    "No personal data is collected or stored",
-                                    "Reports are encrypted end-to-end",
-                                    "Your IP address is not logged",
-                                ].map((txt) => (
-                                    <View key={txt} style={styles.bulletRow}>
-                                        <Text style={styles.bullet}>•</Text>
-                                        <Text style={styles.bulletText}>{txt}</Text>
-                                    </View>
-                                ))}
-                            </View>
+                            <View style={styles.separator} />
+                            {[
+                                { icon: "shield-checkmark-outline", text: "No personal data is collected or stored" },
+                                { icon: "key-outline", text: "Reports are encrypted end-to-end" },
+                                { icon: "eye-off-outline", text: "Your IP address is not logged" },
+                            ].map(({ icon, text }) => (
+                                <View key={text} style={styles.bulletRow}>
+                                    <Ionicons name={icon} size={15} color={COLORS.GREY} />
+                                    <Text style={styles.bulletText}>{text}</Text>
+                                </View>
+                            ))}
                         </View>
 
                         {/* Subject */}
-                        <Text style={styles.label}>Subject *</Text>
+                        <Text style={styles.label}>Subject</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="Brief description of the incident"
-                            placeholderTextColor="#999"
+                            placeholderTextColor={COLORS.GREY}
                             value={subject}
                             onChangeText={setSubject}
                             maxLength={100}
                         />
 
                         {/* Description */}
-                        <Text style={styles.label}>Detailed Description *</Text>
+                        <Text style={styles.label}>Detailed Description</Text>
                         <TextInput
                             style={[styles.input, styles.textArea]}
-                            placeholder="Provide as much detail as you're comfortable sharing. Remember, this is completely anonymous."
-                            placeholderTextColor="#999"
+                            placeholder="Provide as much detail as you're comfortable sharing. This is completely anonymous."
+                            placeholderTextColor={COLORS.GREY}
                             value={description}
                             onChangeText={setDescription}
                             multiline
-                            numberOfLines={8}
+                            numberOfLines={7}
                             textAlignVertical="top"
                         />
                         <Text style={styles.charCount}>{description.length} characters</Text>
@@ -276,7 +297,7 @@ export default function AnonymousReportScreen() {
                             onPress={handleSubmit}
                             disabled={isLoading}
                         >
-                            <Ionicons name="send" size={20} color="#fff" />
+                            <Ionicons name="send" size={16} color="#fff" />
                             <Text style={styles.submitButtonText}>
                                 {isLoading ? "Submitting…" : "Submit Report Anonymously"}
                             </Text>
@@ -287,109 +308,106 @@ export default function AnonymousReportScreen() {
                 </KeyboardAvoidingView>
             )}
 
-            {/* ── Section 2: My Past Reports ── */}
+            {/* ══════════════════════════════════════
+                SECTION 2 — My Past Reports
+            ══════════════════════════════════════ */}
             {activeTab === "history" && (
                 <>
                     {historyLoading ? (
-                        <View style={styles.centeredBox}>
-                            <ActivityIndicator size="large" color="#e63946" />
-                            <Text style={styles.loadingText}>Loading your reports…</Text>
+                        <View style={styles.centered}>
+                            <ActivityIndicator size="large" color={COLORS.RED} />
                         </View>
                     ) : reports.length === 0 ? (
-                        <View style={styles.centeredBox}>
-                            <View style={styles.emptyIconCircle}>
-                                <Ionicons name="document-text-outline" size={36} color="#e63946" />
+                        <ScrollView
+                            contentContainerStyle={styles.emptyContainer}
+                            refreshControl={
+                                <RefreshControl refreshing={refreshing} onRefresh={() => loadHistory(true)} colors={[COLORS.RED]} />
+                            }
+                        >
+                            <View style={styles.iconCircleLarge}>
+                                <Ionicons name="document-text-outline" size={36} color={COLORS.GREY} />
                             </View>
                             <Text style={styles.emptyTitle}>No Reports Yet</Text>
                             <Text style={styles.emptySubtitle}>
                                 Reports you submit will appear here so you can track admin responses.
                             </Text>
-                            <TouchableOpacity
-                                style={styles.emptyButton}
-                                onPress={() => setActiveTab("send")}
-                            >
-                                <Ionicons name="add-circle-outline" size={18} color="#fff" />
+                            <TouchableOpacity style={styles.emptyButton} onPress={() => setActiveTab("send")}>
                                 <Text style={styles.emptyButtonText}>Submit a Report</Text>
                             </TouchableOpacity>
-                        </View>
+                        </ScrollView>
                     ) : (
                         <FlatList
                             data={reports}
                             keyExtractor={(item) => item._id}
-                            renderItem={({ item }) => (
-                                <ReportItem item={item} onPress={handleReportPress} />
-                            )}
-                            contentContainerStyle={styles.sectionContent}
+                            renderItem={({ item }) => <ReportItem item={item} onPress={handleReportPress} />}
+                            style={styles.content}
+                            contentContainerStyle={styles.contentPadding}
                             showsVerticalScrollIndicator={false}
                             refreshControl={
-                                <RefreshControl
-                                    refreshing={refreshing}
-                                    onRefresh={() => loadHistory(true)}
-                                    colors={["#e63946"]}
-                                    tintColor="#e63946"
-                                />
+                                <RefreshControl refreshing={refreshing} onRefresh={() => loadHistory(true)} colors={[COLORS.RED]} />
                             }
                         />
                     )}
                 </>
             )}
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f5f5f5" },
+    container: { flex: 1, backgroundColor: "#fff" },
 
-    // Header
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 16,
-        paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 10 : 10,
-        paddingBottom: 14,
+    // Header block — mirrors academic.jsx headerBlock
+    headerBlock: {
         backgroundColor: "#fff",
         borderBottomWidth: 1,
         borderBottomColor: "#efefef",
+        zIndex: 10,
+    },
+    titleRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingBottom: 8,
     },
     backButton: {
-        width: 40, height: 40, borderRadius: 20,
-        backgroundColor: "#f0f0f0",
-        justifyContent: "center", alignItems: "center",
+        padding: 8,
+        backgroundColor: "#f5f5f5",
+        borderRadius: 8,
     },
-    headerCenter: { flexDirection: "row", alignItems: "center", gap: 8 },
-    headerIconCircle: {
-        width: 32, height: 32, borderRadius: 16,
-        backgroundColor: "#e63946",
-        justifyContent: "center", alignItems: "center",
+    headerTitle: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: "#262626",
     },
-    headerTitle: { fontSize: 20, fontWeight: "700", color: "#111" },
 
-    // Tab bar
+    // Tab bar — mirrors AcademicNavBar exactly
     tabBar: {
         flexDirection: "row",
-        backgroundColor: "#fff",
+        justifyContent: "center",
         paddingHorizontal: 16,
-        paddingBottom: 14,
-        paddingTop: 10,
-        gap: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: "#efefef",
+        marginTop: 10,
+        marginBottom: 10,
+        height: 50,
+        alignItems: "center",
     },
-    tab: {
+    tabButton: {
         flex: 1,
-        flexDirection: "row",
+        paddingVertical: 10,
+        borderRadius: 20,
         alignItems: "center",
         justifyContent: "center",
-        paddingVertical: 11,
-        borderRadius: 10,
-        backgroundColor: "#f0f0f0",
+        marginHorizontal: 4,
+        flexDirection: "row",
         gap: 6,
     },
-    tabActive: { backgroundColor: "#e63946" },
-    tabText: { fontSize: 13, fontWeight: "600", color: "#888" },
+    tabButtonActive: { backgroundColor: COLORS.RED },
+    tabButtonInactive: { backgroundColor: COLORS.WHITE },
+    tabText: { fontWeight: "600", fontSize: 14 },
     tabTextActive: { color: "#fff" },
-    tabBadge: {
+    tabTextInactive: { color: "#777" },
+    tabCount: {
         backgroundColor: "#fff",
         borderRadius: 10,
         paddingHorizontal: 6,
@@ -397,110 +415,148 @@ const styles = StyleSheet.create({
         minWidth: 20,
         alignItems: "center",
     },
-    tabBadgeText: { fontSize: 11, fontWeight: "700", color: "#e63946" },
+    tabCountText: { fontSize: 11, fontWeight: "700", color: COLORS.RED },
 
-    // Scroll / content
-    sectionScroll: { flex: 1 },
-    sectionContent: { padding: 16, paddingBottom: 32 },
+    // Content
+    content: { flex: 1, backgroundColor: "#fff" },
+    contentPadding: { padding: 16, paddingBottom: 60 },
 
-    // Info card
+    // Info card — matches KuppiScreen card style
     infoCard: {
-        backgroundColor: "#eff6ff",
-        borderRadius: 12,
+        backgroundColor: COLORS.WHITE,
+        borderRadius: 16,
         padding: 16,
-        marginBottom: 24,
-        borderWidth: 1,
-        borderColor: "#bfdbfe",
-    },
-    infoHeader: { flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 8 },
-    infoTitle: { flex: 1, fontSize: 14, fontWeight: "700", color: "#1e3a5f" },
-    infoBullets: { gap: 6 },
-    bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, paddingLeft: 4 },
-    bullet: { fontSize: 14, color: "#1e3a5f", lineHeight: 20 },
-    bulletText: { fontSize: 13, color: "#1e3a5f", lineHeight: 20, flex: 1 },
-
-    // Form
-    label: { fontSize: 15, fontWeight: "600", color: "#000", marginBottom: 8 },
-    input: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 15,
-        fontSize: 15,
-        color: "#000",
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: "#e0e0e0",
-    },
-    textArea: { height: 180, textAlignVertical: "top", marginBottom: 5 },
-    charCount: { fontSize: 12, color: "#999", marginBottom: 20 },
-
-    submitButton: {
-        backgroundColor: "#e63946",
-        borderRadius: 12,
-        paddingVertical: 16,
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        gap: 10,
-    },
-    submitButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-
-    // History cards
-    card: {
-        backgroundColor: "#fff",
-        borderRadius: 14,
-        padding: 16,
-        marginBottom: 12,
+        borderColor: "#f0f0f0",
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.06,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
         elevation: 2,
     },
-    responsePill: {
+    infoCardRow: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 12 },
+    iconCircle: {
+        width: 44, height: 44, borderRadius: 22,
+        backgroundColor: "#F9F9F9",
+        justifyContent: "center", alignItems: "center",
+    },
+    infoTitle: { fontSize: 15, fontWeight: "bold", color: COLORS.TEXT_DARK, marginBottom: 2 },
+    infoSub: { fontSize: 13, color: COLORS.GREY },
+    separator: { height: 1, backgroundColor: "#eee", marginBottom: 12 },
+    bulletRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
+    bulletText: { fontSize: 14, color: "#555", flex: 1 },
+
+    // Form
+    label: {
+        fontWeight: "600",
+        marginBottom: 8,
+        fontSize: 15,
+        color: "#1a1a1a",
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: "#E5E5E5",
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 20,
+        backgroundColor: "#FFFFFF",
+        fontSize: 16,
+        color: COLORS.TEXT_DARK,
+    },
+    textArea: { height: 160, textAlignVertical: "top", marginBottom: 6 },
+    charCount: { fontSize: 12, color: COLORS.GREY, marginBottom: 20, textAlign: "right" },
+
+    // Submit button — matches createSubmitButton
+    submitButton: {
+        backgroundColor: COLORS.RED,
+        flexDirection: "row",
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+    },
+    submitButtonText: { fontWeight: "bold", color: "#fff", fontSize: 16 },
+
+    // Report card — matches KuppiScreen card
+    card: {
+        backgroundColor: COLORS.WHITE,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        marginVertical: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 2,
+        borderWidth: 1,
+        borderColor: "#f0f0f0",
+    },
+    cardHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        marginBottom: 8,
+    },
+    cardTitle: {
+        fontSize: 17,
+        fontWeight: "bold",
+        color: COLORS.TEXT_DARK,
+        flex: 1,
+        marginRight: 8,
+    },
+    responseBadge: {
+        backgroundColor: COLORS.RED,
+        borderRadius: 10,
+        minWidth: 22,
+        height: 22,
+        paddingHorizontal: 6,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    responseBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
+    tagRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
+    statusTag: {
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+    },
+    statusTagText: { fontSize: 12, fontWeight: "600" },
+    responseTag: {
         flexDirection: "row",
         alignItems: "center",
-        alignSelf: "flex-start",
-        backgroundColor: "#388E3C",
+        borderWidth: 1,
+        borderColor: COLORS.RED,
         borderRadius: 20,
-        paddingHorizontal: 9,
-        paddingVertical: 3,
-        marginBottom: 10,
-        gap: 4,
-    },
-    responsePillText: { color: "#fff", fontSize: 11, fontWeight: "700" },
-    cardTitle: { fontSize: 16, fontWeight: "700", color: "#111", marginBottom: 8, lineHeight: 22 },
-    statusBadge: {
-        alignSelf: "flex-start",
         paddingHorizontal: 10,
         paddingVertical: 4,
-        borderRadius: 6,
-        marginBottom: 10,
+        gap: 4,
     },
-    statusText: { fontSize: 11, fontWeight: "700", letterSpacing: 0.5 },
-    cardDescription: { fontSize: 14, color: "#777", lineHeight: 20, marginBottom: 12 },
-    cardFooter: { flexDirection: "row", alignItems: "center", gap: 4 },
-    cardFooterText: { fontSize: 12, color: "#aaa" },
+    responseTagText: { color: COLORS.RED, fontSize: 12, fontWeight: "600" },
+    cardDescription: { fontSize: 14, color: "#555", lineHeight: 20, marginBottom: 12 },
+    cardFooter: { flexDirection: "row", alignItems: "center", gap: 5 },
+    cardFooterText: { fontSize: 13, color: COLORS.GREY },
 
     // Loading / empty
-    centeredBox: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
-    loadingText: { marginTop: 12, fontSize: 14, color: "#888" },
-    emptyIconCircle: {
+    centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+    emptyContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40, minHeight: 400 },
+    iconCircleLarge: {
         width: 72, height: 72, borderRadius: 36,
-        backgroundColor: "#fff0f0",
+        backgroundColor: COLORS.WHITE,
         justifyContent: "center", alignItems: "center",
+        borderWidth: 1, borderColor: "#f0f0f0",
         marginBottom: 16,
     },
-    emptyTitle: { fontSize: 18, fontWeight: "700", color: "#111", marginBottom: 8 },
-    emptySubtitle: { fontSize: 13, color: "#888", textAlign: "center", lineHeight: 20, marginBottom: 24 },
+    emptyTitle: { fontSize: 18, fontWeight: "bold", color: "#262626", marginBottom: 8 },
+    emptySubtitle: { fontSize: 14, color: COLORS.GREY, textAlign: "center", lineHeight: 22, marginBottom: 24 },
     emptyButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "#e63946",
-        borderRadius: 12,
+        backgroundColor: COLORS.RED,
+        borderRadius: 20,
         paddingVertical: 13,
-        paddingHorizontal: 22,
-        gap: 8,
+        paddingHorizontal: 28,
     },
-    emptyButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" },
+    emptyButtonText: { color: "#fff", fontSize: 15, fontWeight: "bold" },
 });

@@ -2,8 +2,8 @@
  * ====================================
  * MY REPORT DETAIL SCREEN
  * ====================================
- * Read-only view of an anonymous report the user submitted.
- * Shows the report's current status and all admin responses.
+ * Read-only view of a submitted report + admin responses.
+ * Styled to match the Academic feature design language.
  */
 
 import React, { useState, useCallback } from "react";
@@ -14,53 +14,57 @@ import {
     StyleSheet,
     TouchableOpacity,
     ActivityIndicator,
-    SafeAreaView,
-    Platform,
     StatusBar,
     RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { REPORTS_ENDPOINTS } from "../src/config/api";
 
-// Status colours
+const COLORS = {
+    RED: "#f9252b",
+    WHITE: "#f7f7f7",
+    GREY: "#888",
+    TEXT_DARK: "#333",
+};
+
 const STATUS_COLORS = {
-    pending: { background: "#FFF3E0", text: "#F57C00", icon: "time-outline" },
-    ongoing: { background: "#E3F2FD", text: "#1976D2", icon: "play-circle-outline" },
-    solved: { background: "#E8F5E9", text: "#388E3C", icon: "checkmark-circle-outline" },
-    rejected: { background: "#FFEBEE", text: "#D32F2F", icon: "close-circle-outline" },
+    pending: { border: "#F57C00", text: "#F57C00" },
+    ongoing: { border: "#1976D2", text: "#1976D2" },
+    solved: { border: "#388E3C", text: "#388E3C" },
+    rejected: { border: "#D32F2F", text: "#D32F2F" },
 };
 
 const STATUS_LABELS = {
-    pending: "Pending – your report is waiting for review",
-    ongoing: "Ongoing – admin is looking into this",
-    solved: "Solved – this report has been resolved",
-    rejected: "Rejected – this report was not actioned",
+    pending: "Waiting for admin review",
+    ongoing: "Admin is looking into this",
+    solved: "This report has been resolved",
+    rejected: "This report was not actioned",
 };
 
-// Time-ago helper
+const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString("en-GB", {
+        day: "numeric", month: "long", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+    });
+
 const formatTimeAgo = (dateString) => {
     const diffMs = Date.now() - new Date(dateString).getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return "just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
-};
-
-// Format as readable date
-const formatDate = (dateString) => {
-    const d = new Date(dateString);
-    return d.toLocaleDateString("en-GB", {
-        day: "numeric", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit",
-    });
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} mins ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays === 1) return "1 day ago";
+    return `${diffDays} days ago`;
 };
 
 export default function MyReportDetailScreen() {
+    const insets = useSafeAreaInsets();
     const { id } = useLocalSearchParams();
+
     const [report, setReport] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -68,7 +72,6 @@ export default function MyReportDetailScreen() {
     const fetchReport = useCallback(async (isRefresh = false) => {
         if (isRefresh) setRefreshing(true);
         else if (!report) setIsLoading(true);
-
         try {
             const res = await fetch(REPORTS_ENDPOINTS.GET_BY_ID(id));
             const data = await res.json();
@@ -81,51 +84,41 @@ export default function MyReportDetailScreen() {
         }
     }, [id]);
 
-    useFocusEffect(
-        useCallback(() => {
-            fetchReport();
-        }, [fetchReport])
-    );
+    useFocusEffect(useCallback(() => { fetchReport(); }, [fetchReport]));
 
-    // ── HEADER ──
     const HeaderBlock = () => (
-        <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Ionicons name="arrow-back" size={24} color="#000" />
-            </TouchableOpacity>
-            <View style={styles.headerCenter}>
-                <View style={styles.headerIconCircle}>
-                    <Ionicons name="document-text" size={18} color="#fff" />
-                </View>
+        <View style={[styles.headerBlock, { paddingTop: insets.top + 10 }]}>
+            <View style={styles.titleRow}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                    <Ionicons name="arrow-back" size={22} color={COLORS.TEXT_DARK} />
+                </TouchableOpacity>
                 <Text style={styles.headerTitle}>Report Detail</Text>
+                <View style={{ width: 38 }} />
             </View>
-            <View style={{ width: 40 }} />
         </View>
     );
 
     if (isLoading) {
         return (
-            <SafeAreaView style={styles.container}>
+            <View style={styles.container}>
                 <StatusBar barStyle="dark-content" backgroundColor="#fff" />
                 <HeaderBlock />
-                <View style={styles.centeredBox}>
-                    <ActivityIndicator size="large" color="#e63946" />
-                    <Text style={styles.loadingText}>Loading report…</Text>
+                <View style={styles.centered}>
+                    <ActivityIndicator size="large" color={COLORS.RED} />
                 </View>
-            </SafeAreaView>
+            </View>
         );
     }
 
     if (!report) {
         return (
-            <SafeAreaView style={styles.container}>
+            <View style={styles.container}>
                 <StatusBar barStyle="dark-content" backgroundColor="#fff" />
                 <HeaderBlock />
-                <View style={styles.centeredBox}>
-                    <Ionicons name="alert-circle-outline" size={40} color="#ccc" />
+                <View style={styles.centered}>
                     <Text style={styles.errorText}>Report not found</Text>
                 </View>
-            </SafeAreaView>
+            </View>
         );
     }
 
@@ -135,50 +128,61 @@ export default function MyReportDetailScreen() {
     const displayTitle = report.title || report.subject || "(No title)";
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             <HeaderBlock />
 
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                style={styles.content}
+                contentContainerStyle={styles.contentPadding}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={() => fetchReport(true)}
-                        colors={["#e63946"]}
-                        tintColor="#e63946"
-                    />
+                    <RefreshControl refreshing={refreshing} onRefresh={() => fetchReport(true)} colors={[COLORS.RED]} />
                 }
             >
-                {/* ── Title ── */}
-                <Text style={styles.reportTitle}>{displayTitle}</Text>
-
-                {/* ── Status ── */}
-                <View style={[styles.statusBadge, { backgroundColor: statusColor.background }]}>
-                    <Ionicons name={statusColor.icon} size={14} color={statusColor.text} />
-                    <Text style={[styles.statusText, { color: statusColor.text }]}>
-                        {report.status.toUpperCase()}
-                    </Text>
-                </View>
-                <Text style={styles.statusLabel}>{statusLabel}</Text>
-
-                <Text style={styles.timestamp}>
-                    Submitted {formatDate(report.createdAt)}
-                </Text>
-
-                {/* ── Description ── */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionLabel}>Your Report</Text>
-                    <View style={styles.descriptionBox}>
-                        <Text style={styles.descriptionText}>{report.description}</Text>
+                {/* ── Report Summary card ── */}
+                <View style={styles.card}>
+                    <View style={styles.cardHeader}>
+                        <Text style={styles.cardTitle}>{displayTitle}</Text>
+                        <View style={[styles.statusTag, { borderColor: statusColor.border }]}>
+                            <Text style={[styles.statusTagText, { color: statusColor.text }]}>
+                                {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
+                            </Text>
+                        </View>
                     </View>
+
+                    <View style={styles.separator} />
+
+                    <View style={styles.detailRow}>
+                        <View style={styles.iconCircle}>
+                            <Ionicons name="calendar-outline" size={18} color={COLORS.GREY} />
+                        </View>
+                        <View>
+                            <Text style={styles.detailLabel}>Submitted</Text>
+                            <Text style={styles.detailValue}>{formatDate(report.createdAt)}</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.detailRow}>
+                        <View style={styles.iconCircle}>
+                            <Ionicons name="information-circle-outline" size={18} color={COLORS.GREY} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.detailLabel}>Status</Text>
+                            <Text style={styles.detailValue}>{statusLabel}</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.separator} />
+
+                    <Text style={styles.detailSectionTitle}>Description</Text>
+                    <Text style={styles.aboutText}>{report.description}</Text>
                 </View>
 
-                {/* ── Admin Responses ── */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeaderRow}>
-                        <Text style={styles.sectionLabel}>Admin Responses</Text>
+                {/* ── Admin Responses card ── */}
+                <View style={styles.card}>
+                    <View style={styles.cardHeader}>
+                        <Text style={styles.cardTitle}>Admin Responses</Text>
                         {responses.length > 0 && (
                             <View style={styles.countBadge}>
                                 <Text style={styles.countBadgeText}>{responses.length}</Text>
@@ -186,191 +190,163 @@ export default function MyReportDetailScreen() {
                         )}
                     </View>
 
+                    <View style={styles.separator} />
+
                     {responses.length === 0 ? (
                         <View style={styles.noResponseBox}>
-                            <Ionicons name="chatbubble-ellipses-outline" size={32} color="#ddd" />
+                            <Ionicons name="chatbubble-ellipses-outline" size={28} color={COLORS.LIGHT_GREY} />
                             <Text style={styles.noResponseTitle}>No response yet</Text>
-                            <Text style={styles.noResponseSubtitle}>
-                                The admin hasn't responded yet. Pull down to refresh and check back later.
-                            </Text>
+                            <Text style={styles.noResponseSub}>Pull down to refresh and check back later.</Text>
                         </View>
                     ) : (
                         responses.map((res, index) => (
-                            <View key={res._id || index} style={styles.responseItem}>
-                                {/* Avatar */}
-                                <View style={styles.responseAvatar}>
-                                    <Ionicons name="shield-checkmark" size={16} color="#fff" />
-                                </View>
-
-                                {/* Bubble */}
-                                <View style={styles.responseBubble}>
+                            <View key={res._id || index}>
+                                {index > 0 && <View style={styles.separator} />}
+                                <View style={styles.responseItem}>
                                     <View style={styles.responseHeader}>
+                                        <View style={styles.responseAvatar}>
+                                            <Ionicons name="shield-checkmark" size={14} color="#fff" />
+                                        </View>
                                         <Text style={styles.responseAuthor}>Admin</Text>
-                                        <Text style={styles.responseTime}>
-                                            {formatTimeAgo(res.createdAt)}
-                                        </Text>
+                                        <Text style={styles.responseTime}>{formatTimeAgo(res.createdAt)}</Text>
                                     </View>
-                                    <Text style={styles.responseText}>{res.text}</Text>
+                                    <Text style={styles.responseBody}>{res.text}</Text>
                                 </View>
                             </View>
                         ))
                     )}
                 </View>
 
-                {/* ── Privacy reminder ── */}
-                <View style={styles.privacyNote}>
-                    <Ionicons name="lock-closed-outline" size={14} color="#1d4ed8" />
-                    <Text style={styles.privacyNoteText}>
-                        Admin responses never reveal your identity. Your anonymity is fully protected.
-                    </Text>
+                {/* ── Privacy note ── */}
+                <View style={[styles.card, styles.privacyCard]}>
+                    <View style={styles.detailRow}>
+                        <View style={styles.iconCircle}>
+                            <Ionicons name="lock-closed" size={18} color={COLORS.GREY} />
+                        </View>
+                        <Text style={styles.privacyText}>
+                            Admin responses never reveal your identity. Your anonymity is fully protected at all times.
+                        </Text>
+                    </View>
                 </View>
-
-                <View style={{ height: 40 }} />
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#f5f5f5" },
+    container: { flex: 1, backgroundColor: "#fff" },
 
-    // Header
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 16,
-        paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 10 : 10,
-        paddingBottom: 14,
+    // Header — matches academic.jsx headerBlock
+    headerBlock: {
         backgroundColor: "#fff",
         borderBottomWidth: 1,
         borderBottomColor: "#efefef",
+        zIndex: 10,
     },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "#f0f0f0",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    headerCenter: { flexDirection: "row", alignItems: "center", gap: 8 },
-    headerIconCircle: {
-        width: 32, height: 32, borderRadius: 16,
-        backgroundColor: "#e63946",
-        justifyContent: "center", alignItems: "center",
-    },
-    headerTitle: { fontSize: 20, fontWeight: "700", color: "#111" },
-
-    // Scroll
-    scrollContent: { padding: 16, paddingBottom: 32 },
-
-    // Title
-    reportTitle: {
-        fontSize: 22,
-        fontWeight: "700",
-        color: "#111",
-        lineHeight: 30,
-        marginBottom: 12,
-    },
-
-    // Status
-    statusBadge: {
-        flexDirection: "row",
-        alignItems: "center",
-        alignSelf: "flex-start",
-        paddingHorizontal: 12,
-        paddingVertical: 5,
-        borderRadius: 8,
-        gap: 6,
-        marginBottom: 6,
-    },
-    statusText: { fontSize: 12, fontWeight: "700", letterSpacing: 0.5 },
-    statusLabel: { fontSize: 13, color: "#888", marginBottom: 4 },
-    timestamp: { fontSize: 12, color: "#bbb", marginBottom: 20 },
-
-    // Sections
-    section: { marginBottom: 24 },
-    sectionHeaderRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
-    sectionLabel: { fontSize: 15, fontWeight: "700", color: "#111" },
-    countBadge: {
-        backgroundColor: "#e63946",
-        borderRadius: 10,
-        paddingHorizontal: 7,
-        paddingVertical: 2,
-    },
-    countBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
-
-    // Description
-    descriptionBox: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: "#f0f0f0",
-    },
-    descriptionText: { fontSize: 14, color: "#444", lineHeight: 22 },
-
-    // No-response
-    noResponseBox: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 24,
-        alignItems: "center",
-        gap: 8,
-        borderWidth: 1,
-        borderColor: "#f0f0f0",
-    },
-    noResponseTitle: { fontSize: 15, fontWeight: "600", color: "#999", marginTop: 4 },
-    noResponseSubtitle: { fontSize: 13, color: "#bbb", textAlign: "center", lineHeight: 20 },
-
-    // Response items
-    responseItem: { flexDirection: "row", marginBottom: 16, gap: 10 },
-    responseAvatar: {
-        width: 36, height: 36, borderRadius: 18,
-        backgroundColor: "#e63946",
-        justifyContent: "center", alignItems: "center",
-        marginTop: 2,
-        flexShrink: 0,
-    },
-    responseBubble: {
-        flex: 1,
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 14,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 1,
-        borderWidth: 1,
-        borderColor: "#f0f0f0",
-    },
-    responseHeader: {
+    titleRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 6,
+        paddingHorizontal: 16,
+        paddingBottom: 12,
     },
-    responseAuthor: { fontSize: 13, fontWeight: "700", color: "#e63946" },
-    responseTime: { fontSize: 11, color: "#bbb" },
-    responseText: { fontSize: 14, color: "#333", lineHeight: 21 },
+    backButton: {
+        padding: 8,
+        backgroundColor: "#f5f5f5",
+        borderRadius: 8,
+    },
+    headerTitle: {
+        fontSize: 22,
+        fontWeight: "bold",
+        color: "#262626",
+    },
 
-    // Privacy note
-    privacyNote: {
-        flexDirection: "row",
-        alignItems: "flex-start",
-        backgroundColor: "#eff6ff",
-        borderRadius: 10,
-        padding: 12,
-        gap: 8,
+    // Content
+    content: { flex: 1 },
+    contentPadding: { padding: 16, paddingBottom: 60 },
+
+    // Card — matches KuppiScreen card
+    card: {
+        backgroundColor: COLORS.WHITE,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+        marginVertical: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 2,
         borderWidth: 1,
-        borderColor: "#bfdbfe",
+        borderColor: "#f0f0f0",
     },
-    privacyNoteText: { flex: 1, fontSize: 12, color: "#1e3a5f", lineHeight: 18 },
+    privacyCard: { borderLeftWidth: 4, borderLeftColor: COLORS.RED },
+    cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+    cardTitle: { fontSize: 18, fontWeight: "bold", color: COLORS.TEXT_DARK, flex: 1, marginRight: 8 },
+
+    statusTag: {
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+    },
+    statusTagText: { fontSize: 12, fontWeight: "600" },
+
+    countBadge: {
+        backgroundColor: COLORS.RED,
+        borderRadius: 10,
+        minWidth: 22,
+        height: 22,
+        paddingHorizontal: 6,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    countBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
+
+    separator: { height: 1, backgroundColor: "#eee", marginVertical: 12 },
+
+    // Detail rows — matches KuppiScreen detailRow
+    detailRow: { flexDirection: "row", marginBottom: 16, alignItems: "center" },
+    iconCircle: {
+        width: 44, height: 44, borderRadius: 22,
+        backgroundColor: "#F9F9F9",
+        justifyContent: "center", alignItems: "center",
+        marginRight: 14,
+    },
+    detailLabel: { fontSize: 13, color: COLORS.GREY, marginBottom: 2 },
+    detailValue: { fontSize: 15, fontWeight: "600", color: COLORS.TEXT_DARK },
+
+    detailSectionTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
+        marginBottom: 10,
+        color: COLORS.TEXT_DARK,
+    },
+    aboutText: { lineHeight: 22, color: "#555" },
+
+    // Response items
+    responseItem: { paddingVertical: 6 },
+    responseHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+    responseAvatar: {
+        width: 28, height: 28, borderRadius: 14,
+        backgroundColor: COLORS.RED,
+        justifyContent: "center", alignItems: "center",
+    },
+    responseAuthor: { fontSize: 14, fontWeight: "bold", color: COLORS.TEXT_DARK, flex: 1 },
+    responseTime: { fontSize: 12, color: COLORS.GREY },
+    responseBody: { fontSize: 14, color: "#555", lineHeight: 21 },
+
+    // No response
+    noResponseBox: { alignItems: "center", paddingVertical: 20, gap: 8 },
+    noResponseTitle: { fontSize: 15, fontWeight: "600", color: "#ccc" },
+    noResponseSub: { fontSize: 13, color: "#ccc", textAlign: "center" },
+
+    // Privacy
+    privacyText: { fontSize: 14, color: "#555", lineHeight: 20, flex: 1 },
 
     // Loading / error
-    centeredBox: { flex: 1, justifyContent: "center", alignItems: "center" },
-    loadingText: { marginTop: 12, fontSize: 14, color: "#888" },
-    errorText: { marginTop: 12, fontSize: 15, color: "#aaa" },
+    centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+    errorText: { fontSize: 15, color: COLORS.GREY },
+
+    LIGHT_GREY: "#e0e0e0",
 });
