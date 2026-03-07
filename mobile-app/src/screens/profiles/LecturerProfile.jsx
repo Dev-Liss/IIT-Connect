@@ -8,7 +8,6 @@ import {
     TouchableOpacity,
     SafeAreaView,
     StatusBar,
-    ActivityIndicator,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -33,37 +32,34 @@ export default function LecturerProfile({ user }) {
     // the latest profile data and posts are always shown.
     useFocusEffect(
         useCallback(() => {
-            const fetchAllData = async () => {
+            const fetchAllData = async (silent = false) => {
                 const userId = user?.id || user?._id;
                 if (!userId) {
                     setLoading(false);
                     return;
                 }
 
-                setLoading(true);
+                // First load shows skeleton; subsequent tab-focus refreshes silently
+                if (!silent) setLoading(true);
+
                 try {
-                    const profileResponse = await fetch(`${API_URL}/users/profile/${userId}`);
+                    // Fetch profile and user-specific posts in parallel
+                    const [profileResponse, postsResponse] = await Promise.all([
+                        fetch(`${API_URL}/users/profile/${userId}`),
+                        fetch(`${API_URL}/posts?userId=${userId}`),
+                    ]);
+
                     if (profileResponse.ok) {
                         const profileJson = await profileResponse.json();
                         setProfileData(profileJson);
                     }
 
-                    const postsResponse = await fetch(`${API_URL}/posts`);
                     if (postsResponse.ok) {
                         const postsJson = await postsResponse.json();
-                        const allPosts = postsJson.data || [];
-
-                        const filteredPosts = allPosts.filter(post => {
-                            const postUserId = typeof post.user === 'object'
-                                ? post.user._id?.toString()
-                                : post.user?.toString();
-                            return postUserId === userId.toString();
-                        });
-
-                        filteredPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                        setUserPosts(filteredPosts);
+                        const posts = postsJson.data || [];
+                        posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        setUserPosts(posts);
                     }
-
                 } catch (error) {
                     console.error("Data Fetch Error:", error);
                 } finally {
@@ -71,7 +67,8 @@ export default function LecturerProfile({ user }) {
                 }
             };
 
-            fetchAllData();
+            // If data already loaded, refresh silently in the background
+            fetchAllData(profileData !== null);
         }, [user])
     );
 
@@ -86,11 +83,53 @@ export default function LecturerProfile({ user }) {
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
+    const SkeletonBox = ({ style }) => (
+        <View style={[{ backgroundColor: "#e4e4e4", borderRadius: 6 }, style]} />
+    );
+
     if (loading) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' }}>
-                <ActivityIndicator size="large" color="#D32F2F" />
-            </View>
+            <SafeAreaView style={styles.container}>
+                <StatusBar barStyle="dark-content" backgroundColor="#f9f9f9" />
+                <ScrollView scrollEnabled={false} contentContainerStyle={styles.scrollContent}>
+                    {/* Cover skeleton */}
+                    <View style={[styles.coverContainer, { backgroundColor: "#e4e4e4" }]} />
+
+                    {/* Avatar + action buttons skeleton */}
+                    <View style={styles.profileHeader}>
+                        <View style={styles.avatarContainer}>
+                            <SkeletonBox style={styles.avatar} />
+                        </View>
+                        <View style={styles.actionRow}>
+                            <SkeletonBox style={{ width: 38, height: 38, borderRadius: 19 }} />
+                            <SkeletonBox style={{ width: 95, height: 36, borderRadius: 20 }} />
+                        </View>
+                    </View>
+
+                    {/* Name / role / detail rows skeleton */}
+                    <View style={[styles.infoContainer, { gap: 8 }]}>
+                        <SkeletonBox style={{ width: "55%", height: 26 }} />
+                        <SkeletonBox style={{ width: "38%", height: 16 }} />
+                        <SkeletonBox style={{ width: "68%", height: 16, marginTop: 4 }} />
+                    </View>
+
+                    {/* Tab bar skeleton */}
+                    <View style={[styles.tabContainer, { justifyContent: "space-around" }]}>
+                        <SkeletonBox style={{ width: "35%", height: 14, marginVertical: 14 }} />
+                        <SkeletonBox style={{ width: "35%", height: 14, marginVertical: 14 }} />
+                    </View>
+
+                    {/* Content card skeleton */}
+                    <View style={styles.aboutContainer}>
+                        <View style={styles.card}>
+                            <SkeletonBox style={{ width: "28%", height: 13, marginBottom: 16 }} />
+                            <SkeletonBox style={{ width: "100%", height: 14, marginBottom: 8 }} />
+                            <SkeletonBox style={{ width: "92%", height: 14, marginBottom: 8 }} />
+                            <SkeletonBox style={{ width: "76%", height: 14 }} />
+                        </View>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
         );
     }
 

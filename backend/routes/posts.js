@@ -98,10 +98,11 @@ router.post("/", upload.single("media"), async (req, res) => {
 // ====================================
 router.get("/", async (req, res) => {
   try {
-    // Fetch all posts
-    // .populate() replaces user ObjectId with actual user data
-    // .sort({ createdAt: -1 }) = newest first
-    const posts = await Post.find()
+    // Optional ?userId= query param — filter to a single user's posts.
+    // Used by profile screens to avoid fetching the entire collection.
+    const filter = req.query.userId ? { user: req.query.userId } : {};
+
+    const posts = await Post.find(filter)
       .populate("user", "username email studentId") // Only include these user fields
       .sort({ createdAt: -1 });
 
