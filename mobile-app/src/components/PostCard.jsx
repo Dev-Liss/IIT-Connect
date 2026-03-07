@@ -21,24 +21,26 @@ import {
   StyleSheet,
   Dimensions,
   Alert,
+  Modal,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { POST_ENDPOINTS } from "../config/api";
+import CommentsBottomSheet from "./CommentsBottomSheet";
 
 // Get screen width for dynamic image sizing
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 export default function PostCard({ post, onLike, onShare }) {
   const { user } = useAuth();
-  const router = useRouter();
 
   // Initialize state from real data
   const [isLiked, setIsLiked] = useState(
     () => post.likes?.some((id) => id === user?.id) ?? false,
   );
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
+  const [commentCount, setCommentCount] = useState(post.comments?.length || 0);
+  const [commentsVisible, setCommentsVisible] = useState(false);
 
   // Calculate dynamic image height based on aspect ratio
   // Formula: height = width / aspectRatio
@@ -148,7 +150,7 @@ export default function PostCard({ post, onLike, onShare }) {
             />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => router.push(`/comments/${post._id}`)}
+            onPress={() => setCommentsVisible(true)}
             style={styles.actionButton}
           >
             <Ionicons name="chatbubble-outline" size={24} color="#262626" />
@@ -173,11 +175,11 @@ export default function PostCard({ post, onLike, onShare }) {
       )}
 
       {/* ========== COMMENT COUNT ========== */}
-      {(post.comments?.length || 0) > 0 && (
-        <TouchableOpacity onPress={() => router.push(`/comments/${post._id}`)}>
+      {commentCount > 0 && (
+        <TouchableOpacity onPress={() => setCommentsVisible(true)}>
           <Text style={styles.commentCount}>
-            View all {post.comments.length}{" "}
-            {post.comments.length === 1 ? "comment" : "comments"}
+            View all {commentCount}{" "}
+            {commentCount === 1 ? "comment" : "comments"}
           </Text>
         </TouchableOpacity>
       )}
@@ -194,6 +196,30 @@ export default function PostCard({ post, onLike, onShare }) {
 
       {/* ========== TIMESTAMP ========== */}
       <Text style={styles.timestamp}>{getRelativeTime(post.createdAt)}</Text>
+
+      {/* ========== COMMENTS MODAL ========== */}
+      <Modal
+        visible={commentsVisible}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={() => setCommentsVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setCommentsVisible(false)}
+          />
+          <View style={styles.modalContent}>
+            <CommentsBottomSheet
+              postId={post._id}
+              onClose={() => setCommentsVisible(false)}
+              onCommentAdded={() => setCommentCount((prev) => prev + 1)}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -300,5 +326,18 @@ const styles = StyleSheet.create({
     color: "#8e8e8e",
     textTransform: "uppercase",
     letterSpacing: 0.2,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    flex: 0.3,
+  },
+  modalContent: {
+    flex: 0.7,
+    backgroundColor: "#fff",
   },
 });

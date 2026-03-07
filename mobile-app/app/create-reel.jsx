@@ -184,25 +184,6 @@ export default function CreateReelScreen() {
   const clearVideo = () => setSelectedVideo(null);
 
   // ====================================
-  // HANDLE PREVIEW NAVIGATION
-  // ====================================
-  const handlePreview = () => {
-    if (!selectedVideo) {
-      Alert.alert("Required Field", "Please select a video before continuing.");
-      return;
-    }
-
-    router.push({
-      pathname: "/preview-reel",
-      params: {
-        video: selectedVideo,
-        caption: caption.trim(),
-        tags: tags,
-      },
-    });
-  };
-
-  // ====================================
   // HANDLE SHARE REEL (UPLOAD)
   // ====================================
   const handleShareReel = async () => {
@@ -413,14 +394,6 @@ export default function CreateReelScreen() {
                 onPress={clearVideo}
               >
                 <Ionicons name="close-circle" size={26} color="#f9252b" />
-              </TouchableOpacity>
-              {/* Preview link */}
-              <TouchableOpacity
-                style={styles.previewLink}
-                onPress={handlePreview}
-              >
-                <Ionicons name="eye-outline" size={16} color="#fff" />
-                <Text style={styles.previewLinkText}>Preview</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -731,23 +704,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 4,
-  },
-  previewLink: {
-    position: "absolute",
-    bottom: 8,
-    right: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-  previewLinkText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "600",
   },
 
   // ── Meta Row (category badge + tags badge) ──

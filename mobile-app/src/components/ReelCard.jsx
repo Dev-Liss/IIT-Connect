@@ -23,13 +23,14 @@ import {
   Dimensions,
   Alert,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { useAuth } from "../context/AuthContext";
 import { POST_ENDPOINTS } from "../config/api";
+import CommentsBottomSheet from "./CommentsBottomSheet";
 
 // ====================================
 // DIMENSIONS
@@ -43,7 +44,6 @@ export default function ReelCard({ reel, isActive, height }) {
   // Use provided height or fallback to full screen
   const containerHeight = height || SCREEN_HEIGHT;
   const { user } = useAuth();
-  const router = useRouter();
   const videoRef = useRef(null);
 
   // ── Like state (optimistic UI) ──
@@ -61,7 +61,8 @@ export default function ReelCard({ reel, isActive, height }) {
   // ── Derived data ──
   const username = reel.user?.username || "Unknown User";
   const avatarUrl = `https://i.pravatar.cc/150?u=${reel.user?._id || reel._id}`;
-  const commentCount = reel.comments?.length || 0;
+  const [commentCount, setCommentCount] = useState(reel.comments?.length || 0);
+  const [commentsVisible, setCommentsVisible] = useState(false);
 
   // ====================================
   // FORMAT COUNTS (e.g., 1.2K, 3.4M)
@@ -116,7 +117,7 @@ export default function ReelCard({ reel, isActive, height }) {
   // HANDLE COMMENT NAVIGATION
   // ====================================
   const handleComment = () => {
-    router.push(`/comments/${reel._id}`);
+    setCommentsVisible(true);
   };
 
   // ====================================
@@ -169,75 +170,96 @@ export default function ReelCard({ reel, isActive, height }) {
         )}
       </TouchableOpacity>
 
-      {/* ========== BOTTOM GRADIENT OVERLAY ========== */}
-      <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.7)"]}
-        style={styles.gradient}
-        pointerEvents="none"
-      />
-
-      {/* ========== BOTTOM-LEFT: CREATOR INFO ========== */}
-      <View style={styles.bottomLeft}>
-        {/* Username Row */}
-        <View style={styles.creatorRow}>
-          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-          <Text style={styles.username} numberOfLines={1}>
-            {username}
-          </Text>
-        </View>
-
-        {/* Caption */}
-        {reel.caption ? (
-          <Text style={styles.caption} numberOfLines={2}>
-            {reel.caption}
-          </Text>
-        ) : null}
-      </View>
-
-      {/* ========== BOTTOM-RIGHT: ACTION SIDEBAR ========== */}
-      <View style={styles.actionSidebar}>
-        {/* Like Button */}
-        <TouchableOpacity
-          onPress={handleLike}
-          style={styles.actionItem}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name={isLiked ? "heart" : "heart-outline"}
-            size={30}
-            color={isLiked ? "#ED4956" : "#fff"}
+      {/* ========== OVERLAYS (hidden when comments open) ========== */}
+      {!commentsVisible && (
+        <>
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.7)"]}
+            style={styles.gradient}
+            pointerEvents="none"
           />
-          <Text style={styles.actionCount}>{formatCount(likeCount)}</Text>
-        </TouchableOpacity>
 
-        {/* Comment Button */}
-        <TouchableOpacity
-          onPress={handleComment}
-          style={styles.actionItem}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="chatbubble-outline" size={28} color="#fff" />
-          <Text style={styles.actionCount}>{formatCount(commentCount)}</Text>
-        </TouchableOpacity>
+          <View style={styles.bottomLeft}>
+            <View style={styles.creatorRow}>
+              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+              <Text style={styles.username} numberOfLines={1}>
+                {username}
+              </Text>
+            </View>
+            {reel.caption ? (
+              <Text style={styles.caption} numberOfLines={2}>
+                {reel.caption}
+              </Text>
+            ) : null}
+          </View>
 
-        {/* Share Button */}
-        <TouchableOpacity
-          onPress={() => Alert.alert("Coming Soon")}
-          style={styles.actionItem}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="paper-plane-outline" size={28} color="#fff" />
-        </TouchableOpacity>
+          <View style={styles.actionSidebar}>
+            <TouchableOpacity
+              onPress={handleLike}
+              style={styles.actionItem}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={isLiked ? "heart" : "heart-outline"}
+                size={30}
+                color={isLiked ? "#ED4956" : "#fff"}
+              />
+              <Text style={styles.actionCount}>{formatCount(likeCount)}</Text>
+            </TouchableOpacity>
 
-        {/* Save/Bookmark Button */}
-        <TouchableOpacity
-          onPress={() => Alert.alert("Coming Soon")}
-          style={styles.actionItem}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="bookmark-outline" size={28} color="#fff" />
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity
+              onPress={handleComment}
+              style={styles.actionItem}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="chatbubble-outline" size={28} color="#fff" />
+              <Text style={styles.actionCount}>
+                {formatCount(commentCount)}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => Alert.alert("Coming Soon")}
+              style={styles.actionItem}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="paper-plane-outline" size={28} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => Alert.alert("Coming Soon")}
+              style={styles.actionItem}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="bookmark-outline" size={28} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+
+      {/* ========== COMMENTS MODAL ========== */}
+      <Modal
+        visible={commentsVisible}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={() => setCommentsVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setCommentsVisible(false)}
+          />
+          <View style={styles.modalContent}>
+            <CommentsBottomSheet
+              postId={reel._id}
+              onClose={() => setCommentsVisible(false)}
+              onCommentAdded={() => setCommentCount((prev) => prev + 1)}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -345,5 +367,19 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    flex: 0.3,
+  },
+  modalContent: {
+    flex: 0.7,
+    backgroundColor: "#fff",
   },
 });
