@@ -3,7 +3,8 @@
  * CLOUDINARY CONFIGURATION
  * ====================================
  * Handles image/video uploads to Cloudinary.
- * Files are stored in the "iit-connect-posts" folder.
+ * - Posts        -> "iit-connect-posts" folder
+ * - Profile/Cover -> "iit-connect-profiles" folder
  *
  * TEAM: Make sure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY,
  * and CLOUDINARY_API_SECRET are set in backend/.env
@@ -21,27 +22,39 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Configure Multer Storage for Cloudinary
-// This automatically uploads files to Cloudinary when received
+// ── Posts storage (existing) ──────────────────────────────────
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     return {
       folder: "iit-connect-posts",
       allowed_formats: ["jpg", "jpeg", "png", "gif", "mp4", "mov"],
-      // Request Cloudinary to return image dimensions
-      // This is CRUCIAL for aspect ratio calculation!
-      resource_type: "auto", // Automatically detect image/video
+      resource_type: "auto",
     };
   },
 });
 
-// Create multer upload instance
 const upload = multer({
   storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB max file size
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+});
+
+// ── Profile / Cover image storage ─────────────────────────────
+// Used by POST /api/users/profile/:id/upload-image
+const profileStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: "iit-connect-profiles",
+      allowed_formats: ["jpg", "jpeg", "png"],
+      resource_type: "image",
+    };
   },
 });
 
-module.exports = { cloudinary, upload };
+const uploadProfileImage = multer({
+  storage: profileStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+});
+
+module.exports = { cloudinary, upload, uploadProfileImage };
