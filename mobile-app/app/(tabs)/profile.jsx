@@ -31,7 +31,11 @@ export default function ProfileSwitcher() {
       return <AlumniProfile user={user} />;
 
     case 'admin':
-      return <AdminProfile user={user} />;
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>Admin profile coming soon...</Text>
+        </View>
+      );
 
     default:
       // Fallback just in case a role is missing or misspelled

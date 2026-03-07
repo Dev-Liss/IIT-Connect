@@ -13,8 +13,8 @@ import {
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 
-import { useAuth } from "../../../src/context/AuthContext";
-import { API_BASE_URL as API_URL } from "../../../src/config/api";
+import { useAuth } from "../../context/AuthContext";
+import { API_BASE_URL as API_URL } from "../../config/api";
 
 const DEFAULT_AVATAR =
     "https://avataaars.io/?avatarStyle=Circle&topType=ShortHairShortFlat&accessoriesType=Prescription02&hairColor=Black&facialHairType=BeardLight&clotheType=BlazerShirt&eyeType=Happy&eyebrowType=Default&mouthType=Default&skinColor=Light";
@@ -263,7 +263,7 @@ export default function AlumniProfile({ user }) {
                                 activeTab === "Posts" && styles.activeTabText,
                             ]}
                         >
-                            Post
+                            Posts
                         </Text>
                     </TouchableOpacity>
                 </View>

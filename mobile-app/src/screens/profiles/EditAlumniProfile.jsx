@@ -530,6 +530,8 @@ export default function EditAlumniProfile({ user }) {
                                                 }
                                                 placeholder="End Year / Present"
                                                 placeholderTextColor="#aaa"
+                                                keyboardType="numeric"
+                                                maxLength={4}
                                             />
                                         </View>
                                     </View>
