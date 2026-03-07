@@ -325,7 +325,7 @@ export default function AdminDashboardScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#fafafa",
+        backgroundColor: "#fff",
     },
     // Header
     header: {
@@ -340,20 +340,27 @@ const styles = StyleSheet.create({
         borderBottomColor: "#efefef",
     },
     backButton: {
-        padding: 4,
+        padding: 8,
+        backgroundColor: "#f5f5f5",
+        borderRadius: 8,
     },
     headerTitle: {
-        fontSize: 18,
-        fontWeight: "600",
+        fontSize: 22,
+        fontWeight: "bold",
         color: "#262626",
     },
-    // Tabs
+    // Tabs — matches AcademicNavBar
     tabContainer: {
         flexDirection: "row",
+        justifyContent: "center",
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        marginTop: 10,
+        marginBottom: 10,
+        height: 50,
+        alignItems: "center",
         backgroundColor: "#fff",
-        gap: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: "#efefef",
     },
     tab: {
         flex: 1,
@@ -361,30 +368,30 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         paddingVertical: 10,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: "#ddd",
+        borderRadius: 20,
+        marginHorizontal: 4,
+        backgroundColor: "#f7f7f7",
+        gap: 6,
     },
     tabInactive: {
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "#f7f7f7",
         opacity: 0.5,
     },
     tabActive: {
         backgroundColor: "#f9252b",
-        borderColor: "#f9252b",
     },
     tabText: {
-        fontSize: 14,
         fontWeight: "600",
-        color: "#262626",
+        fontSize: 14,
+        color: "#777",
     },
     tabTextInactive: {
-        color: "#8e8e8e",
+        color: "#777",
     },
     tabTextActive: {
         color: "#fff",
     },
-    // Stats
+    // Stats — matches KuppiScreen card style
     statsContainer: {
         flexDirection: "row",
         paddingHorizontal: 16,
@@ -393,14 +400,16 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1,
-        backgroundColor: "#fff",
-        borderRadius: 12,
+        backgroundColor: "#f7f7f7",
+        borderRadius: 16,
         padding: 12,
         alignItems: "center",
+        borderWidth: 1,
+        borderColor: "#f0f0f0",
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
         elevation: 2,
     },
     statNumber: {
@@ -410,10 +419,11 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     statLabel: {
-        fontSize: 14,
-        color: "#8e8e8e",
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#888",
     },
-    // Filters
+    // Filters — pill style matching tab pills
     filterScrollView: {
         paddingBottom: 12,
     },
@@ -423,23 +433,19 @@ const styles = StyleSheet.create({
     filterButton: {
         height: 36,
         paddingHorizontal: 20,
-        borderRadius: 18,
-        backgroundColor: "#fff",
-        borderWidth: 1,
-        borderColor: "#e3e3e3",
+        borderRadius: 20,
+        backgroundColor: "#f7f7f7",
         marginRight: 8,
         justifyContent: "center",
         alignItems: "center",
-        overflow: "hidden",
     },
     filterButtonActive: {
         backgroundColor: "#f9252b",
-        borderColor: "#f9252b",
     },
     filterText: {
         fontSize: 14,
         fontWeight: "600",
-        color: "#262626",
+        color: "#777",
     },
     filterTextActive: {
         color: "#fff",
@@ -502,10 +508,10 @@ const styles = StyleSheet.create({
     retryButton: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#457b9d",
+        backgroundColor: "#f9252b",
         paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 8,
+        paddingHorizontal: 24,
+        borderRadius: 20,
         gap: 6,
     },
     retryButtonText: {

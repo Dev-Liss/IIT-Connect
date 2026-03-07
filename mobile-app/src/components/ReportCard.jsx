@@ -8,6 +8,7 @@
 
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 // Status badge colors
 const STATUS_COLORS = {
@@ -60,15 +61,14 @@ export default function ReportCard({ report, onPress }) {
                 {displayTitle}
             </Text>
 
-            {/* Status Badge */}
             <View
                 style={[
                     styles.statusBadge,
-                    { backgroundColor: statusColor.background },
+                    { borderColor: statusColor.text },
                 ]}
             >
                 <Text style={[styles.statusText, { color: statusColor.text }]}>
-                    {report.status}
+                    {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
                 </Text>
             </View>
 
@@ -77,13 +77,16 @@ export default function ReportCard({ report, onPress }) {
                 {report.description}
             </Text>
 
-            {/* Footer: Response count | Time ago */}
+            {/* Footer */}
             <View style={styles.footer}>
+                <Ionicons name="chatbubble-outline" size={13} color="#888" />
                 <Text style={styles.footerText}>
                     {responseCount} {responseCount === 1 ? "response" : "responses"}
                 </Text>
                 <Text style={styles.footerText}>•</Text>
                 <Text style={styles.footerText}>{formatTimeAgo(report.createdAt)}</Text>
+                <View style={{ flex: 1 }} />
+                <Ionicons name="chevron-forward" size={16} color="#e0e0e0" />
             </View>
         </TouchableOpacity>
     );
@@ -91,49 +94,52 @@ export default function ReportCard({ report, onPress }) {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
+        backgroundColor: "#f7f7f7",
+        borderRadius: 16,
         padding: 16,
         marginHorizontal: 16,
         marginBottom: 12,
+        marginVertical: 4,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
         elevation: 2,
+        borderWidth: 1,
+        borderColor: "#f0f0f0",
     },
     title: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#262626",
+        fontSize: 17,
+        fontWeight: "bold",
+        color: "#333",
         marginBottom: 8,
         lineHeight: 22,
     },
     statusBadge: {
         alignSelf: "flex-start",
-        paddingHorizontal: 10,
+        paddingHorizontal: 12,
         paddingVertical: 4,
-        borderRadius: 6,
+        borderRadius: 20,
+        borderWidth: 1,
         marginBottom: 10,
     },
     statusText: {
         fontSize: 12,
         fontWeight: "600",
-        textTransform: "lowercase",
     },
     description: {
         fontSize: 14,
-        color: "#8e8e8e",
+        color: "#555",
         lineHeight: 20,
         marginBottom: 12,
     },
     footer: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
+        gap: 6,
     },
     footerText: {
         fontSize: 13,
-        color: "#8e8e8e",
+        color: "#888",
     },
 });
