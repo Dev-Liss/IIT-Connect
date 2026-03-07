@@ -104,18 +104,20 @@ export default function HomeScreen() {
 
       {/* Right: Action Icons */}
       <View style={styles.headerActions}>
-        {/* Messages Button */}
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => router.push("/messages")}
-        >
-          <Ionicons name="chatbubble-outline" size={24} color="#262626" />
-        </TouchableOpacity>
+        <View style={styles.headerButtonGroup}>
+          {/* Messages Button */}
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => router.push("/messages")}
+          >
+            <Ionicons name="chatbubble-outline" size={24} color="#262626" />
+          </TouchableOpacity>
 
-        {/* Notifications Button */}
-        <TouchableOpacity style={styles.headerButton}>
-          <Ionicons name="notifications-outline" size={24} color="#262626" />
-        </TouchableOpacity>
+          {/* Notifications Button */}
+          <TouchableOpacity style={styles.headerButton}>
+            <Ionicons name="notifications-outline" size={24} color="#262626" />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -163,10 +165,12 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.loadingContainer}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         {renderHeader()}
-        <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
         <View style={styles.loadingContent}>
           <ActivityIndicator size="large" color="#f9252b" />
           <Text style={styles.loadingText}>Loading feed...</Text>
+        </View>
+        <View style={styles.floatingSwitcher}>
+          <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
         </View>
       </SafeAreaView>
     );
@@ -180,8 +184,10 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         {renderHeader()}
-        <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
         {renderErrorState()}
+        <View style={styles.floatingSwitcher}>
+          <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -193,9 +199,6 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       {renderHeader()}
-
-      {/* ContentSwitcher — pinned below header, never scrolls */}
-      <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Conditional Content — flex: 1 gives a bounded height for paging */}
       <View
@@ -213,7 +216,12 @@ export default function HomeScreen() {
                 onShare={(id) => console.log("Share:", id)}
               />
             )}
-            ListHeaderComponent={<StoriesRail />}
+            ListHeaderComponent={
+              <View>
+                <View style={styles.switcherSpacer} />
+                <StoriesRail />
+              </View>
+            }
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
@@ -229,8 +237,13 @@ export default function HomeScreen() {
             }
           />
         ) : (
-          <ReelsFeed availableHeight={containerHeight} />
+          <ReelsFeed availableHeight={containerHeight - 56} />
         )}
+      </View>
+
+      {/* Floating ContentSwitcher */}
+      <View style={styles.floatingSwitcher}>
+        <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
       </View>
     </SafeAreaView>
   );
@@ -242,7 +255,18 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#fff",
+  },
+  floatingSwitcher: {
+    position: "absolute",
+    top: Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 72 : 72,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 10,
+  },
+  switcherSpacer: {
+    height: 56,
   },
   // Custom Header
   header: {
@@ -254,8 +278,8 @@ const styles = StyleSheet.create({
       Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 10 : 10,
     paddingBottom: 12,
     backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#efefef",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
 
   headerLogo: {
@@ -267,9 +291,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  headerButton: {
-    marginLeft: 18,
+  headerButtonGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 50,
     padding: 4,
+    gap: 4,
+  },
+  headerButton: {
+    padding: 6,
   },
   // Loading
   loadingContainer: {
