@@ -475,7 +475,7 @@ const getExtensionFromUrl = (url, mimeType) => {
     if (url) {
         const urlPath = url.split('?')[0]; // Remove query params
         const match = urlPath.match(/\.([a-zA-Z0-9]+)$/);
-        if (match) return match[1];
+        if (match) return match[1].toLowerCase();
     }
     // Fallback to mime type mapping
     const mimeToExt = {
@@ -497,79 +497,206 @@ const getExtensionFromUrl = (url, mimeType) => {
 };
 
 /**
- * Download and save an image or video to the device's media library
- * @param {string} fileUrl - URL of the file to download
+ * Download a remote file using fetch() + FileReader + writeAsStringAsync.
+ *
+ * Why NOT use LegacyFileSystem.downloadAsync?
+ * ─ In expo-file-system v19+ (SDK 54) the legacy downloadAsync has reliability
+ *   issues with HTTPS CDN URLs (like Cloudinary). React Native's built-in
+ *   fetch() uses its own native HTTP stack which handles redirects, SSL, and
+ *   CDN content-negotiation correctly. We read the response as a Blob,
+ *   convert to base64 via FileReader, and write with writeAsStringAsync.
+ *
+ * @param {string} url       - Remote URL to download
+ * @param {string} localUri  - Local file:// path to save the file to
+ * @returns {Promise<string>} - The local URI of the saved file
+ */
+const fetchToFile = async (url, localUri) => {
+    console.log('[Download] fetch() →', url);
+
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Server returned ${response.status} ${response.statusText}`);
+    }
+
+    const blob = await response.blob();
+    console.log('[Download] Blob received – size:', blob.size);
+    if (blob.size === 0) {
+        throw new Error('Remote file is empty (0 bytes)');
+    }
+
+    // Convert blob → base64 using FileReader (works reliably in React Native)
+    const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (reader.result) {
+                // result is "data:<mime>;base64,AAAA…" → take everything after the comma
+                const comma = reader.result.indexOf(',');
+                resolve(reader.result.substring(comma + 1));
+            } else {
+                reject(new Error('FileReader produced no result'));
+            }
+        };
+        reader.onerror = () => reject(reader.error || new Error('FileReader error'));
+        reader.readAsDataURL(blob);
+    });
+
+    // Write to local cache
+    await LegacyFileSystem.writeAsStringAsync(localUri, base64Data, {
+        encoding: LegacyFileSystem.EncodingType.Base64,
+    });
+
+    // Verify the written file
+    const info = await LegacyFileSystem.getInfoAsync(localUri, { size: true });
+    if (!info.exists || info.size === 0) {
+        throw new Error('File write verification failed – file is empty or missing');
+    }
+    console.log('[Download] Written & verified –', info.size, 'bytes at', localUri);
+
+    return localUri;
+};
+
+/**
+ * Try to download a file, attempting fetch() first, then falling back to
+ * the legacy downloadAsync just in case.
+ *
+ * @param {string} url      - URL to download
+ * @param {string} localUri - Where to save the file locally
+ * @returns {Promise<string>} - Local URI of the saved file
+ */
+const robustDownload = async (url, localUri) => {
+    // ── Primary: fetch-based download ──
+    try {
+        return await fetchToFile(url, localUri);
+    } catch (fetchErr) {
+        console.warn('[Download] fetch() failed:', fetchErr.message);
+    }
+
+    // ── Fallback: legacy downloadAsync (may still work for some URLs) ──
+    try {
+        console.log('[Download] Falling back to downloadAsync…');
+        const result = await LegacyFileSystem.downloadAsync(url, localUri);
+        if (result.status === 200) {
+            const info = await LegacyFileSystem.getInfoAsync(result.uri || localUri, { size: true });
+            if (info.exists && info.size > 0) {
+                console.log('[Download] downloadAsync succeeded –', info.size, 'bytes');
+                return result.uri || localUri;
+            }
+        }
+        console.warn('[Download] downloadAsync returned status', result.status);
+    } catch (dlErr) {
+        console.warn('[Download] downloadAsync also failed:', dlErr.message);
+    }
+
+    throw new Error(
+        'Could not download the file. Please check your internet connection and try again.',
+    );
+};
+
+/**
+ * Download and save an image or video to the device's media library.
+ * Falls back to the share sheet if MediaLibrary save fails (e.g. Android 13+).
+ *
+ * @param {string} fileUrl   - Cloudinary URL of the image or video
  * @param {string} mediaType - 'image' or 'video'
- * @returns {Promise<boolean>} - Whether the save was successful
+ * @returns {Promise<boolean>}
  */
 export const downloadToMediaLibrary = async (fileUrl, mediaType = 'image') => {
     try {
-        // Request media library permissions (only photo & video, not audio)
+        console.log(`[Download] Starting ${mediaType} download…`);
+
+        // ── 1. Permissions ──
         const { status } = await MediaLibrary.requestPermissionsAsync(false, ['photo', 'video']);
         if (status !== 'granted') {
-            Alert.alert('Permission Required', 'Please grant media library access to save files.');
+            Alert.alert(
+                'Permission Required',
+                'Please allow media library access in your device settings to save files.',
+            );
             return false;
         }
 
-        const ext = mediaType === 'video' ? 'mp4' : 'jpg';
-        const fileName = `${mediaType}_${Date.now()}.${ext}`;
+        // ── 2. File name & extension (derived from URL, not hardcoded) ──
+        const ext = getExtensionFromUrl(fileUrl) || (mediaType === 'video' ? 'mp4' : 'jpg');
+        const fileName = `IITConnect_${mediaType}_${Date.now()}.${ext}`;
         const localUri = LegacyFileSystem.cacheDirectory + fileName;
 
-        // Download the file
-        const downloadResult = await LegacyFileSystem.downloadAsync(fileUrl, localUri);
+        // ── 3. Download ──
+        const savedUri = await robustDownload(fileUrl, localUri);
 
-        if (downloadResult.status !== 200) {
-            throw new Error(`Download failed with status ${downloadResult.status}`);
+        // ── 4. Save to gallery ──
+        try {
+            const asset = await MediaLibrary.createAssetAsync(savedUri);
+            console.log('[Download] Asset created:', asset.id);
+
+            // Album creation is non-critical – don't let it crash the save
+            try {
+                await MediaLibrary.createAlbumAsync('IIT Connect', asset, false);
+            } catch (_) {
+                /* ignored */
+            }
+
+            Alert.alert('Saved!', `${mediaType === 'video' ? 'Video' : 'Photo'} saved to your gallery.`);
+            return true;
+        } catch (saveError) {
+            // ── 5. Fallback: share sheet ──
+            console.warn('[Download] Gallery save failed, opening share sheet:', saveError.message);
+            const canShare = await Sharing.isAvailableAsync();
+            if (canShare) {
+                await Sharing.shareAsync(savedUri, {
+                    mimeType:
+                        mediaType === 'video'
+                            ? 'video/mp4'
+                            : `image/${ext === 'png' ? 'png' : 'jpeg'}`,
+                    dialogTitle: `Save ${mediaType}`,
+                });
+                return true;
+            }
+            throw saveError;
         }
-
-        // Save to media library
-        const asset = await MediaLibrary.createAssetAsync(downloadResult.uri);
-        await MediaLibrary.createAlbumAsync('IIT Connect', asset, false);
-
-        Alert.alert('Saved', `${mediaType === 'video' ? 'Video' : 'Photo'} saved to gallery.`);
-        return true;
     } catch (error) {
-        console.error(`Error saving ${mediaType}:`, error);
-        Alert.alert('Error', `Failed to save ${mediaType}. Please try again.`);
+        console.error(`[Download] ${mediaType} error:`, error);
+        Alert.alert(
+            'Download Failed',
+            error.message || `Could not save the ${mediaType}. Please try again.`,
+        );
         return false;
     }
 };
 
 /**
- * Download a document/file and open the share sheet so the user can save or open it
- * @param {string} fileUrl - URL of the file to download
+ * Download a document / file and open the share sheet so the user can save or open it.
+ *
+ * @param {string} fileUrl  - URL of the file to download
  * @param {string} fileName - Original file name
  * @param {string} mimeType - MIME type of the file
- * @returns {Promise<boolean>} - Whether the download was successful
+ * @returns {Promise<boolean>}
  */
 export const downloadDocument = async (fileUrl, fileName, mimeType) => {
     try {
+        console.log('[Download] Starting document download:', fileName);
+
         const ext = getExtensionFromUrl(fileUrl, mimeType);
-        const safeName = fileName || `document_${Date.now()}.${ext}`;
+        const safeName = (fileName || `document_${Date.now()}.${ext}`).replace(/[<>:"/\\|?*]/g, '_');
         const localUri = LegacyFileSystem.cacheDirectory + safeName;
 
-        // Download the file
-        const downloadResult = await LegacyFileSystem.downloadAsync(fileUrl, localUri);
+        const savedUri = await robustDownload(fileUrl, localUri);
 
-        if (downloadResult.status !== 200) {
-            throw new Error(`Download failed with status ${downloadResult.status}`);
-        }
-
-        // Check if sharing is available
-        const isAvailable = await Sharing.isAvailableAsync();
-        if (isAvailable) {
-            await Sharing.shareAsync(downloadResult.uri, {
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+            await Sharing.shareAsync(savedUri, {
                 mimeType: mimeType || 'application/octet-stream',
                 dialogTitle: `Save ${safeName}`,
                 UTI: mimeType || 'public.data',
             });
         } else {
-            Alert.alert('Downloaded', `File saved to app storage: ${safeName}`);
+            Alert.alert('Downloaded', `File saved to app cache: ${safeName}`);
         }
         return true;
     } catch (error) {
-        console.error('Error downloading document:', error);
-        Alert.alert('Error', 'Failed to download file. Please try again.');
+        console.error('[Download] Document error:', error);
+        Alert.alert(
+            'Download Failed',
+            error.message || 'Could not download the file. Please try again.',
+        );
         return false;
     }
 };
