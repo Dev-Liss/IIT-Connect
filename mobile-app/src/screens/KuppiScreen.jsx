@@ -136,10 +136,8 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
         {
           ...formData,
           meetingLink: formData.meetingLink,
-          // Send explicit start and end times
           startTime: formData.startTime.toISOString(),
           endTime: formData.endTime.toISOString(),
-          // maintain date/time/dateTime for consistency if backend uses them
           dateTime: formData.startTime.toISOString(),
           date: formData.startTime.toLocaleDateString(),
           time: formData.startTime.toLocaleTimeString([], {

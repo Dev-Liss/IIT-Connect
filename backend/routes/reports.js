@@ -101,6 +101,33 @@ router.get("/", async (req, res) => {
 });
 
 // ====================================
+// GET REPORTS BY IDs (batch — for user history)
+// POST /api/reports/batch
+// Body: { ids: ["id1", "id2", ...] }
+// ====================================
+router.post("/batch", async (req, res) => {
+    try {
+        const { ids } = req.body;
+
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.json({ success: true, data: [] });
+        }
+
+        const reports = await Report.find({ _id: { $in: ids } })
+            .populate("responses.user", "username")
+            .sort({ createdAt: -1 });
+
+        res.json({ success: true, data: reports });
+    } catch (error) {
+        console.error("❌ Batch Fetch Error:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch reports",
+        });
+    }
+});
+
+// ====================================
 // GET SINGLE REPORT BY ID
 // GET /api/reports/:id
 // ====================================
