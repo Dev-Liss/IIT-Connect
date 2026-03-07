@@ -237,7 +237,7 @@ export default function HomeScreen() {
             }
           />
         ) : (
-          <ReelsFeed availableHeight={containerHeight - 56} />
+          <ReelsFeed availableHeight={containerHeight} />
         )}
       </View>
 
