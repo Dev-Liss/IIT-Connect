@@ -73,8 +73,7 @@ export default function CreatePostScreen() {
   const insets = useSafeAreaInsets();
 
   // ── Form state ──
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [caption, setCaption] = useState("");
   const [media, setMedia] = useState(null);
   const [category, setCategory] = useState("General");
   const [tags, setTags] = useState("");
@@ -204,12 +203,9 @@ export default function CreatePostScreen() {
     setIsSubmitting(true);
 
     try {
-      // Build caption from title + body
-      const caption = [title.trim(), body.trim()].filter(Boolean).join("\n\n");
-
       const formData = new FormData();
       formData.append("userId", user.id);
-      formData.append("caption", caption);
+      formData.append("caption", caption.trim());
       formData.append("category", category);
 
       // Android needs file as { uri, name, type } object
@@ -238,8 +234,7 @@ export default function CreatePostScreen() {
           {
             text: "OK",
             onPress: () => {
-              setTitle("");
-              setBody("");
+              setCaption("");
               setMedia(null);
               setCategory("General");
               setTags("");
@@ -373,23 +368,13 @@ export default function CreatePostScreen() {
             <Text style={styles.userName}>{displayName}</Text>
           </View>
 
-          {/* ── Title Input ── */}
+          {/* ── Caption Input ── */}
           <TextInput
-            style={styles.titleInput}
-            placeholder="Post Title"
+            style={styles.captionInput}
+            placeholder="What's on your mind?"
             placeholderTextColor="#b0b0b0"
-            value={title}
-            onChangeText={setTitle}
-            maxLength={120}
-          />
-
-          {/* ── Body Input ── */}
-          <TextInput
-            style={styles.bodyInput}
-            placeholder="Add more details of your question or hack. Don't worry if you don't have extra thoughts, it's optional."
-            placeholderTextColor="#c0c0c0"
-            value={body}
-            onChangeText={setBody}
+            value={caption}
+            onChangeText={setCaption}
             multiline
             textAlignVertical="top"
           />
@@ -672,20 +657,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
 
-  // ── Title Input ──
-  titleInput: {
-    fontSize: 20,
-    fontWeight: "700",
+  // ── Caption Input ──
+  captionInput: {
+    fontSize: 16,
     color: "#1a1a1a",
-    letterSpacing: 0.2,
-    marginBottom: 12,
-    paddingVertical: 4,
-  },
-
-  // ── Body Input ──
-  bodyInput: {
-    fontSize: 15,
-    color: "#444",
     lineHeight: 22,
     minHeight: 120,
     paddingVertical: 4,
