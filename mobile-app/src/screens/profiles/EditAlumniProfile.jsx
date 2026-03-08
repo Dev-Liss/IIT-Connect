@@ -45,6 +45,7 @@ export default function EditAlumniProfile({ user }) {
 
     const [profilePicture, setProfilePicture] = useState("");
     const [coverPicture, setCoverPicture] = useState("");
+    const [uploading, setUploading] = useState(false);
 
     const userId = user?.id || user?._id;
 
@@ -119,16 +120,34 @@ export default function EditAlumniProfile({ user }) {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: type === "profile" ? [1, 1] : [16, 9],
-            quality: 0.5,
-            base64: true,
+            quality: 0.7,
+            // No base64 — we send the file directly via FormData
         });
 
         if (!result.canceled) {
-            const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
-            if (type === "profile") {
-                setProfilePicture(base64Image);
-            } else {
-                setCoverPicture(base64Image);
+            const asset = result.assets[0];
+            const formData = new FormData();
+            formData.append("image", { uri: asset.uri, type: "image/jpeg", name: `${type}_${userId}.jpg` });
+            formData.append("type", type);
+
+            setUploading(true);
+            try {
+                const response = await fetch(
+                    `${API_URL}/users/profile/${userId}/upload-image`,
+                    { method: "POST", body: formData }
+                );
+                const data = await response.json();
+                if (response.ok && data.user) {
+                    if (type === "profile") setProfilePicture(data.user.profilePicture);
+                    else setCoverPicture(data.user.coverPicture);
+                } else {
+                    Alert.alert("Upload Failed", data.message || "Could not upload image.");
+                }
+            } catch (err) {
+                console.error("Image Upload Error:", err);
+                Alert.alert("Network Error", "Could not connect to server.");
+            } finally {
+                setUploading(false);
             }
         }
     };

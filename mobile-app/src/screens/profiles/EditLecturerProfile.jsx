@@ -36,6 +36,7 @@ export default function EditLecturerProfile({ user }) {
 
     const [profilePicture, setProfilePicture] = useState("");
     const [coverPicture, setCoverPicture] = useState("");
+    const [uploading, setUploading] = useState(false);
 
     const userId = user?.id || user?._id;
 
@@ -83,17 +84,34 @@ export default function EditLecturerProfile({ user }) {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: type === 'profile' ? [1, 1] : [16, 9],
-            quality: 0.5,
-            base64: true,
+            quality: 0.7,
+            // No base64 — we send the file directly via FormData
         });
 
         if (!result.canceled) {
-            const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
+            const asset = result.assets[0];
+            const formData = new FormData();
+            formData.append("image", { uri: asset.uri, type: "image/jpeg", name: `${type}_${userId}.jpg` });
+            formData.append("type", type);
 
-            if (type === 'profile') {
-                setProfilePicture(base64Image);
-            } else if (type === 'cover') {
-                setCoverPicture(base64Image);
+            setUploading(true);
+            try {
+                const response = await fetch(
+                    `${API_URL}/users/profile/${userId}/upload-image`,
+                    { method: "POST", body: formData }
+                );
+                const data = await response.json();
+                if (response.ok && data.user) {
+                    if (type === 'profile') setProfilePicture(data.user.profilePicture);
+                    else setCoverPicture(data.user.coverPicture);
+                } else {
+                    Alert.alert("Upload Failed", data.message || "Could not upload image.");
+                }
+            } catch (err) {
+                console.error("Image Upload Error:", err);
+                Alert.alert("Network Error", "Could not connect to server.");
+            } finally {
+                setUploading(false);
             }
         }
     };
@@ -103,11 +121,10 @@ export default function EditLecturerProfile({ user }) {
 
         setSaving(true);
         try {
+            // Images are already saved to Cloudinary on pick — only send text fields here
             const updatedData = {
                 username: `${firstName} ${lastName}`.trim(),
-                bio: bio, // Sends the bio specifically for lecturers
-                profilePicture: profilePicture,
-                coverPicture: coverPicture,
+                bio,
             };
 
             const response = await fetch(`${API_URL}/users/profile/${userId}`, {
@@ -134,6 +151,15 @@ export default function EditLecturerProfile({ user }) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <ActivityIndicator size="large" color="#D32F2F" />
+            </View>
+        );
+    }
+
+    if (uploading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#D32F2F" />
+                <Text style={{ marginTop: 12, color: '#555', fontSize: 15 }}>Uploading image...</Text>
             </View>
         );
     }

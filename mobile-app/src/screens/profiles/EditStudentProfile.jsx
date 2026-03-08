@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
 import { API_BASE_URL as API_URL } from "../../config/api";
 
@@ -41,6 +42,7 @@ export default function EditStudentProfile({ user }) {
 
     const [profilePicture, setProfilePicture] = useState("");
     const [coverPicture, setCoverPicture] = useState("");
+    const [uploading, setUploading] = useState(false);
 
     const [modalVisible, setModalVisible] = useState(false);
     const [modalType, setModalType] = useState(null);
@@ -125,6 +127,48 @@ export default function EditStudentProfile({ user }) {
         }
     };
 
+    const pickImage = async (type) => {
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (permissionResult.granted === false) {
+            Alert.alert("Permission Required", "Allow access to your photos to upload an image.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: type === "profile" ? [1, 1] : [16, 9],
+            quality: 0.7,
+        });
+
+        if (!result.canceled) {
+            const asset = result.assets[0];
+            const formData = new FormData();
+            formData.append("image", { uri: asset.uri, type: "image/jpeg", name: `${type}_${userId}.jpg` });
+            formData.append("type", type);
+
+            setUploading(true);
+            try {
+                const response = await fetch(
+                    `${API_URL}/users/profile/${userId}/upload-image`,
+                    { method: "POST", body: formData }
+                );
+                const data = await response.json();
+                if (response.ok && data.user) {
+                    if (type === "profile") setProfilePicture(data.user.profilePicture);
+                    else setCoverPicture(data.user.coverPicture);
+                } else {
+                    Alert.alert("Upload Failed", data.message || "Could not upload image.");
+                }
+            } catch (err) {
+                console.error("Image Upload Error:", err);
+                Alert.alert("Network Error", "Could not connect to server.");
+            } finally {
+                setUploading(false);
+            }
+        }
+    };
+
     const openModal = (type) => {
         setModalType(type);
         setModalVisible(true);
@@ -141,6 +185,15 @@ export default function EditStudentProfile({ user }) {
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <ActivityIndicator size="large" color="#D32F2F" />
                 <Text style={{ marginTop: 10, color: '#666' }}>Loading Profile...</Text>
+            </View>
+        );
+    }
+
+    if (uploading) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#D32F2F" />
+                <Text style={{ marginTop: 12, color: '#555', fontSize: 15 }}>Uploading image...</Text>
             </View>
         );
     }
@@ -182,11 +235,11 @@ export default function EditStudentProfile({ user }) {
                         </View>
 
                         <View style={styles.editButtonsRow}>
-                            <TouchableOpacity style={styles.editMediaBtn}>
+                            <TouchableOpacity style={styles.editMediaBtn} onPress={() => pickImage("profile")}>
                                 <Text style={styles.editMediaText}>Edit Profile Picture</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.editMediaBtn}>
-                                <Text style={styles.editMediaText}>Edit cover</Text>
+                            <TouchableOpacity style={styles.editMediaBtn} onPress={() => pickImage("cover")}>
+                                <Text style={styles.editMediaText}>Edit Cover</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
