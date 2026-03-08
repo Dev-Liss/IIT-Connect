@@ -44,6 +44,19 @@ app.use("/api/stories", storyRoutes);
 app.use("/api/users", userRoutes);
 
 // ====================================
+// ERROR HANDLERS
+// ====================================
+// Catch multer errors (file too large, wrong type, etc.) and return JSON
+// Without this, multer sends an HTML error page which crashes response.json() on the app
+app.use((err, req, res, next) => {
+  if (err.name === "MulterError" || err.message?.includes("file")) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+  console.error("Unhandled error:", err);
+  res.status(500).json({ success: false, message: "Internal server error" });
+});
+
+// ====================================
 // DATABASE CONNECTION & SERVER START
 // ====================================
 const PORT = process.env.PORT || 5000;

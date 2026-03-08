@@ -45,7 +45,7 @@ const profileStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     return {
-      folder: "iit-connect-profiles",
+      folder: "content-media/profile",
       allowed_formats: ["jpg", "jpeg", "png"],
       resource_type: "image",
     };

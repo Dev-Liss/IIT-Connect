@@ -81,7 +81,7 @@ export default function EditLecturerProfile({ user }) {
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ["images"],
             allowsEditing: true,
             aspect: type === 'profile' ? [1, 1] : [16, 9],
             quality: 0.7,
@@ -100,12 +100,16 @@ export default function EditLecturerProfile({ user }) {
                     `${API_URL}/users/profile/${userId}/upload-image`,
                     { method: "POST", body: formData }
                 );
-                const data = await response.json();
+                const text = await response.text();
+                let data = {};
+                try { data = JSON.parse(text); } catch { /* server returned non-JSON */ }
+
                 if (response.ok && data.user) {
                     if (type === 'profile') setProfilePicture(data.user.profilePicture);
                     else setCoverPicture(data.user.coverPicture);
                 } else {
-                    Alert.alert("Upload Failed", data.message || "Could not upload image.");
+                    console.error("Upload response:", text);
+                    Alert.alert("Upload Failed", data.message || `Server error (${response.status})`);
                 }
             } catch (err) {
                 console.error("Image Upload Error:", err);
