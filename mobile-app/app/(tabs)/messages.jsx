@@ -9,6 +9,8 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  Platform,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -257,13 +259,6 @@ export default function MessagesScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>Co</Text>
-          <View style={styles.logoIcon}>
-            <Ionicons name="wifi" size={14} color="#D32F2F" />
-          </View>
-          <Text style={styles.logoText}>Nect</Text>
-        </View>
         <Text style={styles.headerTitle}>Messages</Text>
       </View>
 
@@ -349,33 +344,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   header: {
-    alignItems: "center",
+    paddingHorizontal: 16,
     paddingTop: 10,
-    paddingBottom: 15,
-  },
-  logoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 5,
-  },
-  logoText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000",
-  },
-  logoIcon: {
-    marginHorizontal: 2,
+    paddingBottom: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#efefef",
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#000",
+    color: "#262626", // Specific dark gray used in Academic and More screens
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F5F5F5",
     marginHorizontal: 20,
+    marginTop: 15,
     borderRadius: 25,
     paddingHorizontal: 15,
     marginBottom: 15,
