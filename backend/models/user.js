@@ -44,8 +44,52 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["student", "lecturer", "admin"],
+      enum: ["student", "lecturer", "admin", "alumni"],
       default: "student",
+    },
+    profilePicture: {
+      type: String,
+      default: "",
+    },
+    profilePicturePublicId: {
+      type: String,
+      default: "", // Cloudinary public ID — used to delete old image on update
+    },
+    coverPicture: {
+      type: String,
+      default: "",
+    },
+    coverPicturePublicId: {
+      type: String,
+      default: "", // Cloudinary public ID — used to delete old image on update
+    },
+    batch: {
+      type: String,
+      default: "", // e.g., "L4 G1"
+    },
+    bio: {
+      type: String,
+      default: "",
+    },
+    graduationYear: {
+      type: String,
+      default: "",
+    },
+    currentJob: {
+      type: String,
+      default: "",
+    },
+    company: {
+      type: String,
+      default: "",
+    },
+    location: {
+      type: String,
+      default: "",
+    },
+    careerJourney: {
+      type: String,
+      default: "",
     },
   },
   {
