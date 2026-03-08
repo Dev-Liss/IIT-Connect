@@ -28,9 +28,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "../context/AuthContext";
 import { POST_ENDPOINTS } from "../config/api";
 
-export default function CommentsBottomSheet({ postId, onClose, onCommentAdded }) {
+export default function CommentsBottomSheet({
+  postId,
+  onClose,
+  onCommentAdded,
+}) {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const DEFAULT_AVATAR =
+    "https://ui-avatars.com/api/?background=ccc&color=fff&name=User";
 
   const [comments, setComments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,17 +56,16 @@ export default function CommentsBottomSheet({ postId, onClose, onCommentAdded })
     const hideEvent =
       Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
-    const ANDROID_GAP = 10;  // extra pixels above keyboard on Android
-    const IOS_GAP = 10;      // extra pixels above keyboard on iOS
+    const ANDROID_GAP = 10; // extra pixels above keyboard on Android
+    const IOS_GAP = 10; // extra pixels above keyboard on iOS
 
     const showSub = Keyboard.addListener(showEvent, (e) => {
       const kbHeight = e.endCoordinates.height;
-      const targetPadding = Platform.OS === "ios"
-        ? kbHeight + IOS_GAP
-        : kbHeight + ANDROID_GAP;
+      const targetPadding =
+        Platform.OS === "ios" ? kbHeight + IOS_GAP : kbHeight + ANDROID_GAP;
       Animated.timing(keyboardPadding, {
         toValue: targetPadding,
-        duration: Platform.OS === "ios" ? (e.duration || 250) : 200,
+        duration: Platform.OS === "ios" ? e.duration || 250 : 200,
         useNativeDriver: false,
       }).start();
     });
@@ -163,7 +168,7 @@ export default function CommentsBottomSheet({ postId, onClose, onCommentAdded })
   // RENDER COMMENT ITEM
   // ====================================
   const renderComment = ({ item }) => {
-    const avatarUrl = `https://i.pravatar.cc/150?u=${item.user?._id || item._id}`;
+    const avatarUrl = item.user?.profilePicture || DEFAULT_AVATAR;
     return (
       <View style={styles.commentItem}>
         <Image source={{ uri: avatarUrl }} style={styles.commentAvatar} />
@@ -237,12 +242,15 @@ export default function CommentsBottomSheet({ postId, onClose, onCommentAdded })
 
       {/* Floating Pill Input Bar */}
       <Animated.View
-        style={[styles.inputBarWrapper, { paddingBottom: Animated.add(keyboardPadding, insets.bottom) }]}
+        style={[
+          styles.inputBarWrapper,
+          { paddingBottom: Animated.add(keyboardPadding, insets.bottom) },
+        ]}
       >
         <View style={styles.inputBar}>
           <Image
             source={{
-              uri: `https://i.pravatar.cc/150?u=${user?.id || "default"}`,
+              uri: user?.profilePicture || DEFAULT_AVATAR,
             }}
             style={styles.inputAvatar}
           />

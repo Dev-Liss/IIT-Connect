@@ -55,9 +55,13 @@ router.post("/register", async (req, res) => {
 
     // Generate JWT Token
     const jwt = require("jsonwebtoken");
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET || "default_secret", {
-      expiresIn: "30d",
-    });
+    const token = jwt.sign(
+      { id: newUser._id },
+      process.env.JWT_SECRET || "default_secret",
+      {
+        expiresIn: "30d",
+      },
+    );
 
     // Return success (don't send password back!)
     res.status(201).json({
@@ -70,6 +74,7 @@ router.post("/register", async (req, res) => {
         email: newUser.email,
         studentId: newUser.studentId,
         role: newUser.role,
+        profilePicture: newUser.profilePicture,
       },
     });
   } catch (err) {
@@ -114,9 +119,13 @@ router.post("/login", async (req, res) => {
     // Generate JWT Token
     // Reuse jwt if imported at top, or re-require
     const jwt = require("jsonwebtoken");
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || "default_secret", {
-      expiresIn: "30d",
-    });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET || "default_secret",
+      {
+        expiresIn: "30d",
+      },
+    );
 
     // Success! Return user data (never send password!)
     res.json({
@@ -129,6 +138,7 @@ router.post("/login", async (req, res) => {
         email: user.email,
         studentId: user.studentId,
         role: user.role,
+        profilePicture: user.profilePicture,
       },
     });
   } catch (err) {

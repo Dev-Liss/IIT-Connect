@@ -36,6 +36,8 @@ import CommentsBottomSheet from "./CommentsBottomSheet";
 // DIMENSIONS
 // ====================================
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const DEFAULT_AVATAR =
+  "https://ui-avatars.com/api/?background=ccc&color=fff&name=User";
 
 // ====================================
 // COMPONENT
@@ -60,7 +62,7 @@ export default function ReelCard({ reel, isActive, height }) {
 
   // ── Derived data ──
   const username = reel.user?.username || "Unknown User";
-  const avatarUrl = `https://i.pravatar.cc/150?u=${reel.user?._id || reel._id}`;
+  const avatarUrl = reel.user?.profilePicture || DEFAULT_AVATAR;
   const [commentCount, setCommentCount] = useState(reel.comments?.length || 0);
   const [commentsVisible, setCommentsVisible] = useState(false);
 
