@@ -95,7 +95,7 @@ export default function StudentProfile({ user }) {
       };
 
       fetchAllData();
-    }, [user]),
+    }, [user?._id, user?.id]),
   );
 
   const handleLogout = async () => {
