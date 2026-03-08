@@ -166,18 +166,22 @@ router.get("/", async (req, res) => {
   try {
     let posts = [];
 
+    // Optional ?userId= query param — filter to a single user's posts.
+    // Used by profile screens to avoid fetching the entire collection.
+    const filter = req.query.userId ? { user: req.query.userId } : {};
+
     if (req.query.mediaType === "video") {
-      posts = await Reel.find()
+      posts = await Reel.find(filter)
         .populate("user", "username email studentId")
         .sort({ createdAt: -1 });
     } else if (req.query.mediaType === "image") {
-      posts = await Post.find()
+      posts = await Post.find(filter)
         .populate("user", "username email studentId")
         .sort({ createdAt: -1 });
     } else {
       const [imagePosts, videoReels] = await Promise.all([
-        Post.find().populate("user", "username email studentId"),
-        Reel.find().populate("user", "username email studentId"),
+        Post.find(filter).populate("user", "username email studentId"),
+        Reel.find(filter).populate("user", "username email studentId"),
       ]);
 
       posts = [...imagePosts, ...videoReels].sort(

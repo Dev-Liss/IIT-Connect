@@ -16,6 +16,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const postRoutes = require("./routes/posts");
 const storyRoutes = require("./routes/stories");
+const userRoutes = require("./routes/users");
 const eventsRoutes = require("./routes/events");
 const announcementsRoutes = require("./routes/announcements");
 const reportsRoutes = require("./routes/reports");
@@ -44,6 +45,20 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/stories", storyRoutes);
+app.use("/api/users", userRoutes);
+
+// ====================================
+// ERROR HANDLERS
+// ====================================
+// Catch multer errors (file too large, wrong type, etc.) and return JSON
+// Without this, multer sends an HTML error page which crashes response.json() on the app
+app.use((err, req, res, next) => {
+  if (err.name === "MulterError" || err.message?.includes("file")) {
+    return res.status(400).json({ success: false, message: err.message });
+  }
+  console.error("Unhandled error:", err);
+  res.status(500).json({ success: false, message: "Internal server error" });
+});
 
 // Timetable routes
 const timetableRoutes = require("./routes/timetable");

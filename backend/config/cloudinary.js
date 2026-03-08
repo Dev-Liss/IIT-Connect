@@ -4,6 +4,7 @@
  * ====================================
  * Handles image/video uploads to Cloudinary.
  * - Posts & Stories: stored in "iit-connect-posts + stories" folder
+ * - Profile/Cover: stored in "iit-connect-profiles" folder
  * - Academic Resources: stored in "IIT-Connect-Resources" folder
  *
  * TEAM: Make sure CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY,
@@ -57,9 +58,25 @@ const storage = new CloudinaryStorage({
 // Create multer upload instance for posts/stories/reels
 const upload = multer({
   storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB max file size
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+});
+
+// ── Profile / Cover image storage ─────────────────────────────
+// Used by POST /api/users/profile/:id/upload-image
+const profileStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: async (req, file) => {
+    return {
+      folder: "content-media/profile",
+      allowed_formats: ["jpg", "jpeg", "png"],
+      resource_type: "image",
+    };
   },
+});
+
+const uploadProfileImage = multer({
+  storage: profileStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
 });
 
 // ====================================
@@ -87,4 +104,4 @@ const resourceStorage = new CloudinaryStorage({
   },
 });
 
-module.exports = { cloudinary, upload, resourceStorage };
+module.exports = { cloudinary, upload, uploadProfileImage, resourceStorage };
