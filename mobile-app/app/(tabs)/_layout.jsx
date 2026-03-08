@@ -117,6 +117,34 @@ const ACADEMIC_TILES = [
   },
 ];
 
+// ─── Messages-Only Tiles (shown when on Messages tab) ─────────────────────────
+const MESSAGES_TILES = [
+  {
+    label: "New Chat",
+    description: "Start a direct message",
+    icon: "chatbubble", // Ionicons
+    themeColor: "#0EA5E9", // Sky Blue
+    background: "#f0f9ff",
+    route: "/messages/new-chat",
+  },
+  {
+    label: "New Group",
+    description: "Create a group chat",
+    icon: "people",
+    themeColor: "#34C759", // Green
+    background: "#f2fbf4",
+    route: { pathname: "/messages/new-group", params: { type: "group" } },
+  },
+  {
+    label: "New Community",
+    description: "Start a large community",
+    icon: "globe",
+    themeColor: "#FF9500", // Orange
+    background: "#fff8f0",
+    route: "/messages/new-community",
+  },
+];
+
 // ─── Animated Tab Item ───────────────────────────────────────────────────────
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -274,7 +302,11 @@ function CreateContentSheet({ visible, onClose, currentTab }) {
         {/* Header row */}
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>
-            {currentTab === "academic" ? "Create" : "Create Content"}
+            {currentTab === "messages"
+              ? "New Message"
+              : currentTab === "academic"
+                ? "Create"
+                : "Create Content"}
           </Text>
           <TouchableOpacity
             onPress={onClose}
@@ -287,9 +319,11 @@ function CreateContentSheet({ visible, onClose, currentTab }) {
 
         {/* Tile Grid — 2×2 or 3×2 depending on active tab */}
         <View style={styles.tileGrid}>
-          {(currentTab === "academic"
-            ? [...CREATE_TILES, ...ACADEMIC_TILES]
-            : CREATE_TILES
+          {(currentTab === "messages"
+            ? MESSAGES_TILES
+            : currentTab === "academic"
+              ? [...CREATE_TILES, ...ACADEMIC_TILES]
+              : CREATE_TILES
           ).map((tile) => (
             <TouchableOpacity
               key={tile.label}
