@@ -30,6 +30,8 @@ import CommentsBottomSheet from "./CommentsBottomSheet";
 
 // Get screen width for dynamic image sizing
 const SCREEN_WIDTH = Dimensions.get("window").width;
+const DEFAULT_AVATAR =
+  "https://ui-avatars.com/api/?background=ccc&color=fff&name=User";
 
 export default function PostCard({ post, onLike, onShare }) {
   const { user } = useAuth();
@@ -57,8 +59,8 @@ export default function PostCard({ post, onLike, onShare }) {
   // Get username with fallback
   const username = post.user?.username || "Unknown User";
 
-  // Generate avatar URL using pravatar.cc for consistent placeholder
-  const avatarUrl = `https://i.pravatar.cc/150?u=${post.user?._id || post._id}`;
+  // Get avatar URL from user profile or fallback
+  const avatarUrl = post.user?.profilePicture || DEFAULT_AVATAR;
 
   // Format relative timestamp
   const getRelativeTime = (dateString) => {

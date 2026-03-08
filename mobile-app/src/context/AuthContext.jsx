@@ -80,6 +80,22 @@ export function AuthProvider({ children }) {
   };
 
   // ====================================
+  // UPDATE USER FUNCTION
+  // ====================================
+  /**
+   * Update current user data and persist to storage
+   */
+  const updateUser = async (updates) => {
+    try {
+      const updatedUser = { ...user, ...updates };
+      await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    } catch (error) {
+      console.error("❌ Failed to update user data:", error);
+    }
+  };
+
+  // ====================================
   // LOGOUT FUNCTION
   // ====================================
   /**
@@ -106,6 +122,7 @@ export function AuthProvider({ children }) {
     isLoading,
     login,
     logout,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

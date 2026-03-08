@@ -117,7 +117,7 @@ router.post(
       await newPost.save();
 
       // Populate user data before returning
-      await newPost.populate("user", "username email studentId");
+      await newPost.populate("user", "username email studentId profilePicture");
 
       console.log(
         `✅ ${detectedMediaType === "video" ? "🎬 Reel" : "📷 Post"} created successfully:`,
@@ -172,16 +172,22 @@ router.get("/", async (req, res) => {
 
     if (req.query.mediaType === "video") {
       posts = await Reel.find(filter)
-        .populate("user", "username email studentId")
+        .populate("user", "username email studentId profilePicture")
         .sort({ createdAt: -1 });
     } else if (req.query.mediaType === "image") {
       posts = await Post.find(filter)
-        .populate("user", "username email studentId")
+        .populate("user", "username email studentId profilePicture")
         .sort({ createdAt: -1 });
     } else {
       const [imagePosts, videoReels] = await Promise.all([
-        Post.find(filter).populate("user", "username email studentId"),
-        Reel.find(filter).populate("user", "username email studentId"),
+        Post.find(filter).populate(
+          "user",
+          "username email studentId profilePicture",
+        ),
+        Reel.find(filter).populate(
+          "user",
+          "username email studentId profilePicture",
+        ),
       ]);
 
       posts = [...imagePosts, ...videoReels].sort(
@@ -211,13 +217,13 @@ router.get("/:id", async (req, res) => {
   try {
     let post = await Post.findById(req.params.id).populate(
       "user",
-      "username email",
+      "username email profilePicture",
     );
 
     if (!post) {
       post = await Reel.findById(req.params.id).populate(
         "user",
-        "username email",
+        "username email profilePicture",
       );
     }
 
@@ -347,7 +353,7 @@ router.post("/:id/comment", async (req, res) => {
     // Populate the user field of the newly added comment
     await post.populate({
       path: "comments.user",
-      select: "username",
+      select: "username profilePicture",
       match: { _id: savedComment.user },
     });
 
@@ -378,13 +384,13 @@ router.get("/:id/comments", async (req, res) => {
   try {
     let post = await Post.findById(req.params.id).populate(
       "comments.user",
-      "username",
+      "username profilePicture",
     );
 
     if (!post) {
       post = await Reel.findById(req.params.id).populate(
         "comments.user",
-        "username",
+        "username profilePicture",
       );
     }
 
