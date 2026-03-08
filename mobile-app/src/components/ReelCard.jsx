@@ -337,17 +337,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 15,
     marginLeft: 10,
-    textShadowColor: "rgba(0,0,0,0.6)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadow: "0px 1px 3px rgba(0,0,0,0.6)",
   },
   caption: {
     color: "rgba(255,255,255,0.92)",
     fontSize: 13.5,
     lineHeight: 19,
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
   },
 
   // ── Bottom-Right: Action Sidebar ──
@@ -366,9 +362,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     marginTop: 3,
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
   },
 
   // Modal styles

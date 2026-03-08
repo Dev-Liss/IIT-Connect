@@ -177,10 +177,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#eee",
     // Shadow for iOS
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.05)",
     // Shadow for Android
     elevation: 2,
   },

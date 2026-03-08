@@ -50,10 +50,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 1, // spacing between columns
     justifyContent: "flex-start",
     elevation: 2, // Android shadow
-    shadowColor: "#000", // iOS shadow
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    boxShadow: "0px 1px 2px 0px rgba(0, 0, 0, 0.1)",
     minHeight: 50,
   },
   courseCode: {

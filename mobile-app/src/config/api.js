@@ -105,6 +105,8 @@ export const REPORT_ENDPOINTS = {
   GET_BY_ID: (id) => `${API_BASE_URL}/reports/${id}`,
   UPDATE_STATUS: (id) => `${API_BASE_URL}/reports/${id}/status`,
   ADD_RESPONSE: (id) => `${API_BASE_URL}/reports/${id}/response`,
+};
+
 // Conversation endpoints
 export const CONVERSATION_ENDPOINTS = {
   GET_ALL: `${API_BASE_URL}/conversations`,

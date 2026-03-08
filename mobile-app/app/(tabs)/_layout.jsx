@@ -415,10 +415,7 @@ const styles = StyleSheet.create({
     marginRight: 14,
     paddingVertical: 8,
     paddingHorizontal: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 18,
+    boxShadow: "0px 6px 18px 0px rgba(0, 0, 0, 0.1)",
     elevation: 10,
   },
 
@@ -457,10 +454,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9252b",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#f9252b",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
+    boxShadow: "0px 6px 12px 0px rgba(249, 37, 43, 0.45)",
     elevation: 12,
   },
 
@@ -485,10 +479,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     // Shadow above sheet
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
+    boxShadow: "0px -4px 20px 0px rgba(0, 0, 0, 0.12)",
     elevation: 24,
   },
 

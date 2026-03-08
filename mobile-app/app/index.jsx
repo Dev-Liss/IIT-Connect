@@ -313,10 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 20,
     padding: 25,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    boxShadow: "0px 4px 10px 0px rgba(0, 0, 0, 0.1)",
     elevation: 5,
   },
   inputContainer: {

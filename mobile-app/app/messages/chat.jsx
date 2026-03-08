@@ -50,6 +50,7 @@ export default function ChatScreen() {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
 
   // Load current user and connect to socket
   useEffect(() => {
@@ -65,13 +66,23 @@ export default function ChatScreen() {
           if (!socketService.getConnectionStatus() && userId) {
             socketService.connect(userId);
           }
+          setIsConnected(socketService.getConnectionStatus());
         }
       } catch (error) {
         console.error('Error loading user data:', error);
       }
     };
 
+    const handleConnectionChange = (connected) => {
+      setIsConnected(connected);
+    };
+
+    socketService.addConnectionListener(handleConnectionChange);
     initialize();
+
+    return () => {
+      socketService.removeConnectionListener(handleConnectionChange);
+    };
   }, []);
 
   // Fetch messages and join conversation room

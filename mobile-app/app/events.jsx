@@ -423,10 +423,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 18,
         marginBottom: 15,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
+        boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.06)",
         elevation: 3,
     },
     eventHeader: {
@@ -471,10 +468,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 18,
         marginBottom: 15,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
+        boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.06)",
         elevation: 3,
     },
     announcementHeader: {

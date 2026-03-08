@@ -371,10 +371,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 16,
         alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
+        boxShadow: "0px 1px 3px 0px rgba(0, 0, 0, 0.05)",
         elevation: 2,
     },
     statNumber: {
