@@ -27,6 +27,7 @@ const COLORS = {
     WHITE: "#f7f7f7",
     GREY: "#888",
     TEXT_DARK: "#333",
+    LIGHT_GREY: "#e0e0e0",
 };
 
 const STATUS_COLORS = {
@@ -272,10 +273,7 @@ const styles = StyleSheet.create({
         padding: 16,
         marginBottom: 12,
         marginVertical: 4,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
+        boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.08)",
         elevation: 2,
         borderWidth: 1,
         borderColor: "#f0f0f0",
@@ -347,6 +345,4 @@ const styles = StyleSheet.create({
     // Loading / error
     centered: { flex: 1, justifyContent: "center", alignItems: "center" },
     errorText: { fontSize: 15, color: COLORS.GREY },
-
-    LIGHT_GREY: "#e0e0e0",
 });

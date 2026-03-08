@@ -7,25 +7,30 @@
  */
 
 import { Stack } from "expo-router";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "../src/context/AuthContext";
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="timetable" options={{ headerShown: false }} />
-        <Stack.Screen name="events" options={{ headerShown: false }} />
-        <Stack.Screen name="create-event" options={{ headerShown: false }} />
-        <Stack.Screen name="create-announcement" options={{ headerShown: false }} />
-        <Stack.Screen name="anonymous-report" options={{ headerShown: false }} />
-        <Stack.Screen name="admin-dashboard" options={{ headerShown: false }} />
-        <Stack.Screen name="report-detail" options={{ headerShown: false }} />
-      </Stack>
-    </AuthProvider>
-  );}
+    <SafeAreaProvider>
+      <AuthProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="messages" options={{ headerShown: false }} />
+          <Stack.Screen name="timetable" options={{ headerShown: false }} />
+          <Stack.Screen name="events" options={{ headerShown: false }} />
+          <Stack.Screen name="create-event" options={{ headerShown: false }} />
+          <Stack.Screen name="create-announcement" options={{ headerShown: false }} />
+          <Stack.Screen name="anonymous-report" options={{ headerShown: false }} />
+          <Stack.Screen name="admin-dashboard" options={{ headerShown: false }} />
+          <Stack.Screen name="report-detail" options={{ headerShown: false }} />
+        </Stack>
+      </AuthProvider>
+    </SafeAreaProvider>
+  );
+}

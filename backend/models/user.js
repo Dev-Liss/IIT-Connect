@@ -7,13 +7,16 @@
  * Fields:
  * - username: Display name
  * - email: Unique identifier for login
- * - password: User's password (TODO: hash in Phase 3)
+ * - password: User's password (hashed with bcrypt)
  * - studentId: University student ID
  * - role: User type (student/lecturer/admin)
  * - createdAt: Account creation timestamp
  */
 
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+
+const SALT_ROUNDS = 12;
 
 const UserSchema = new mongoose.Schema(
   {
@@ -22,6 +25,7 @@ const UserSchema = new mongoose.Schema(
       required: [true, "Username is required"],
       trim: true,
       minlength: [3, "Username must be at least 3 characters"],
+      maxlength: [50, "Username cannot exceed 50 characters"],
     },
     email: {
       type: String,
@@ -35,7 +39,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
-      // TODO Phase 3: Add bcrypt hashing via pre-save hook
+      select: false, // Never return password by default
     },
     studentId: {
       type: String,
@@ -97,6 +101,29 @@ const UserSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// ====================================
+// PRE-SAVE HOOK – hash password
+// ====================================
+UserSchema.pre("save", async function (next) {
+  // Only hash if password was modified (or is new)
+  if (!this.isModified("password")) return next();
+
+  try {
+    const salt = await bcrypt.genSalt(SALT_ROUNDS);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ====================================
+// INSTANCE METHOD – compare passwords
+// ====================================
+UserSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 // Export the model
 module.exports = mongoose.models.User || mongoose.model('User', UserSchema);

@@ -19,7 +19,9 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Import API configuration - TEAM: Update the IP in this file!
 import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
@@ -102,8 +104,12 @@ export default function AuthScreen() {
           // Clear form for login
           setPassword("");
         } else {
-          // Save user to global auth state
+          // Save user to global auth state and AsyncStorage
           await login(data.user);
+          // Also store in AsyncStorage for messaging system compatibility
+          await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+          const authToken = data.token || data.user.id;
+          await AsyncStorage.setItem('authToken', authToken);
           console.log("✅ Logged in user:", data.user);
           // Navigate to home (tabs)
           router.replace("/(tabs)");
@@ -153,14 +159,15 @@ export default function AuthScreen() {
   // RENDER UI
   // ====================================
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
       >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.logo}>🎓</Text>
@@ -263,6 +270,7 @@ export default function AuthScreen() {
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -270,6 +278,10 @@ export default function AuthScreen() {
 // STYLES
 // ====================================
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f5f7fa",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f5f7fa",
@@ -301,10 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 20,
     padding: 25,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    boxShadow: "0px 4px 10px 0px rgba(0, 0, 0, 0.1)",
     elevation: 5,
   },
   inputContainer: {
