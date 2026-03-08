@@ -7,13 +7,26 @@
  * Endpoints:
  * - POST /api/auth/register - Create a new user
  * - POST /api/auth/login    - Login an existing user
+ * - GET  /api/auth/users    - Get all users (for new chat)
  */
 
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 
-// Import User model
 const User = require("../models/user");
+const { generateToken } = require("../middleware/authMiddleware");
+const logger = require("../config/logger");
+
+// ====================================
+// HELPERS – input sanitisation
+// ====================================
+/**
+ * Strip characters that have no business in normal text inputs.
+ * Removes < > to prevent HTML/script injection.
+ */
+const sanitiseText = (str) =>
+  typeof str === "string" ? str.replace(/[<>]/g, "").trim() : "";
 
 // ====================================
 // REGISTER ROUTE
@@ -21,7 +34,6 @@ const User = require("../models/user");
 // ====================================
 router.post("/register", async (req, res) => {
   try {
-    // Extract user data from request body
     const { username, email, password, studentId } = req.body;
 
     // Validate required fields
@@ -33,8 +45,33 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    // Sanitise text fields
+    const cleanUsername = sanitiseText(username);
+    const cleanEmail = sanitiseText(email).toLowerCase();
+    const cleanStudentId = sanitiseText(studentId);
+
+    // Basic format checks
+    if (cleanUsername.length < 3 || cleanUsername.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: "Username must be between 3 and 50 characters",
+      });
+    }
+    if (!/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address",
+      });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: cleanEmail });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -42,28 +79,21 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    // Create new user
+    // Create new user (password hashed automatically via pre-save hook)
     const newUser = new User({
-      username,
-      email,
-      password, // TODO: Hash password with bcrypt in Phase 3
-      studentId,
+      username: cleanUsername,
+      email: cleanEmail,
+      password,
+      studentId: cleanStudentId,
     });
 
-    // Save to database
     await newUser.save();
 
-    // Generate JWT Token
-    const jwt = require("jsonwebtoken");
-    const token = jwt.sign(
-      { id: newUser._id },
-      process.env.JWT_SECRET || "default_secret",
-      {
-        expiresIn: "30d",
-      },
-    );
+    // Generate JWT
+    const token = generateToken(newUser._id);
 
-    // Return success (don't send password back!)
+    logger.info("New user registered", { userId: newUser._id, email: cleanEmail });
+
     res.status(201).json({
       success: true,
       message: "Account created successfully!",
@@ -78,8 +108,8 @@ router.post("/register", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Register Error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    logger.error("Register error", { error: err.message });
+    res.status(500).json({ success: false, message: "Registration failed. Please try again." });
   }
 });
 
@@ -91,7 +121,6 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate required fields
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -99,35 +128,43 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email });
+    const cleanEmail = sanitiseText(email).toLowerCase();
+
+    // Find user and explicitly include password for comparison
+    const user = await User.findOne({ email: cleanEmail }).select("+password");
     if (!user) {
-      return res.status(404).json({
+      // Use generic message to avoid user enumeration
+      return res.status(401).json({
         success: false,
-        message: "User not found. Please register first.",
+        message: "Invalid email or password",
       });
     }
 
-    // Check password (TODO: Use bcrypt.compare in Phase 3)
-    if (user.password !== password) {
-      return res.status(400).json({
+    // Compare password (bcrypt hash)
+    let isMatch = await user.comparePassword(password);
+
+    // Backward compatibility: if the stored password is still plaintext
+    // (pre-bcrypt accounts), check directly and migrate to bcrypt
+    if (!isMatch && user.password === password) {
+      isMatch = true;
+      // Migrate: hash the plaintext password and save
+      user.password = password; // pre-save hook will hash it
+      await user.save();
+      logger.info("Migrated plaintext password to bcrypt", { userId: user._id });
+    }
+
+    if (!isMatch) {
+      return res.status(401).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Invalid email or password",
       });
     }
 
-    // Generate JWT Token
-    // Reuse jwt if imported at top, or re-require
-    const jwt = require("jsonwebtoken");
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET || "default_secret",
-      {
-        expiresIn: "30d",
-      },
-    );
+    // Generate JWT
+    const token = generateToken(user._id);
 
-    // Success! Return user data (never send password!)
+    logger.info("User logged in", { userId: user._id });
+
     res.json({
       success: true,
       message: "Login successful!",
@@ -142,8 +179,40 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Login Error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    logger.error("Login error", { error: err.message });
+    res.status(500).json({ success: false, message: "Login failed. Please try again." });
+  }
+});
+
+// ====================================
+// GET ALL USERS ROUTE
+// GET /api/auth/users
+// ====================================
+router.get("/users", async (req, res) => {
+  try {
+    const { excludeUserId } = req.query;
+
+    let query = {};
+    if (excludeUserId && mongoose.Types.ObjectId.isValid(excludeUserId)) {
+      query._id = { $ne: excludeUserId };
+    }
+
+    const users = await User.find(query);
+
+    res.json({
+      success: true,
+      users: users.map((user) => ({
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        studentId: user.studentId,
+        role: user.role,
+        department: user.department || "IIT Student",
+      })),
+    });
+  } catch (err) {
+    logger.error("Get users error", { error: err.message });
+    res.status(500).json({ success: false, message: "Failed to fetch users" });
   }
 });
 

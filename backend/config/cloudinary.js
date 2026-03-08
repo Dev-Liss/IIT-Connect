@@ -104,4 +104,69 @@ const resourceStorage = new CloudinaryStorage({
   },
 });
 
-module.exports = { cloudinary, upload, uploadProfileImage, resourceStorage };
+// ====================================
+// MESSAGE MEDIA UPLOAD UTILITIES
+// ====================================
+// Used by the messaging system for uploading chat media (images, videos, docs)
+
+const UPLOAD_FOLDER = process.env.CLOUDINARY_FOLDER || 'iit-connect-message-resources';
+
+const uploadToCloudinary = async (file, options = {}) => {
+  const uploadOptions = { folder: UPLOAD_FOLDER, resource_type: 'auto', ...options };
+  try {
+    if (typeof file === 'string' && file.startsWith('data:')) {
+      return await cloudinary.uploader.upload(file, uploadOptions);
+    } else if (Buffer.isBuffer(file)) {
+      const base64 = `data:application/octet-stream;base64,${file.toString('base64')}`;
+      return await cloudinary.uploader.upload(base64, uploadOptions);
+    } else {
+      return await cloudinary.uploader.upload(file, uploadOptions);
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const uploadFromBuffer = (buffer, options = {}) => {
+  return new Promise((resolve, reject) => {
+    const uploadOptions = { folder: UPLOAD_FOLDER, resource_type: 'auto', ...options };
+    const uploadStream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
+      if (error) return reject(error);
+      resolve(result);
+    });
+    uploadStream.end(buffer);
+  });
+};
+
+const uploadImageFromBuffer = (buffer, options = {}) =>
+  uploadFromBuffer(buffer, { ...options, resource_type: 'image', folder: `${UPLOAD_FOLDER}/images`, transformation: [{ quality: 'auto:good' }, { fetch_format: 'auto' }] });
+
+const uploadVideoFromBuffer = (buffer, options = {}) =>
+  uploadFromBuffer(buffer, { ...options, resource_type: 'video', folder: `${UPLOAD_FOLDER}/videos`, eager: [{ quality: 'auto:good', fetch_format: 'mp4' }], eager_async: true });
+
+const uploadDocumentFromBuffer = (buffer, options = {}) =>
+  uploadFromBuffer(buffer, { ...options, resource_type: 'raw', folder: `${UPLOAD_FOLDER}/documents` });
+
+const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
+  return await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+};
+
+const getOptimizedUrl = (publicId, options = {}) =>
+  cloudinary.url(publicId, { secure: true, ...options });
+
+module.exports = {
+  // Multer-based storage (posts, stories, profiles, resources)
+  cloudinary,
+  upload,
+  uploadProfileImage,
+  resourceStorage,
+  // Direct upload utilities (messaging media)
+  UPLOAD_FOLDER,
+  uploadToCloudinary,
+  uploadFromBuffer,
+  uploadImageFromBuffer,
+  uploadVideoFromBuffer,
+  uploadDocumentFromBuffer,
+  deleteFromCloudinary,
+  getOptimizedUrl,
+};
