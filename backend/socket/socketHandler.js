@@ -4,7 +4,7 @@ const Conversation = require('../models/Conversation');
 const User = require('../models/user');
 const logger = require('../config/logger');
 
-// Store online users: { userId: socketId }
+// Store online users: { userId: socketId } (used for message notifications)
 const onlineUsers = new Map();
 
 // ====================================
@@ -52,11 +52,6 @@ const socketHandler = (io) => {
             onlineUsers.set(userId, socket.id);
             socket.userId = userId;
             logger.debug('User online', { userId });
-
-            socket.broadcast.emit('user_status_change', {
-                userId,
-                status: 'online'
-            });
 
             socket.join(`user_${userId}`);
         });
@@ -435,11 +430,6 @@ const socketHandler = (io) => {
         socket.on('disconnect', () => {
             if (socket.userId) {
                 onlineUsers.delete(socket.userId);
-
-                socket.broadcast.emit('user_status_change', {
-                    userId: socket.userId,
-                    status: 'offline'
-                });
 
                 logger.debug('User disconnected', { userId: socket.userId });
             } else {

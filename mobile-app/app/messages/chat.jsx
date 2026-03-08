@@ -38,7 +38,7 @@ export default function ChatScreen() {
   const [isTyping, setIsTyping] = useState(false);
   const [typingUser, setTypingUser] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [isConnected, setIsConnected] = useState(socketService.getConnectionStatus());
+
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const flatListRef = useRef(null);
@@ -168,18 +168,7 @@ export default function ChatScreen() {
     };
   }, [conversationId, currentUser]);
 
-  // Connection status listener
-  useEffect(() => {
-    const handleConnection = (connected) => {
-      setIsConnected(connected);
-    };
 
-    socketService.addConnectionListener(handleConnection);
-
-    return () => {
-      socketService.removeConnectionListener(handleConnection);
-    };
-  }, []);
 
   // Handle typing indicator
   const handleInputChange = (text) => {
@@ -473,21 +462,18 @@ export default function ChatScreen() {
           </TouchableOpacity>
           <View style={styles.headerInfo}>
             <Text style={styles.headerName}>{name}</Text>
-            <Text style={[styles.headerStatus, !isConnected && styles.headerStatusOffline]}>
-              {isTyping ? `${typingUser || 'Someone'} is typing...` : isConnected ? 'Online' : 'Connecting...'}
-            </Text>
+            {isTyping && (
+              <Text style={styles.headerStatus}>
+                {`${typingUser || 'Someone'} is typing...`}
+              </Text>
+            )}
           </View>
           <TouchableOpacity style={styles.moreButton}>
             <Ionicons name="ellipsis-vertical" size={24} color="#000" />
           </TouchableOpacity>
         </View>
 
-        {/* Connection Status Banner */}
-        {!isConnected && (
-          <View style={styles.connectionBanner}>
-            <Text style={styles.connectionBannerText}>Reconnecting...</Text>
-          </View>
-        )}
+
 
         {/* Messages List */}
         <FlatList
@@ -768,18 +754,7 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
   },
-  headerStatusOffline: {
-    color: '#999',
-  },
-  connectionBanner: {
-    backgroundColor: '#FFF3CD',
-    padding: 8,
-    alignItems: 'center',
-  },
-  connectionBannerText: {
-    color: '#856404',
-    fontSize: 12,
-  },
+
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',

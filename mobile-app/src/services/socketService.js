@@ -92,10 +92,6 @@ class SocketService {
             console.log('📬 New message notification:', data);
         });
 
-        // User status changes
-        this.socket.on('user_status_change', (data) => {
-            console.log('👤 User status:', data.userId, data.status);
-        });
 
         return this.socket;
     }
