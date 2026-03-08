@@ -2,6 +2,10 @@
  * ====================================
  * API CONFIGURATION
  * ====================================
+ * IMPORTANT FOR TEAM MEMBERS:
+ *
+ * Update EXPO_PUBLIC_LAPTOP_IP in mobile-app/.env when your IP changes.
+ * Make sure your phone and laptop are on the SAME WiFi network.
  */
 
 // Read from .env file - update EXPO_PUBLIC_LAPTOP_IP in .env when your IP changes
@@ -10,13 +14,20 @@ const LAPTOP_IP = process.env.EXPO_PUBLIC_LAPTOP_IP;
 // Backend port (should match PORT in backend/.env)
 const PORT = "5000";
 
+// Request timeout in milliseconds
+export const REQUEST_TIMEOUT = 15000;
+
 // Full API base URL
 export const API_BASE_URL = `http://${LAPTOP_IP}:${PORT}/api`;
+
+// Socket.io URL (same server, different purpose)
+export const SOCKET_URL = `http://${LAPTOP_IP}:${PORT}`;
 
 // Auth endpoints
 export const AUTH_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/auth/login`,
   REGISTER: `${API_BASE_URL}/auth/register`,
+  GET_USERS: `${API_BASE_URL}/auth/users`,
 };
 
 // Post endpoints (Phase 3)
@@ -96,11 +107,37 @@ export const REPORT_ENDPOINTS = {
   ADD_RESPONSE: (id) => `${API_BASE_URL}/reports/${id}/response`,
 };
 
+// Conversation endpoints
+export const CONVERSATION_ENDPOINTS = {
+  GET_ALL: `${API_BASE_URL}/conversations`,
+  GET_ONE: (id) => `${API_BASE_URL}/conversations/${id}`,
+  CREATE_DIRECT: `${API_BASE_URL}/conversations/direct`,
+  CREATE_GROUP: `${API_BASE_URL}/conversations/group`,
+  ADD_PARTICIPANT: (id) => `${API_BASE_URL}/conversations/${id}/participants`,
+  REMOVE_PARTICIPANT: (id, userId) => `${API_BASE_URL}/conversations/${id}/participants/${userId}`,
+};
+
+// Message endpoints
+export const MESSAGE_ENDPOINTS = {
+  GET_MESSAGES: (conversationId) => `${API_BASE_URL}/messages/${conversationId}`,
+  SEND_MESSAGE: (conversationId) => `${API_BASE_URL}/messages/${conversationId}`,
+  MARK_READ: (messageId) => `${API_BASE_URL}/messages/${messageId}/read`,
+  SEARCH: (conversationId) => `${API_BASE_URL}/messages/${conversationId}/search`,
+};
+
+// Upload endpoints
+export const UPLOAD_ENDPOINTS = {
+  UPLOAD_MEDIA: `${API_BASE_URL}/upload/media`,
+  UPLOAD_MULTIPLE: `${API_BASE_URL}/upload/multiple`,
+  DELETE_FILE: (publicId) => `${API_BASE_URL}/upload/${encodeURIComponent(publicId)}`,
+};
+
 // Health check endpoint (for testing connection)
 export const HEALTH_CHECK_URL = `${API_BASE_URL}/health`;
 
 export default {
   API_BASE_URL,
+  SOCKET_URL,
   AUTH_ENDPOINTS,
   POST_ENDPOINTS,
   STORY_ENDPOINTS,
@@ -111,6 +148,9 @@ export default {
   ANNOUNCEMENTS_ENDPOINTS,
   REPORTS_ENDPOINTS,
   REPORT_ENDPOINTS,
+  CONVERSATION_ENDPOINTS,
+  MESSAGE_ENDPOINTS,
+  UPLOAD_ENDPOINTS,
   HEALTH_CHECK_URL,
   LAPTOP_IP,
   PORT,

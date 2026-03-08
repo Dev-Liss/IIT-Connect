@@ -730,9 +730,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontWeight: "600",
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
   },
   modalStoryCount: {
     color: "rgba(255,255,255,0.7)",

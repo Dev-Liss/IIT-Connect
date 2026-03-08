@@ -117,6 +117,34 @@ const ACADEMIC_TILES = [
   },
 ];
 
+// ─── Messages-Only Tiles (shown when on Messages tab) ─────────────────────────
+const MESSAGES_TILES = [
+  {
+    label: "New Chat",
+    description: "Start a direct message",
+    icon: "chatbubble", // Ionicons
+    themeColor: "#0EA5E9", // Sky Blue
+    background: "#f0f9ff",
+    route: "/messages/new-chat",
+  },
+  {
+    label: "New Group",
+    description: "Create a group chat",
+    icon: "people",
+    themeColor: "#34C759", // Green
+    background: "#f2fbf4",
+    route: { pathname: "/messages/new-group", params: { type: "group" } },
+  },
+  {
+    label: "New Community",
+    description: "Start a large community",
+    icon: "globe",
+    themeColor: "#FF9500", // Orange
+    background: "#fff8f0",
+    route: "/messages/new-community",
+  },
+];
+
 // ─── Animated Tab Item ───────────────────────────────────────────────────────
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -274,7 +302,11 @@ function CreateContentSheet({ visible, onClose, currentTab }) {
         {/* Header row */}
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>
-            {currentTab === "academic" ? "Create" : "Create Content"}
+            {currentTab === "messages"
+              ? "New Message"
+              : currentTab === "academic"
+                ? "Create"
+                : "Create Content"}
           </Text>
           <TouchableOpacity
             onPress={onClose}
@@ -287,9 +319,11 @@ function CreateContentSheet({ visible, onClose, currentTab }) {
 
         {/* Tile Grid — 2×2 or 3×2 depending on active tab */}
         <View style={styles.tileGrid}>
-          {(currentTab === "academic"
-            ? [...CREATE_TILES, ...ACADEMIC_TILES]
-            : CREATE_TILES
+          {(currentTab === "messages"
+            ? MESSAGES_TILES
+            : currentTab === "academic"
+              ? [...CREATE_TILES, ...ACADEMIC_TILES]
+              : CREATE_TILES
           ).map((tile) => (
             <TouchableOpacity
               key={tile.label}
@@ -415,10 +449,7 @@ const styles = StyleSheet.create({
     marginRight: 14,
     paddingVertical: 8,
     paddingHorizontal: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 18,
+    boxShadow: "0px 6px 18px 0px rgba(0, 0, 0, 0.1)",
     elevation: 10,
   },
 
@@ -457,10 +488,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9252b",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#f9252b",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
+    boxShadow: "0px 6px 12px 0px rgba(249, 37, 43, 0.45)",
     elevation: 12,
   },
 
@@ -485,10 +513,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     // Shadow above sheet
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
+    boxShadow: "0px -4px 20px 0px rgba(0, 0, 0, 0.12)",
     elevation: 24,
   },
 

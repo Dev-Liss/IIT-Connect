@@ -420,10 +420,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     backgroundColor: "#fff",
     borderRadius: 50,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    boxShadow: "0px 4px 12px 0px rgba(0, 0, 0, 0.1)",
     elevation: 8,
   },
   inputAvatar: {
