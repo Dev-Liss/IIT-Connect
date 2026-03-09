@@ -187,19 +187,16 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   };
 
   const isOrganizer = (session) => {
-    if (!user) return false;
-    const orgId =
-      typeof session.organizer === "object"
-        ? session.organizer._id
-        : session.organizer;
-    return orgId === user.id;
+    if (!user || !session?.organizer) return false;
+    const orgId = typeof session.organizer === "object" ? session.organizer?._id : session.organizer;
+    return orgId === user?.id || orgId === user?._id;
   };
 
   const hasJoined = (session) => {
-    if (!user) return false;
+    if (!user || !session?.attendees) return false;
     return session.attendees.some((a) => {
-      const id = typeof a === "object" ? a._id : a;
-      return id === user.id;
+      const id = typeof a === "object" ? a?._id : a;
+      return id === user?.id || id === user?._id;
     });
   };
 
@@ -208,11 +205,11 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 
     return (
       <View
-        key={session._id}
+        key={session?._id || Math.random().toString()}
         style={[styles.card, isMySession && styles.mySessionCard]}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>{session.title}</Text>
+          <Text style={styles.cardTitle}>{session?.title}</Text>
           {userIsOrganizer && isMySession && (
             <View style={styles.organizerBadge}>
               <Text style={styles.organizerText}>ORGANIZER</Text>
@@ -291,13 +288,13 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 
   // Filter Logic
   // My Sessions: session.organizer === currentUserId
-  const mySessions = sessions.filter((s) => isOrganizer(s));
+  const mySessions = Array.isArray(sessions) ? sessions.filter((s) => s && isOrganizer(s)) : [];
 
   // Upcoming Sessions:
   // 1. Organizer is NOT currentUserId
   // 2. Session has not ended yet (endTime > now)
-  const upcomingSessions = sessions.filter((s) => {
-    if (isOrganizer(s)) return false;
+  const upcomingSessions = Array.isArray(sessions) ? sessions.filter((s) => {
+    if (!s || isOrganizer(s)) return false;
 
     let sessionEnd;
     if (s.endTime) {
@@ -315,7 +312,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
       return sessionEnd > currentTime;
     }
     return true;
-  });
+  }) : [];
 
   // Date Picker Handlers
   const onDateChange = (event, selectedDate) => {

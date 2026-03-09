@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,7 +11,9 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
 import { API_BASE_URL } from "../config/api";
+import { useAuth } from "../context/AuthContext";
 import ClassCard from "../components/ClassCard";
 import TodayClassCard from "../components/TodayClassCard";
 import ModalDropdown from "../components/ModalDropdown";
@@ -24,6 +26,7 @@ const HOURS = [
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const SLOT_HEIGHT = 80;
+const DEFAULT_GROUP = "L5 SE -G1";
 
 export default function TimetableScreen({ view = "weekly" }) {
   const [timetable, setTimetable] = useState([]);
@@ -31,23 +34,55 @@ export default function TimetableScreen({ view = "weekly" }) {
   const [loading, setLoading] = useState(true);
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState("");
+  const [isUsingFallback, setIsUsingFallback] = useState(false);
   const [selectedLecture, setSelectedLecture] = useState(null);
 
   const todayIndex = new Date().getDay();
   const currentDay = DAYS[todayIndex - 1] || "";
 
-  useEffect(() => {
-    fetchGroups();
-  }, []);
+  const selectedLevelMatch = selectedGroup ? selectedGroup.match(/L[4-7]/) : null;
+  const activeUnsupportedLevel = selectedLevelMatch && ["L4", "L6", "L7"].includes(selectedLevelMatch[0]) ? selectedLevelMatch[0] : null;
+
+  const groupMatch = selectedGroup ? selectedGroup.match(/(CS|SE)\s*-\s*G(\d+)/) : null;
+  const invalidCourseDetails = groupMatch ? 
+    (groupMatch[1] === 'SE' && parseInt(groupMatch[2], 10) > 10 ? { course: 'SE', max: 10 } :
+     groupMatch[1] === 'CS' && parseInt(groupMatch[2], 10) > 29 ? { course: 'CS', max: 29 } : null) 
+    : null;
+
+  const router = useRouter();
+
+  const { user } = useAuth();
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchGroups();
+      if (user) {
+        fetchUserProfile();
+      } else {
+        setSelectedGroup(DEFAULT_GROUP);
+        setIsUsingFallback(true);
+        setLoading(false);
+      }
+    }, [user])
+  );
 
   useEffect(() => {
     if (!selectedGroup) return;
+
+    if (activeUnsupportedLevel || invalidCourseDetails) {
+      setTimetable([]);
+      setTodayClasses([]);
+      setLoading(false);
+      return;
+    }
+
     if (view === "weekly") {
       fetchTimetable(selectedGroup);
     } else {
       fetchTodayTimetable(selectedGroup);
     }
-  }, [view, selectedGroup]);
+  }, [view, selectedGroup, activeUnsupportedLevel, invalidCourseDetails]);
 
   const fetchGroups = async () => {
     try {
@@ -55,10 +90,32 @@ export default function TimetableScreen({ view = "weekly" }) {
       const result = await response.json();
       if (result.success && result.data.length > 0) {
         setGroups(result.data);
-        if (!selectedGroup) setSelectedGroup(result.data[0]);
       }
     } catch (error) {
       console.error("Error fetching groups:", error);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    setLoading(true);
+    try {
+      const userId = user?.id || user?._id;
+      const response = await fetch(`${API_BASE_URL}/users/profile/${userId}`);
+      const data = await response.json();
+      if (response.ok && data.tutorialGroup) {
+        setSelectedGroup(data.tutorialGroup);
+        setIsUsingFallback(false);
+      } else {
+        setSelectedGroup(DEFAULT_GROUP);
+        setIsUsingFallback(true);
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      setSelectedGroup(DEFAULT_GROUP);
+      setIsUsingFallback(true);
+    } finally {
+      setProfileLoaded(true);
+      setLoading(false);
     }
   };
 
@@ -163,7 +220,17 @@ export default function TimetableScreen({ view = "weekly" }) {
           color="#f9252b"
           style={{ marginTop: 50 }}
         />
-      ) : view === "weekly" ? (
+      ) : (
+        <>
+          {isUsingFallback && (
+            <View style={styles.fallbackBanner}>
+              <Ionicons name="information-circle" size={20} color="#0277bd" />
+              <Text style={styles.fallbackText}>
+                Showing default timetable ({DEFAULT_GROUP}). Update your profile to see your specific schedule.
+              </Text>
+            </View>
+          )}
+          {view === "weekly" ? (
         /* WEEKLY GRID VIEW */
         <View style={styles.gridContainer}>
           <ScrollView
@@ -173,9 +240,12 @@ export default function TimetableScreen({ view = "weekly" }) {
             <View style={[styles.filterContainer, { marginBottom: 10 }]}>
               <View style={styles.pickerWrapper}>
                 <ModalDropdown
-                  options={groups}
-                  defaultValue={selectedGroup || "Select Your Group"}
-                  onSelect={(index, value) => setSelectedGroup(value)}
+                  options={(activeUnsupportedLevel || invalidCourseDetails) ? [] : groups}
+                  defaultValue={(activeUnsupportedLevel || invalidCourseDetails) ? "No groups available for this selection" : (selectedGroup || "Select Your Group")}
+                  onSelect={(index, value) => {
+                    setSelectedGroup(value);
+                    setIsUsingFallback(false);
+                  }}
                   showSearch={true}
                   searchPlaceholder="Search Group..."
                   style={styles.dropdownButton}
@@ -199,47 +269,68 @@ export default function TimetableScreen({ view = "weekly" }) {
               </View>
             </View>
 
-            {/* Day Headers */}
-            <View style={styles.headerRow}>
-              <View style={styles.timeColumnHeader} />
-              {DAYS.map((day) => (
-                <View key={day} style={styles.dayHeader}>
-                  <Text
-                    style={[
-                      styles.dayText,
-                      day === currentDay && styles.currentDayText,
-                    ]}
-                  >
-                    {day}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={{ flexDirection: "row" }}>
-              {/* Time Column */}
-              <View style={styles.timeColumn}>
-                {HOURS.map((time) => (
-                  <View key={time} style={styles.timeSlot}>
-                    <Text style={styles.timeText}>
-                      {parseInt(time.split(":")[0]) >= 12
-                        ? `${parseInt(time.split(":")[0]) === 12 ? 12 : parseInt(time.split(":")[0]) - 12}:${time.split(":")[1]} PM`
-                        : `${parseInt(time.split(":")[0])}:${time.split(":")[1]} AM`}
-                    </Text>
-                  </View>
-                ))}
+            {activeUnsupportedLevel ? (
+              <View style={[styles.emptyStateContainer, { marginTop: 40, backgroundColor: 'transparent', width: '100%', alignItems: 'center' }]}>
+                <Ionicons name="warning-outline" size={60} color="#ff9800" style={{ marginBottom: 15 }} />
+                <Text style={{ textAlign: 'center', fontSize: 16, color: '#333', paddingHorizontal: 20 }}>
+                  Timetable not found for {activeUnsupportedLevel}. Currently, only L5 timetables are supported.
+                </Text>
               </View>
-
-              {/* Grid Columns */}
-              {DAYS.map((day) => (
-                <View key={day} style={styles.dayColumn}>
-                  {HOURS.map((h, i) => (
-                    <View key={i} style={styles.gridLine} />
+            ) : invalidCourseDetails ? (
+              <View style={[styles.emptyStateContainer, { marginTop: 40, backgroundColor: 'transparent', width: '100%', alignItems: 'center' }]}>
+                <Ionicons name="warning-outline" size={60} color="#f9252b" style={{ marginBottom: 15 }} />
+                <Text style={{ textAlign: 'center', fontSize: 16, color: '#333', paddingHorizontal: 20, marginBottom: 20 }}>
+                  Timetable Not Found. Level 5 {invalidCourseDetails.course} only contains Groups 1 to {invalidCourseDetails.max}. Please check your profile settings.
+                </Text>
+                <TouchableOpacity style={styles.goProfileBtn} onPress={() => router.push('/profiles/EditStudentProfile')}>
+                  <Text style={styles.goProfileText}>Go to Profile</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                {/* Day Headers */}
+                <View style={styles.headerRow}>
+                  <View style={styles.timeColumnHeader} />
+                  {DAYS.map((day) => (
+                    <View key={day} style={styles.dayHeader}>
+                      <Text
+                        style={[
+                          styles.dayText,
+                          day === currentDay && styles.currentDayText,
+                        ]}
+                      >
+                        {day}
+                      </Text>
+                    </View>
                   ))}
-                  {renderClassCards(day)}
                 </View>
-              ))}
-            </View>
+
+                <View style={{ flexDirection: "row" }}>
+                  {/* Time Column */}
+                  <View style={styles.timeColumn}>
+                    {HOURS.map((time) => (
+                      <View key={time} style={styles.timeSlot}>
+                        <Text style={styles.timeText}>
+                          {parseInt(time.split(":")[0]) >= 12
+                            ? `${parseInt(time.split(":")[0]) === 12 ? 12 : parseInt(time.split(":")[0]) - 12}:${time.split(":")[1]} PM`
+                            : `${parseInt(time.split(":")[0])}:${time.split(":")[1]} AM`}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  {/* Grid Columns */}
+                  {DAYS.map((day) => (
+                    <View key={day} style={styles.dayColumn}>
+                      {HOURS.map((h, i) => (
+                        <View key={i} style={styles.gridLine} />
+                      ))}
+                      {renderClassCards(day)}
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
           </ScrollView>
         </View>
       ) : (
@@ -250,7 +341,24 @@ export default function TimetableScreen({ view = "weekly" }) {
           >
             <Text style={styles.todayTitle}>Today's Sessions</Text>
 
-            {todayClasses.length > 0 ? (
+            {activeUnsupportedLevel ? (
+              <View style={[styles.emptyStateContainer, { marginTop: 40, backgroundColor: 'transparent', width: '100%', alignItems: 'center' }]}>
+                <Ionicons name="warning-outline" size={60} color="#ff9800" style={{ marginBottom: 15 }} />
+                <Text style={{ textAlign: 'center', fontSize: 16, color: '#333', paddingHorizontal: 20 }}>
+                  Timetable not found for {activeUnsupportedLevel}. Currently, only L5 timetables are supported.
+                </Text>
+              </View>
+            ) : invalidCourseDetails ? (
+              <View style={[styles.emptyStateContainer, { marginTop: 40, backgroundColor: 'transparent', width: '100%', alignItems: 'center' }]}>
+                <Ionicons name="warning-outline" size={60} color="#f9252b" style={{ marginBottom: 15 }} />
+                <Text style={{ textAlign: 'center', fontSize: 16, color: '#333', paddingHorizontal: 20, marginBottom: 20 }}>
+                  Timetable Not Found. Level 5 {invalidCourseDetails.course} only contains Groups 1 to {invalidCourseDetails.max}. Please check your profile settings.
+                </Text>
+                <TouchableOpacity style={styles.goProfileBtn} onPress={() => router.push('/profiles/EditStudentProfile')}>
+                  <Text style={styles.goProfileText}>Go to Profile</Text>
+                </TouchableOpacity>
+              </View>
+            ) : todayClasses.length > 0 ? (
               todayClasses.map((entry) => (
                 <TouchableOpacity
                   key={entry._id}
@@ -276,6 +384,8 @@ export default function TimetableScreen({ view = "weekly" }) {
           </ScrollView>
         </View>
       )}
+      </>
+    )}
 
       {/* Detail Modal */}
       <Modal
@@ -525,5 +635,38 @@ const styles = StyleSheet.create({
   modalLabel: {
     fontWeight: "600",
     color: "#333",
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+    backgroundColor: "#fff",
+  },
+  fallbackBanner: {
+    backgroundColor: '#e1f5fe',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 10,
+    borderRadius: 8,
+  },
+  fallbackText: {
+    color: '#01579b',
+    fontSize: 13,
+    marginLeft: 8,
+    flex: 1,
+  },
+  goProfileBtn: {
+    backgroundColor: '#f9252b',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  goProfileText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });

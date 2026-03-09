@@ -49,11 +49,8 @@ export default function StudentProfile({ user }) {
   useFocusEffect(
     useCallback(() => {
       const fetchAllData = async () => {
-        const userId = user?._id || user?.id;
-        if (!userId) {
-          setLoading(false);
-          return;
-        }
+        if (!user || (!user._id && !user.id)) return;
+        const userId = user._id || user.id;
 
         setLoading(true);
         try {
@@ -88,6 +85,10 @@ export default function StudentProfile({ user }) {
             setUserPosts(filteredPosts);
           }
         } catch (error) {
+          if (error.message && error.message.includes('_id')) {
+             console.log('Waiting for user ID...');
+             return;
+          }
           console.error("Data Fetch Error:", error);
         } finally {
           setLoading(false);
