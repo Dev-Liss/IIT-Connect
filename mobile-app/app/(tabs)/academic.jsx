@@ -78,18 +78,30 @@ export default function AcademicScreen() {
         <View style={styles.titleRow}>
           <Text style={styles.headerTitle}>Academic</Text>
           {activeTab === "Timetable" ? (
-            <TouchableOpacity
-              style={styles.viewToggle}
-              onPress={() => setView(view === "weekly" ? "today" : "weekly")}
-            >
-              <Ionicons
-                name={view === "weekly" ? "list-outline" : "grid-outline"}
-                size={22}
-                color="#555"
-              />
-            </TouchableOpacity>
+            <View style={styles.toggleContainer}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setView("weekly")}
+              >
+                <Ionicons
+                  name="grid-outline"
+                  size={22}
+                  color={view === "weekly" ? "#f9252b" : "#aaa"}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setView("today")}
+              >
+                <Ionicons
+                  name="list-outline"
+                  size={22}
+                  color={view === "today" ? "#f9252b" : "#aaa"}
+                />
+              </TouchableOpacity>
+            </View>
           ) : (
-            <View style={{ width: 38 }} />
+            <View style={{ width: 76 }} />
           )}
         </View>
 
@@ -140,10 +152,16 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#262626",
   },
-  viewToggle: {
-    padding: 8,
+  toggleContainer: {
+    flexDirection: "row",
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
+    padding: 4,
+    alignItems: "center",
+  },
+  iconButton: {
+    padding: 6,
+    marginHorizontal: 4,
   },
   content: {
     flex: 1,

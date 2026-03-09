@@ -130,8 +130,8 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem("token");
-      await axios.post(
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await axios.post(
         KUPPI_ENDPOINTS.CREATE,
         {
           ...formData,
@@ -149,6 +149,13 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
+      
+      const newSessionWithUser = {
+        ...response.data,
+        organizer: response.data.organizer || user,
+      };
+      setSessions((prev) => Array.isArray(prev) ? [newSessionWithUser, ...prev] : [newSessionWithUser]);
+
       setCreateModalVisible(false);
       // Reset form
       const now = new Date();
@@ -753,9 +760,11 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            {selectedSession && (
-              <>
-                <View style={styles.detailsHeader}>
+            {(() => {
+              if (!selectedSession) return null;
+              return (
+                <>
+                  <View style={styles.detailsHeader}>
                   <Text style={styles.modalTitle}>{selectedSession.title}</Text>
                   <TouchableOpacity
                     onPress={() => setDetailsModalVisible(false)}
@@ -827,9 +836,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                     <View>
                       <Text style={styles.detailLabel}>Organizer</Text>
                       <Text style={styles.detailValue}>
-                        {typeof selectedSession.organizer === "object"
-                          ? selectedSession.organizer.username
-                          : "Organizer"}
+                        {selectedSession?.organizer?.username || "Unknown User"}
                       </Text>
                     </View>
                   </View>
@@ -843,8 +850,9 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   </Text>
                   <Text style={styles.aboutText}>{selectedSession.about}</Text>
                 </ScrollView>
-              </>
-            )}
+                </>
+              );
+            })()}
           </View>
         </View>
       </Modal>
