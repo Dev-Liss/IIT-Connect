@@ -12,7 +12,7 @@ import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthToken } from '../utils/getAuthToken';
 import { UPLOAD_ENDPOINTS } from '../config/api';
 
 /**
@@ -306,7 +306,7 @@ export const formatFileSize = (bytes) => {
  */
 export const uploadFile = async (file, onProgress = null) => {
     try {
-        const token = await AsyncStorage.getItem('authToken');
+        const token = await getAuthToken();
         if (!token) {
             throw new Error('Not authenticated');
         }
@@ -378,7 +378,7 @@ export const uploadFile = async (file, onProgress = null) => {
  */
 export const uploadMultipleFiles = async (files, onProgress = null) => {
     try {
-        const token = await AsyncStorage.getItem('authToken');
+        const token = await getAuthToken();
         if (!token) {
             throw new Error('Not authenticated');
         }

@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthToken } from '../../src/utils/getAuthToken';
 import { API_BASE_URL } from '../../src/config/api';
 
 export default function NewGroupScreen() {
@@ -33,7 +34,7 @@ export default function NewGroupScreen() {
     const fetchUsers = async () => {
       try {
         const userData = await AsyncStorage.getItem('userData');
-        const token = await AsyncStorage.getItem('authToken');
+        const token = await getAuthToken();
 
         const response = await fetch(`${API_BASE_URL}/auth/users`, {
           headers: {

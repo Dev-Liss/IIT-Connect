@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthToken } from '../../src/utils/getAuthToken';
 import { API_BASE_URL, CONVERSATION_ENDPOINTS } from '../../src/config/api';
 
 export default function NewChatScreen() {
@@ -30,7 +31,7 @@ export default function NewChatScreen() {
     const fetchUsers = async () => {
       try {
         const userData = await AsyncStorage.getItem('userData');
-        const token = await AsyncStorage.getItem('authToken');
+        const token = await getAuthToken();
         
         if (userData) {
           setCurrentUser(JSON.parse(userData));
@@ -94,7 +95,7 @@ export default function NewChatScreen() {
 
   const handleUserSelect = async (user) => {
     try {
-      const token = await AsyncStorage.getItem('authToken');
+      const token = await getAuthToken();
       
       // Create or get existing direct conversation
       const response = await fetch(CONVERSATION_ENDPOINTS.CREATE_DIRECT, {

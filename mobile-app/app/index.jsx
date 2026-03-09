@@ -1,386 +1,260 @@
 /**
  * ====================================
- * IIT CONNECT - LOGIN/REGISTER SCREEN
+ * IIT CONNECT - APP ENTRY POINT
  * ====================================
- * Main entry screen for the app.
- * Users can register a new account or login to existing one.
+ * Manages authentication flow:
+ *   Already signed in → redirect to (tabs) main app
+ *   Not signed in     → Splash → Welcome → Login / Register flow
+ *
+ * Auth screens (Clerk-based) come from hansana-authentication branch.
+ * Main app screens (tabs, messages, etc.) are from final-merge branch.
  */
 
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState, useEffect } from "react";
+import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// Import API configuration - TEAM: Update the IP in this file!
-import { AUTH_ENDPOINTS, HEALTH_CHECK_URL } from "../src/config/api";
-
-// Import Auth Context for session management
+import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import { useAuth } from "../src/context/AuthContext";
 
-export default function AuthScreen() {
-  // ====================================
-  // HOOKS
-  // ====================================
+// Auth screens (Clerk-based)
+import SplashScreen from "../src/screens/SplashScreen";
+import WelcomeScreen from "../src/screens/WelcomeScreen";
+import LoginScreen from "../src/screens/LoginScreen";
+import RoleSelectionScreen from "../src/screens/RoleSelectionScreen";
+import CreateAccountScreen from "../src/screens/CreateAccountScreen";
+import StudentIdDetailsScreen from "../src/screens/StudentIdDetailsScreen";
+import AlumniAccountScreen from "../src/screens/AlumniAccountScreen";
+import AlumniDetailsScreen from "../src/screens/AlumniDetailsScreen";
+import UserDetailsScreen from "../src/screens/UserDetailsScreen";
+import EmailVerificationScreen from "../src/screens/EmailVerificationScreen";
+import SignupSuccessScreen from "../src/screens/SignupSuccessScreen";
+import ForgotPasswordScreen from "../src/screens/ForgotPasswordScreen";
+import PasswordResetOTPScreen from "../src/screens/PasswordResetOTPScreen";
+import NewPasswordScreen from "../src/screens/NewPasswordScreen";
+
+export default function AuthEntry() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { isSignedIn, isLoaded } = useClerkAuth();
+  const { user, isLoading: profileLoading } = useAuth();
 
-  // ====================================
-  // STATE MANAGEMENT
-  // ====================================
-  // Form fields
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [currentScreen, setCurrentScreen] = useState("splash");
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [userEmail, setUserEmail] = useState("");
   const [studentId, setStudentId] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+  const [userData, setUserData] = useState(null);
 
-  // UI state
-  const [isRegistering, setIsRegistering] = useState(true); // Start with register
-  const [isLoading, setIsLoading] = useState(false);
-
-  // ====================================
-  // API CALL - AUTHENTICATION
-  // ====================================
-  const handleAuth = async () => {
-    // Validate common fields
-    if (!email || !password) {
-      Alert.alert("Error", "Email and password are required");
-      return;
+  // Once Clerk confirms sign-in AND MongoDB profile is loaded, go to main app
+  useEffect(() => {
+    if (isLoaded && isSignedIn && user && !profileLoading) {
+      router.replace("/(tabs)");
     }
+  }, [isLoaded, isSignedIn, user, profileLoading]);
 
-    // Extra validation for registration
-    if (isRegistering && (!username || !studentId)) {
-      Alert.alert("Error", "All fields are required for registration");
-      return;
-    }
+  // While Clerk is loading, show a spinner so we don't flash the auth screens
+  if (!isLoaded || profileLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E53935" />
+      </View>
+    );
+  }
 
-    setIsLoading(true);
+  // Already authenticated — redirecting above, render nothing meanwhile
+  if (isSignedIn && user) {
+    return null;
+  }
 
-    try {
-      // Choose endpoint based on mode
-      const endpoint = isRegistering
-        ? AUTH_ENDPOINTS.REGISTER
-        : AUTH_ENDPOINTS.LOGIN;
+  // =========================================================
+  // AUTH SCREEN ROUTING
+  // =========================================================
 
-      console.log(
-        `📡 Attempting ${isRegistering ? "register" : "login"} at:`,
-        endpoint,
-      );
+  if (currentScreen === "splash") {
+    return (
+      <SplashScreen
+        onComplete={() => setCurrentScreen("welcome")}
+      />
+    );
+  }
 
-      // Build request body
-      const body = isRegistering
-        ? { username, email, password, studentId }
-        : { email, password };
+  if (currentScreen === "welcome") {
+    return (
+      <WelcomeScreen
+        onGetStarted={() => {
+          setCurrentScreen("login");
+          // Non-blocking health check
+          try {
+            const { checkHealth } = require("../src/services/api");
+            checkHealth()
+              .then((h) => console.log("Backend health:", h))
+              .catch((e) => console.warn("Backend connectivity:", e));
+          } catch (e) {
+            console.warn("Health check error:", e);
+          }
+        }}
+      />
+    );
+  }
 
-      // Make API call
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
+  if (currentScreen === "roleSelection") {
+    return (
+      <RoleSelectionScreen
+        onRoleSelect={(role) => {
+          setSelectedRole(role);
+          if (role === "student" || role === "lecture") {
+            setCurrentScreen("createAccount");
+          } else if (role === "alumni") {
+            setCurrentScreen("alumniAccount");
+          }
+        }}
+        onBack={() => setCurrentScreen("login")}
+      />
+    );
+  }
 
-      const data = await response.json();
+  if (currentScreen === "createAccount") {
+    return (
+      <CreateAccountScreen
+        role={selectedRole}
+        onContinue={(email) => {
+          setUserEmail(email);
+          if (selectedRole === "student") {
+            setCurrentScreen("studentIdDetails");
+          } else {
+            setCurrentScreen("userDetails");
+          }
+        }}
+        onNavigateToLogin={() => setCurrentScreen("login")}
+        onBack={() => setCurrentScreen("roleSelection")}
+      />
+    );
+  }
 
-      if (data.success) {
-        if (isRegistering) {
-          Alert.alert(
-            "🎉 Success!",
-            "Account created! Now switch to Login and sign in.",
-            [{ text: "OK", onPress: () => setIsRegistering(false) }],
-          );
-          // Clear form for login
-          setPassword("");
-        } else {
-          // Save user to global auth state and AsyncStorage
-          await login(data.user);
-          // Also store in AsyncStorage for messaging system compatibility
-          await AsyncStorage.setItem('userData', JSON.stringify(data.user));
-          const authToken = data.token || data.user.id;
-          await AsyncStorage.setItem('authToken', authToken);
-          console.log("✅ Logged in user:", data.user);
-          // Navigate to home (tabs)
-          router.replace("/(tabs)");
-        }
-      } else {
-        Alert.alert("❌ Error", data.message);
-      }
-    } catch (error) {
-      console.error("Network Error:", error);
-      Alert.alert(
-        "🔌 Connection Error",
-        "Could not connect to server.\n\n" +
-        "Check:\n" +
-        "1. Backend is running (node server.js)\n" +
-        "2. IP address in src/config/api.js is correct\n" +
-        "3. Phone and laptop on same WiFi",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  if (currentScreen === "studentIdDetails") {
+    return (
+      <StudentIdDetailsScreen
+        email={userEmail}
+        role={selectedRole}
+        onContinue={(id) => {
+          setStudentId(id);
+          setCurrentScreen("userDetails");
+        }}
+      />
+    );
+  }
 
-  // ====================================
-  // TEST CONNECTION (for debugging)
-  // ====================================
-  const testConnection = async () => {
-    setIsLoading(true);
-    try {
-      console.log("🔍 Testing connection to:", HEALTH_CHECK_URL);
-      const response = await fetch(HEALTH_CHECK_URL);
-      const data = await response.json();
+  if (currentScreen === "alumniAccount") {
+    return (
+      <AlumniAccountScreen
+        onContinue={(email) => {
+          setUserEmail(email);
+          setCurrentScreen("alumniDetails");
+        }}
+        onNavigateToLogin={() => setCurrentScreen("login")}
+        onBack={() => setCurrentScreen("roleSelection")}
+      />
+    );
+  }
 
-      if (data.status === "ok") {
-        Alert.alert("✅ Connected!", "Backend is reachable!");
-      }
-    } catch (error) {
-      Alert.alert(
-        "❌ Connection Failed",
-        "Cannot reach the backend server.\nCheck the IP in src/config/api.js",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  if (currentScreen === "alumniDetails") {
+    return (
+      <AlumniDetailsScreen
+        email={userEmail}
+        onContinue={(data) => {
+          setUserData(data);
+          setCurrentScreen("userDetails");
+        }}
+      />
+    );
+  }
 
-  // ====================================
-  // RENDER UI
-  // ====================================
+  if (currentScreen === "userDetails") {
+    return (
+      <UserDetailsScreen
+        email={userEmail}
+        role={selectedRole}
+        studentId={studentId}
+        onContinue={(data) => {
+          setUserData((prev) => ({ ...prev, ...data, studentId }));
+          setCurrentScreen("emailVerification");
+        }}
+      />
+    );
+  }
+
+  if (currentScreen === "emailVerification") {
+    return (
+      <EmailVerificationScreen
+        email={userEmail}
+        userData={userData}
+        onVerify={async () => {
+          // Clerk verification and MongoDB sync already done inside the screen
+          setCurrentScreen("signupSuccess");
+        }}
+      />
+    );
+  }
+
+  if (currentScreen === "signupSuccess") {
+    return (
+      <SignupSuccessScreen
+        onContinue={() => {
+          // AuthContext detects isSignedIn and redirects to (tabs) via useEffect
+          setCurrentScreen("login");
+        }}
+      />
+    );
+  }
+
+  if (currentScreen === "forgotPassword") {
+    return (
+      <ForgotPasswordScreen
+        onBack={() => setCurrentScreen("login")}
+        onCodeSent={(email) => {
+          setResetEmail(email);
+          setCurrentScreen("passwordResetOTP");
+        }}
+      />
+    );
+  }
+
+  if (currentScreen === "passwordResetOTP") {
+    return (
+      <PasswordResetOTPScreen
+        email={resetEmail}
+        onBack={() => setCurrentScreen("forgotPassword")}
+        onVerify={() => setCurrentScreen("newPassword")}
+      />
+    );
+  }
+
+  if (currentScreen === "newPassword") {
+    return (
+      <NewPasswordScreen
+        email={resetEmail}
+        onBack={() => setCurrentScreen("passwordResetOTP")}
+        onPasswordSet={() => setCurrentScreen("login")}
+      />
+    );
+  }
+
+  // Default: Login screen
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>🎓</Text>
-          <Text style={styles.title}>IIT Connect</Text>
-          <Text style={styles.subtitle}>
-            {isRegistering ? "Create Your Account" : "Welcome Back!"}
-          </Text>
-        </View>
-
-        {/* Form Card */}
-        <View style={styles.card}>
-          {/* Username - Only for registration */}
-          {isRegistering && (
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Username</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your username"
-                placeholderTextColor="#999"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-              />
-            </View>
-          )}
-
-          {/* Email */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your email"
-              placeholderTextColor="#999"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-          </View>
-
-          {/* Password */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
-
-          {/* Student ID - Only for registration */}
-          {isRegistering && (
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Student ID</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., IIT2024001"
-                placeholderTextColor="#999"
-                value={studentId}
-                onChangeText={setStudentId}
-                autoCapitalize="characters"
-              />
-            </View>
-          )}
-
-          {/* Submit Button */}
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleAuth}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>
-                {isRegistering ? "Create Account" : "Sign In"}
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Toggle Mode */}
-          <TouchableOpacity
-            style={styles.switchButton}
-            onPress={() => setIsRegistering(!isRegistering)}
-          >
-            <Text style={styles.switchText}>
-              {isRegistering
-                ? "Already have an account? Sign In"
-                : "Don't have an account? Register"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Debug Button - Test Connection */}
-        <TouchableOpacity style={styles.debugButton} onPress={testConnection}>
-          <Text style={styles.debugText}>🔌 Test Server Connection</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
-    </SafeAreaView>
+    <LoginScreen
+      onSignUp={() => setCurrentScreen("roleSelection")}
+      onLoginSuccess={() => {
+        // AuthContext detects the Clerk sign-in and redirects to (tabs)
+      }}
+      onForgotPassword={() => setCurrentScreen("forgotPassword")}
+    />
   );
 }
 
-// ====================================
-// STYLES
-// ====================================
 const styles = StyleSheet.create({
-  safeArea: {
+  loadingContainer: {
     flex: 1,
-    backgroundColor: "#f5f7fa",
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f7fa",
-  },
-  scrollContent: {
-    flexGrow: 1,
     justifyContent: "center",
-    padding: 20,
-  },
-  header: {
     alignItems: "center",
-    marginBottom: 30,
-  },
-  logo: {
-    fontSize: 60,
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#e63946",
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: "#457b9d",
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 25,
-    boxShadow: "0px 4px 10px 0px rgba(0, 0, 0, 0.1)",
-    elevation: 5,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1d3557",
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    backgroundColor: "#f8f9fa",
-    padding: 15,
-    borderRadius: 12,
-    fontSize: 16,
-    color: "#333",
-  },
-  button: {
-    backgroundColor: "#e63946",
-    padding: 18,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  switchButton: {
-    marginTop: 20,
-    alignItems: "center",
-  },
-  switchText: {
-    color: "#457b9d",
-    fontSize: 15,
-  },
-  debugButton: {
-    marginTop: 30,
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: "#f1f1f1",
-    borderRadius: 8,
-  },
-  debugText: {
-    color: "#666",
-    fontSize: 14,
-  },
-  createPostButton: {
-    marginTop: 15,
-    alignItems: "center",
-    padding: 15,
-    backgroundColor: "#e63946",
-    borderRadius: 12,
-  },
-  createPostText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  feedButton: {
-    backgroundColor: "#457b9d",
+    backgroundColor: "#FFFFFF",
   },
 });

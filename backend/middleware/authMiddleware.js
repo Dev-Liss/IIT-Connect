@@ -1,72 +1,74 @@
-const jwt = require('jsonwebtoken');
+/**
+ * ====================================
+ * AUTH MIDDLEWARE — CLERK INTEGRATION
+ * ====================================
+ * Verifies the Clerk session token sent as a Bearer token.
+ * On success, attaches the full MongoDB user document to req.user
+ * so all downstream routes (messages, kuppi, upload, etc.) continue
+ * to work without any changes — they all rely on req.user._id.
+ */
+
+const { clerkClient } = require('@clerk/clerk-sdk-node');
 const User = require('../models/user');
 const logger = require('../config/logger');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'iit-connect-secret-change-me';
-
 /**
- * Generate a signed JWT for a user
- * @param {string} userId - MongoDB _id of the user
- * @returns {string} signed JWT
- */
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  });
-};
-
-/**
- * Auth middleware – verifies Bearer token (JWT **or** raw userId for dev compat).
- * In production only JWT is accepted.
+ * protect — Express middleware
+ * Expects: Authorization: Bearer <clerk_session_token>
  */
 const protect = async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
-  ) {
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  if (!token) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res
       .status(401)
       .json({ success: false, message: 'Not authorized, no token' });
   }
 
+  const token = authHeader.split(' ')[1];
+
   try {
-    // 1. Try JWT verification first (preferred)
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findById(decoded.id);
-    if (user) {
-      req.user = user;
-      return next();
-    }
-  } catch (jwtError) {
-    // Token was not a valid JWT – fall through to ObjectId check in dev only
-  }
+    // Verify the Clerk session token and get the Clerk userId
+    const session = await clerkClient.sessions.verifySession(token);
 
-  // 2. Development fallback: accept raw MongoDB ObjectId as token
-  if (process.env.NODE_ENV !== 'production') {
-    try {
-      const mongoose = require('mongoose');
-      if (mongoose.Types.ObjectId.isValid(token)) {
-        const user = await User.findById(token);
-        if (user) {
-          req.user = user;
-          return next();
-        }
-      }
-    } catch {
-      // ignore
+    if (!session || !session.userId) {
+      logger.warn('Auth failed – invalid Clerk session', { ip: req.ip });
+      return res
+        .status(401)
+        .json({ success: false, message: 'Not authorized, invalid session' });
     }
-  }
 
-  logger.warn('Auth failed – invalid token', { ip: req.ip });
-  return res
-    .status(401)
-    .json({ success: false, message: 'Not authorized, invalid token' });
+    // Look up the MongoDB user by their Clerk ID
+    const user = await User.findOne({ clerkId: session.userId });
+
+    if (!user) {
+      logger.warn('Auth failed – no MongoDB user for clerkId', {
+        clerkId: session.userId,
+        ip: req.ip,
+      });
+      return res
+        .status(401)
+        .json({ success: false, message: 'User profile not found. Please complete registration.' });
+    }
+
+    // Attach the full user document — req.user._id works for all existing routes
+    req.user = user;
+    req.auth = { userId: session.userId, sessionId: session.id };
+    next();
+  } catch (err) {
+    logger.warn('Auth failed – Clerk verification error', {
+      error: err.message,
+      ip: req.ip,
+    });
+    return res
+      .status(401)
+      .json({ success: false, message: 'Not authorized, invalid token' });
+  }
 };
 
-module.exports = { protect, generateToken, JWT_SECRET };
+// generateToken is no longer needed — Clerk manages tokens.
+// Exported as a no-op stub so any accidental old import won't crash the server.
+const generateToken = () => {
+  throw new Error('generateToken() is deprecated. Clerk manages authentication tokens.');
+};
+
+module.exports = { protect, generateToken };

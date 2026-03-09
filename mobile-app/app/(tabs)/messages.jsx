@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuthToken } from "../../src/utils/getAuthToken";
 import socketService from "../../src/services/socketService";
 import { CONVERSATION_ENDPOINTS } from "../../src/config/api";
 
@@ -57,7 +58,7 @@ export default function MessagesScreen() {
   // Fetch conversations
   const fetchConversations = async () => {
     try {
-      const token = await AsyncStorage.getItem("authToken");
+      const token = await getAuthToken();
 
       if (!token) {
         console.log("No auth token found");

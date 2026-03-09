@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthToken } from '../../src/utils/getAuthToken';
 import socketService from '../../src/services/socketService';
 import { MESSAGE_ENDPOINTS } from '../../src/config/api';
 import MediaMessage from '../../src/components/MediaMessage';
@@ -92,7 +93,7 @@ export default function ChatScreen() {
     const fetchMessages = async () => {
       try {
         setIsLoading(true);
-        const token = await AsyncStorage.getItem('authToken');
+        const token = await getAuthToken();
         
         const response = await fetch(MESSAGE_ENDPOINTS.GET_MESSAGES(conversationId), {
           headers: {
@@ -372,7 +373,7 @@ export default function ChatScreen() {
 
     setLoadingMore(true);
     try {
-      const token = await AsyncStorage.getItem('authToken');
+      const token = await getAuthToken();
       const oldestMessage = messages[0];
       const response = await fetch(
         `${MESSAGE_ENDPOINTS.GET_MESSAGES(conversationId)}?before=${oldestMessage.createdAt}&limit=50`,

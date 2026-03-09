@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthToken } from '../../src/utils/getAuthToken';
 import { CONVERSATION_ENDPOINTS } from '../../src/config/api';
 
 export default function CreateGroupScreen() {
@@ -33,7 +33,7 @@ export default function CreateGroupScreen() {
     setIsLoading(true);
 
     try {
-      const token = await AsyncStorage.getItem('authToken');
+      const token = await getAuthToken();
       
       // Create group/community via API
       const response = await fetch(CONVERSATION_ENDPOINTS.CREATE_GROUP, {
