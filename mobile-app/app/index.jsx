@@ -46,10 +46,12 @@ export default function AuthEntry() {
 
   // Once Clerk confirms sign-in AND MongoDB profile is loaded, go to main app
   useEffect(() => {
+    if (currentScreen === "signupSuccess") return;
+
     if (isLoaded && isSignedIn && user && !profileLoading) {
       router.replace("/(tabs)");
     }
-  }, [isLoaded, isSignedIn, user, profileLoading]);
+  }, [isLoaded, isSignedIn, user, profileLoading, currentScreen]);
 
   // While Clerk is loading, show a spinner so we don't flash the auth screens
   if (!isLoaded || profileLoading) {
@@ -61,7 +63,7 @@ export default function AuthEntry() {
   }
 
   // Already authenticated — redirecting above, render nothing meanwhile
-  if (isSignedIn && user) {
+  if (isSignedIn && user && currentScreen !== "signupSuccess") {
     return null;
   }
 
@@ -70,11 +72,7 @@ export default function AuthEntry() {
   // =========================================================
 
   if (currentScreen === "splash") {
-    return (
-      <SplashScreen
-        onComplete={() => setCurrentScreen("welcome")}
-      />
-    );
+    return <SplashScreen onComplete={() => setCurrentScreen("welcome")} />;
   }
 
   if (currentScreen === "welcome") {
@@ -199,8 +197,7 @@ export default function AuthEntry() {
     return (
       <SignupSuccessScreen
         onContinue={() => {
-          // AuthContext detects isSignedIn and redirects to (tabs) via useEffect
-          setCurrentScreen("login");
+          router.replace("/(tabs)");
         }}
       />
     );
