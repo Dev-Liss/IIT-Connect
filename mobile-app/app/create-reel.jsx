@@ -102,7 +102,10 @@ export default function CreateReelScreen() {
     if (Platform.OS !== "android") return undefined;
 
     const keyboardShowSub = Keyboard.addListener("keyboardDidShow", (event) => {
-      const nextHeight = Math.max(0, event.endCoordinates.height - insets.bottom);
+      const nextHeight = Math.max(
+        0,
+        event.endCoordinates.height - insets.bottom,
+      );
       setKeyboardHeight(nextHeight);
     });
 
@@ -203,7 +206,7 @@ export default function CreateReelScreen() {
       const fullCaption = caption.trim();
 
       const formData = new FormData();
-      formData.append("userId", user.id);
+      formData.append("userId", user._id || user.id);
       formData.append("caption", fullCaption);
       formData.append("category", category);
 
