@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   Platform,
   StatusBar,
+  DeviceEventEmitter,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -40,16 +41,31 @@ export default function AcademicScreen() {
 
   // When openModal param arrives, switch to the right sub-tab and set the flag
   useEffect(() => {
-    if (openModal === "kuppi") {
-      setActiveTab("Kuppi");
-      setPendingKuppi(true);
-      // Clear the param so it doesn't re-trigger on re-render
-      router.setParams({ openModal: undefined });
-    } else if (openModal === "resource") {
-      setActiveTab("Resources");
-      setPendingResource(true);
+    const handleOpenModal = (modalType) => {
+      if (modalType === "kuppi") {
+        setActiveTab("Kuppi");
+        setPendingKuppi(true);
+      } else if (modalType === "resource") {
+        setActiveTab("Resources");
+        setPendingResource(true);
+      }
+    };
+
+    // Handle deep links or param navigation
+    if (openModal) {
+      handleOpenModal(openModal);
       router.setParams({ openModal: undefined });
     }
+
+    // Handle internal triggers via EventEmitter (fixes iOS expo-router tab bug)
+    const subscription = DeviceEventEmitter.addListener(
+      "openAcademicModal",
+      handleOpenModal,
+    );
+
+    return () => {
+      subscription.remove();
+    };
   }, [openModal]);
 
   return (

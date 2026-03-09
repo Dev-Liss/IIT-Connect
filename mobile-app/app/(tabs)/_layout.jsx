@@ -28,6 +28,7 @@ import {
   Modal,
   Animated as RNAnimated,
   TouchableWithoutFeedback,
+  DeviceEventEmitter,
 } from "react-native";
 import Animated, {
   useSharedValue,
@@ -256,16 +257,16 @@ function CreateContentSheet({ visible, onClose, currentTab }) {
   const handleTilePress = (tile) => {
     onClose();
     if (tile.action) {
-      // Academic tiles — navigate to academic tab with openModal param
+      // Academic tiles — trigger directly via DeviceEventEmitter rather than Router
+      // because push/setParams on iOS while already on the active tab is unreliable.
+      // We use 400ms to ensure the bottom sheet Modal has completely unmounted on iOS
+      // before AcademicScreen attempts to open another Modal, avoiding iOS modal conflicts.
       setTimeout(() => {
-        router.push({
-          pathname: "/(tabs)/academic",
-          params: { openModal: tile.action },
-        });
-      }, 180);
+        DeviceEventEmitter.emit("openAcademicModal", tile.action);
+      }, 400);
     } else if (tile.route) {
       // Small delay so the sheet closes smoothly before navigating
-      setTimeout(() => router.push(tile.route), 180);
+      setTimeout(() => router.push(tile.route), 250);
     }
   };
 
