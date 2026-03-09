@@ -8,7 +8,7 @@
     "start:mobile": "cd mobile-app && npx expo start",
     "dev": "concurrently \"npm run dev:backend\" \"npm run start:mobile\"",
     "start": "concurrently \"npm run start:backend\" \"npm run start:mobile\"",
-    "install:all": "npm install && cd backend && npm install && cd ../mobile-app && npm install"
+    "postinstall": "cd backend && npm install && cd ../mobile-app && npm install"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

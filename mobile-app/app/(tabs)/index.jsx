@@ -30,6 +30,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import PostCard from "../../src/components/PostCard";
 import StoriesRail from "../../src/components/StoriesRail";
 import ContentSwitcher from "../../src/components/ContentSwitcher";
@@ -38,6 +39,7 @@ import { POST_ENDPOINTS } from "../../src/config/api";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   // State
   const [activeTab, setActiveTab] = useState("feed");
@@ -169,7 +171,17 @@ export default function HomeScreen() {
           <ActivityIndicator size="large" color="#f9252b" />
           <Text style={styles.loadingText}>Loading feed...</Text>
         </View>
-        <View style={styles.floatingSwitcher}>
+        <View
+          style={[
+            styles.floatingSwitcher,
+            {
+              top:
+                Platform.OS === "ios"
+                  ? insets.top + 72
+                  : (StatusBar.currentHeight || 0) + 72,
+            },
+          ]}
+        >
           <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
         </View>
       </SafeAreaView>
@@ -185,7 +197,17 @@ export default function HomeScreen() {
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         {renderHeader()}
         {renderErrorState()}
-        <View style={styles.floatingSwitcher}>
+        <View
+          style={[
+            styles.floatingSwitcher,
+            {
+              top:
+                Platform.OS === "ios"
+                  ? insets.top + 72
+                  : (StatusBar.currentHeight || 0) + 72,
+            },
+          ]}
+        >
           <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
         </View>
       </SafeAreaView>
@@ -242,7 +264,17 @@ export default function HomeScreen() {
       </View>
 
       {/* Floating ContentSwitcher */}
-      <View style={styles.floatingSwitcher}>
+      <View
+        style={[
+          styles.floatingSwitcher,
+          {
+            top:
+              Platform.OS === "ios"
+                ? insets.top + 72
+                : (StatusBar.currentHeight || 0) + 72,
+          },
+        ]}
+      >
         <ContentSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
       </View>
     </SafeAreaView>
@@ -259,7 +291,6 @@ const styles = StyleSheet.create({
   },
   floatingSwitcher: {
     position: "absolute",
-    top: Platform.OS === "android" ? (StatusBar.currentHeight || 0) + 72 : 72,
     left: 0,
     right: 0,
     alignItems: "center",
