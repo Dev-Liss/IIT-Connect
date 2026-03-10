@@ -75,6 +75,8 @@ export default function StudentProfile({ user }) {
             const allPosts = postsJson.data || [];
 
             const filteredPosts = allPosts.filter((post) => {
+              if (!post.user) return false;
+              
               const postUserId =
                 typeof post.user === "object"
                   ? post.user._id?.toString()
