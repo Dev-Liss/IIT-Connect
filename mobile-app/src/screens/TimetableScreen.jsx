@@ -9,14 +9,18 @@ import {
   ScrollView,
   Modal,
   TouchableWithoutFeedback,
+  TextInput,
+  Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
+import { BlurView } from "expo-blur";
+import { MotiView, AnimatePresence } from "moti";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { API_BASE_URL } from "../config/api";
 import { useAuth } from "../context/AuthContext";
 import ClassCard from "../components/ClassCard";
 import TodayClassCard from "../components/TodayClassCard";
-import ModalDropdown from "../components/ModalDropdown";
 
 const HOURS = [
   "08:30", "09:30", "10:30", "11:30", "12:30",
@@ -36,6 +40,8 @@ export default function TimetableScreen({ view = "weekly" }) {
   const [selectedGroup, setSelectedGroup] = useState("");
   const [isUsingFallback, setIsUsingFallback] = useState(false);
   const [selectedLecture, setSelectedLecture] = useState(null);
+  const [groupPickerVisible, setGroupPickerVisible] = useState(false);
+  const [groupSearchQuery, setGroupSearchQuery] = useState("");
 
   const todayIndex = new Date().getDay();
   const currentDay = DAYS[todayIndex - 1] || "";
@@ -212,6 +218,41 @@ export default function TimetableScreen({ view = "weekly" }) {
     });
   };
 
+  const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+  const GroupItem = ({ item, isSelected, onSelect }) => {
+    const scale = useSharedValue(1);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: scale.value }],
+    }));
+
+    return (
+      <AnimatedPressable
+        onPressIn={() => {
+          scale.value = withSpring(0.95);
+        }}
+        onPressOut={() => {
+          scale.value = withSpring(1);
+        }}
+        onPress={() => onSelect(item)}
+        style={[styles.groupItemContainer, animatedStyle]}
+      >
+        <Text
+          style={[
+            styles.groupItemText,
+            isSelected && styles.groupItemTextSelected,
+          ]}
+        >
+          {item}
+        </Text>
+        {isSelected && (
+          <Ionicons name="checkmark" size={24} color="#f9252b" />
+        )}
+      </AnimatedPressable>
+    );
+  };
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -239,33 +280,25 @@ export default function TimetableScreen({ view = "weekly" }) {
             {/* Group Filter */}
             <View style={[styles.filterContainer, { marginBottom: 10 }]}>
               <View style={styles.pickerWrapper}>
-                <ModalDropdown
-                  options={(activeUnsupportedLevel || invalidCourseDetails) ? [] : groups}
-                  defaultValue={(activeUnsupportedLevel || invalidCourseDetails) ? "No groups available for this selection" : (selectedGroup || "Select Your Group")}
-                  onSelect={(index, value) => {
-                    setSelectedGroup(value);
-                    setIsUsingFallback(false);
+                <TouchableOpacity
+                  style={styles.dropdownContainer}
+                  onPress={() => {
+                    if (!(activeUnsupportedLevel || invalidCourseDetails)) {
+                      setGroupPickerVisible(true);
+                    }
                   }}
-                  showSearch={true}
-                  searchPlaceholder="Search Group..."
-                  style={styles.dropdownButton}
-                  textStyle={styles.dropdownButtonText}
-                  dropdownStyle={styles.dropdownList}
-                  dropdownTextStyle={styles.dropdownListText}
-                  dropdownTextHighlightStyle={styles.dropdownHighlightText}
+                  activeOpacity={0.8}
                 >
-                  <View style={styles.dropdownContainer}>
-                    <Text style={styles.badgeText}>
-                      Group: {selectedGroup || "Select"}
-                    </Text>
-                    <Ionicons
-                      name="chevron-down"
-                      size={12}
-                      color="#f9252b"
-                      style={{ marginLeft: 4 }}
-                    />
-                  </View>
-                </ModalDropdown>
+                  <Text style={styles.badgeText}>
+                    Group: {(activeUnsupportedLevel || invalidCourseDetails) ? "No groups available" : (selectedGroup || "Select")}
+                  </Text>
+                  <Ionicons
+                    name="chevron-down"
+                    size={16}
+                    color="#f9252b"
+                    style={{ marginLeft: 6 }}
+                  />
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -452,6 +485,78 @@ export default function TimetableScreen({ view = "weekly" }) {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* Glassmorphism Group Picker Modal */}
+      <Modal
+        visible={groupPickerVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setGroupPickerVisible(false)}
+      >
+        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill}>
+          <TouchableWithoutFeedback onPress={() => setGroupPickerVisible(false)}>
+            <View style={styles.glassModalOverlay}>
+              <TouchableWithoutFeedback>
+                <MotiView
+                  from={{ opacity: 0, scale: 0.8, translateY: 50 }}
+                  animate={{ opacity: 1, scale: 1, translateY: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, translateY: 50 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                  style={styles.glassModalContent}
+                >
+                  <View style={styles.glassModalHeader}>
+                    <Text style={styles.glassModalTitle}>Select Group</Text>
+                    <TouchableOpacity
+                      onPress={() => setGroupPickerVisible(false)}
+                      style={{ padding: 4 }}
+                    >
+                      <Ionicons name="close" size={24} color="#555" />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  {/* Search Input for Groups */}
+                  <View style={styles.searchContainer}>
+                    <Ionicons name="search" size={20} color="#888" style={{marginLeft: 10}} />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Search group..."
+                      placeholderTextColor="#888"
+                      value={groupSearchQuery}
+                      onChangeText={setGroupSearchQuery}
+                    />
+                  </View>
+
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingBottom: 20 }}
+                  >
+                    {groups
+                      .filter((g) =>
+                        g.toLowerCase().includes(groupSearchQuery.toLowerCase())
+                      )
+                      .map((g, index) => (
+                        <View key={g}>
+                          <GroupItem
+                            item={g}
+                            isSelected={selectedGroup === g}
+                            onSelect={(val) => {
+                              setSelectedGroup(val);
+                              setIsUsingFallback(false);
+                              setGroupPickerVisible(false);
+                            }}
+                          />
+                          {index < groups.length - 1 && (
+                            <View style={styles.groupSeparator} />
+                          )}
+                        </View>
+                      ))}
+                  </ScrollView>
+                </MotiView>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </BlurView>
+      </Modal>
     </View>
   );
 }
@@ -542,12 +647,15 @@ const styles = StyleSheet.create({
   dropdownContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    alignSelf: "flex-start",
     backgroundColor: "rgba(249, 37, 43, 0.1)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: "#f9252b",
+    minWidth: "45%",
   },
   dropdownButtonText: {
     fontSize: 14,
@@ -668,5 +776,72 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  
+  // Custom Glassmorphism Group Picker Styles
+  glassModalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  glassModalContent: {
+    width: "85%",
+    maxHeight: "70%",
+    backgroundColor: "rgba(255, 255, 255, 0.90)",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 1)",
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  glassModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  glassModalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
+    borderRadius: 12,
+    marginBottom: 15,
+    height: 40,
+  },
+  searchInput: {
+    flex: 1,
+    paddingHorizontal: 10,
+    color: "#333",
+    fontSize: 16,
+  },
+  groupItemContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  groupItemText: {
+    fontSize: 16,
+    color: "#444",
+  },
+  groupItemTextSelected: {
+    fontWeight: "bold",
+    color: "#ed2c32",
+  },
+  groupSeparator: {
+    height: 1,
+    backgroundColor: "rgba(0,0,0,0.06)",
+    marginHorizontal: 10,
   },
 });
