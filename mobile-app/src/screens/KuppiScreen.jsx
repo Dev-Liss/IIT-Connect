@@ -130,7 +130,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem("token");
+      const token = await AsyncStorage.getItem("authToken");
       await axios.post(
         KUPPI_ENDPOINTS.CREATE,
         {
@@ -187,7 +187,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   };
 
   const isOrganizer = (session) => {
-    if (!user) return false;
+    if (!user || !session || !session.organizer) return false;
     const orgId =
       typeof session.organizer === "object"
         ? session.organizer._id
@@ -196,8 +196,9 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   };
 
   const hasJoined = (session) => {
-    if (!user) return false;
+    if (!user || !session || !session.attendees) return false;
     return session.attendees.some((a) => {
+      if (!a) return false;
       const id = typeof a === "object" ? a._id : a;
       return id === user.id;
     });
