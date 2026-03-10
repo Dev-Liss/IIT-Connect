@@ -23,6 +23,12 @@ Thumbs.db
 *.swp
 *.swo
 
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
 # Temporary Files
 tmp/
 temp/
