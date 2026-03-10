@@ -71,6 +71,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "", // e.g., "L4 G1"
     },
+    tutorialGroup: {
+      type: String,
+      default: "", // e.g., "SE-G1" or "CS-G19"
+    },
     bio: {
       type: String,
       default: "",

@@ -19,11 +19,18 @@ function processLocalData(groupReq, targetDay) {
   }
   const allData = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
-  if (!allData[groupReq]) {
-    console.log(`Warning: Could not resolve group ${groupReq} in data`);
-    return [];
+  // Handle "L5 SE -G1" format by extracting "SE-G1" or "CS-G1"
+  let jsonKey = groupReq;
+  const match = groupReq.match(/(CS|SE)\s*-\s*(G\d+)/);
+  if (match) {
+    jsonKey = `${match[1]}-${match[2]}`;
   }
-  const groupData = allData[groupReq] || {};
+
+  if (!allData[jsonKey]) {
+    console.log(`Warning: Could not resolve group ${jsonKey} in data (original req: ${groupReq})`);
+    return null;
+  }
+  const groupData = allData[jsonKey] || {};
   const entries = [];
   let colorIdx = 0;
 
@@ -126,6 +133,13 @@ exports.getTimetable = async (req, res) => {
 
     const timetable = processLocalData(tutGroup);
 
+    if (!timetable) {
+      return res.status(404).json({
+        success: false,
+        message: "Timetable not available for this group",
+      });
+    }
+
     res.status(200).json({
       success: true,
       count: timetable.length,
@@ -163,6 +177,13 @@ exports.getTodayTimetable = async (req, res) => {
     }
 
     const timetable = processLocalData(tutGroup, todayName);
+
+    if (!timetable) {
+      return res.status(404).json({
+        success: false,
+        message: "Timetable not available for this group",
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -226,6 +247,13 @@ exports.getTimetableByGroup = async (req, res) => {
     }
 
     const timetable = processLocalData(tutGroup);
+
+    if (!timetable) {
+      return res.status(404).json({
+        success: false,
+        message: "Timetable not available for this group",
+      });
+    }
 
     res.status(200).json({
       success: true,

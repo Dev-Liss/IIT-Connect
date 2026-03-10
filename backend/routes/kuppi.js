@@ -24,7 +24,7 @@ router.get("/", async (req, res) => {
         const sessions = await Kuppi.find({
             endTime: { $gt: now }
         })
-            .populate("organizer", "username studentId")
+            .populate("organizer", "username profileImage")
             .populate("attendees", "username")
             .sort({ startTime: 1 }); // Sort by start time ascending
         res.json(sessions);
@@ -40,7 +40,7 @@ router.get("/", async (req, res) => {
 router.get("/my-sessions", protect, async (req, res) => {
     try {
         const sessions = await Kuppi.find({ organizer: req.user.id })
-            .populate("organizer", "username studentId")
+            .populate("organizer", "username profileImage")
             .populate("attendees", "username")
             .sort({ createdAt: -1 });
         res.json(sessions);
@@ -123,7 +123,7 @@ router.post("/join/:id", protect, async (req, res) => {
 
         // Return session data (whether newly joined or already joined)
         const updatedKuppi = await Kuppi.findById(req.params.id)
-            .populate("organizer", "username studentId")
+            .populate("organizer", "username profileImage")
             .populate("attendees", "username");
 
         return res.json({ msg: "Attendance recorded", kuppi: updatedKuppi });
