@@ -644,7 +644,7 @@ export default function TimetableScreen({ view = "weekly" }) {
                   from={{ opacity: 0, scale: 0.8, translateY: 50 }}
                   animate={{ opacity: 1, scale: 1, translateY: 0 }}
                   exit={{ opacity: 0, scale: 0.8, translateY: 50 }}
-                  transition={{ type: "spring", damping: 35, stiffness: 400 }}
+                  transition={{ type: "spring", damping: 18, stiffness: 250 }}
                   style={styles.glassModalContent}
                 >
                   <View style={styles.glassModalHeader}>
@@ -770,7 +770,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#ffffff",
     paddingHorizontal: 20,
   },
   todayTitle: {

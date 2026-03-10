@@ -913,9 +913,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     marginVertical: 4,
-    // Light Shadow
-    boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.08)",
-    elevation: 2,
     borderWidth: 1,
     borderColor: "#f0f0f0",
   },

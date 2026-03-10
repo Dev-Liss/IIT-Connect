@@ -49,8 +49,6 @@ const styles = StyleSheet.create({
     marginVertical: 2,
     marginHorizontal: 1, // spacing between columns
     justifyContent: "flex-start",
-    elevation: 2, // Android shadow
-    boxShadow: "0px 1px 2px 0px rgba(0, 0, 0, 0.1)",
     minHeight: 50,
   },
   courseCode: {
