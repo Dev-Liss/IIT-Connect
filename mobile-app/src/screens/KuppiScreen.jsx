@@ -130,8 +130,8 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem("token");
-      await axios.post(
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await axios.post(
         KUPPI_ENDPOINTS.CREATE,
         {
           ...formData,
@@ -149,6 +149,13 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
+      
+      const newSessionWithUser = {
+        ...response.data,
+        organizer: response.data.organizer || user,
+      };
+      setSessions((prev) => Array.isArray(prev) ? [newSessionWithUser, ...prev] : [newSessionWithUser]);
+
       setCreateModalVisible(false);
       // Reset form
       const now = new Date();
@@ -187,19 +194,16 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   };
 
   const isOrganizer = (session) => {
-    if (!user) return false;
-    const orgId =
-      typeof session.organizer === "object"
-        ? session.organizer._id
-        : session.organizer;
-    return orgId === user.id;
+    if (!user || !session?.organizer) return false;
+    const orgId = typeof session.organizer === "object" ? session.organizer?._id : session.organizer;
+    return orgId === user?.id || orgId === user?._id;
   };
 
   const hasJoined = (session) => {
-    if (!user) return false;
+    if (!user || !session?.attendees) return false;
     return session.attendees.some((a) => {
-      const id = typeof a === "object" ? a._id : a;
-      return id === user.id;
+      const id = typeof a === "object" ? a?._id : a;
+      return id === user?.id || id === user?._id;
     });
   };
 
@@ -208,11 +212,11 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 
     return (
       <View
-        key={session._id}
+        key={session?._id || Math.random().toString()}
         style={[styles.card, isMySession && styles.mySessionCard]}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>{session.title}</Text>
+          <Text style={styles.cardTitle}>{session?.title}</Text>
           {userIsOrganizer && isMySession && (
             <View style={styles.organizerBadge}>
               <Text style={styles.organizerText}>ORGANIZER</Text>
@@ -291,13 +295,13 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 
   // Filter Logic
   // My Sessions: session.organizer === currentUserId
-  const mySessions = sessions.filter((s) => isOrganizer(s));
+  const mySessions = Array.isArray(sessions) ? sessions.filter((s) => s && isOrganizer(s)) : [];
 
   // Upcoming Sessions:
   // 1. Organizer is NOT currentUserId
   // 2. Session has not ended yet (endTime > now)
-  const upcomingSessions = sessions.filter((s) => {
-    if (isOrganizer(s)) return false;
+  const upcomingSessions = Array.isArray(sessions) ? sessions.filter((s) => {
+    if (!s || isOrganizer(s)) return false;
 
     let sessionEnd;
     if (s.endTime) {
@@ -315,7 +319,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
       return sessionEnd > currentTime;
     }
     return true;
-  });
+  }) : [];
 
   // Date Picker Handlers
   const onDateChange = (event, selectedDate) => {
@@ -756,9 +760,11 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            {selectedSession && (
-              <>
-                <View style={styles.detailsHeader}>
+            {(() => {
+              if (!selectedSession) return null;
+              return (
+                <>
+                  <View style={styles.detailsHeader}>
                   <Text style={styles.modalTitle}>{selectedSession.title}</Text>
                   <TouchableOpacity
                     onPress={() => setDetailsModalVisible(false)}
@@ -830,9 +836,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                     <View>
                       <Text style={styles.detailLabel}>Organizer</Text>
                       <Text style={styles.detailValue}>
-                        {typeof selectedSession.organizer === "object"
-                          ? selectedSession.organizer.username
-                          : "Organizer"}
+                        {selectedSession?.organizer?.username || "Unknown User"}
                       </Text>
                     </View>
                   </View>
@@ -846,8 +850,9 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   </Text>
                   <Text style={styles.aboutText}>{selectedSession.about}</Text>
                 </ScrollView>
-              </>
-            )}
+                </>
+              );
+            })()}
           </View>
         </View>
       </Modal>
@@ -908,9 +913,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     marginVertical: 4,
-    // Light Shadow
-    boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.08)",
-    elevation: 2,
     borderWidth: 1,
     borderColor: "#f0f0f0",
   },

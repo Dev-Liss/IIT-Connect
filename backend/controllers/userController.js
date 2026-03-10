@@ -27,7 +27,7 @@ exports.getUserProfile = async (req, res) => {
 // @access  Private
 exports.updateUserProfile = async (req, res) => {
     const {
-        username, bio, batch,
+        username, bio, batch, tutorialGroup,
         profilePicture, coverPicture,
         graduationYear, currentJob, company, location, careerJourney
     } = req.body;
@@ -37,6 +37,7 @@ exports.updateUserProfile = async (req, res) => {
     if (username !== undefined) profileFields.username = username;
     if (bio !== undefined) profileFields.bio = bio;
     if (batch !== undefined) profileFields.batch = batch;
+    if (tutorialGroup !== undefined) profileFields.tutorialGroup = tutorialGroup;
     if (profilePicture !== undefined) profileFields.profilePicture = profilePicture;
     if (coverPicture !== undefined) profileFields.coverPicture = coverPicture;
     if (graduationYear !== undefined) profileFields.graduationYear = graduationYear;

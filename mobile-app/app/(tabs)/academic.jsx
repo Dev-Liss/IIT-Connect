@@ -20,6 +20,7 @@ import {
   StatusBar,
   DeviceEventEmitter,
 } from "react-native";
+import { MotiView, AnimatePresence } from "moti";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -78,18 +79,30 @@ export default function AcademicScreen() {
         <View style={styles.titleRow}>
           <Text style={styles.headerTitle}>Academic</Text>
           {activeTab === "Timetable" ? (
-            <TouchableOpacity
-              style={styles.viewToggle}
-              onPress={() => setView(view === "weekly" ? "today" : "weekly")}
-            >
-              <Ionicons
-                name={view === "weekly" ? "list-outline" : "grid-outline"}
-                size={22}
-                color="#555"
-              />
-            </TouchableOpacity>
+            <View style={styles.toggleContainer}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setView("weekly")}
+              >
+                <Ionicons
+                  name="grid-outline"
+                  size={22}
+                  color={view === "weekly" ? "#f9252b" : "#aaa"}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => setView("today")}
+              >
+                <Ionicons
+                  name="list-outline"
+                  size={22}
+                  color={view === "today" ? "#f9252b" : "#aaa"}
+                />
+              </TouchableOpacity>
+            </View>
           ) : (
-            <View style={{ width: 38 }} />
+            <View style={{ width: 76 }} />
           )}
         </View>
 
@@ -99,19 +112,52 @@ export default function AcademicScreen() {
 
       {/* Content */}
       <View style={styles.content}>
-        {activeTab === "Timetable" ? (
-          <TimetableScreen view={view} />
-        ) : activeTab === "Kuppi" ? (
-          <KuppiScreen
-            autoOpenCreate={pendingKuppi}
-            onModalOpened={() => setPendingKuppi(false)}
-          />
-        ) : (
-          <ResourcesScreen
-            autoOpenUpload={pendingResource}
-            onModalOpened={() => setPendingResource(false)}
-          />
-        )}
+        <AnimatePresence exitBeforeEnter>
+          {activeTab === "Timetable" && (
+            <MotiView
+              key="Timetable"
+              from={{ opacity: 0, translateX: 20 }}
+              animate={{ opacity: 1, translateX: 0 }}
+              exit={{ opacity: 0, translateX: -20 }}
+              transition={{ type: "timing", duration: 250 }}
+              style={{ flex: 1 }}
+            >
+              <TimetableScreen view={view} />
+            </MotiView>
+          )}
+
+          {activeTab === "Kuppi" && (
+            <MotiView
+              key="Kuppi"
+              from={{ opacity: 0, translateX: 20 }}
+              animate={{ opacity: 1, translateX: 0 }}
+              exit={{ opacity: 0, translateX: -20 }}
+              transition={{ type: "timing", duration: 250 }}
+              style={{ flex: 1 }}
+            >
+              <KuppiScreen
+                autoOpenCreate={pendingKuppi}
+                onModalOpened={() => setPendingKuppi(false)}
+              />
+            </MotiView>
+          )}
+
+          {activeTab === "Resources" && (
+            <MotiView
+              key="Resources"
+              from={{ opacity: 0, translateX: 20 }}
+              animate={{ opacity: 1, translateX: 0 }}
+              exit={{ opacity: 0, translateX: -20 }}
+              transition={{ type: "timing", duration: 250 }}
+              style={{ flex: 1 }}
+            >
+              <ResourcesScreen
+                autoOpenUpload={pendingResource}
+                onModalOpened={() => setPendingResource(false)}
+              />
+            </MotiView>
+          )}
+        </AnimatePresence>
       </View>
     </View>
   );
@@ -140,10 +186,16 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#262626",
   },
-  viewToggle: {
-    padding: 8,
+  toggleContainer: {
+    flexDirection: "row",
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
+    padding: 4,
+    alignItems: "center",
+  },
+  iconButton: {
+    padding: 6,
+    marginHorizontal: 4,
   },
   content: {
     flex: 1,
