@@ -9,6 +9,13 @@
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider } from "../src/context/AuthContext";
+import { Alert } from "react-native";
+import CustomAlertContainer, { CustomAlertManager } from "../src/components/CustomAlert";
+
+// Override React Native's global Alert.alert to use our custom toast/snackbar UI
+Alert.alert = (title, message, buttons, options) => {
+  CustomAlertManager.alert(title, message, buttons, options);
+};
 
 export default function RootLayout() {
   return (
@@ -30,6 +37,7 @@ export default function RootLayout() {
           <Stack.Screen name="admin-dashboard" options={{ headerShown: false }} />
           <Stack.Screen name="report-detail" options={{ headerShown: false }} />
         </Stack>
+        <CustomAlertContainer />
       </AuthProvider>
     </SafeAreaProvider>
   );
