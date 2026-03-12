@@ -43,6 +43,8 @@ export default function PostCard({ post, onLike, onShare }) {
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
   const [commentCount, setCommentCount] = useState(post.comments?.length || 0);
   const [commentsVisible, setCommentsVisible] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
 
   // Calculate dynamic image height based on aspect ratio
   // Formula: height = width / aspectRatio
@@ -189,10 +191,24 @@ export default function PostCard({ post, onLike, onShare }) {
       {/* ========== CAPTION ========== */}
       {post.caption && (
         <View style={styles.captionContainer}>
-          <Text style={styles.caption} numberOfLines={2}>
+          <Text
+            style={styles.caption}
+            numberOfLines={isExpanded ? undefined : 2}
+            onTextLayout={(e) => {
+              if (!isTruncated && e.nativeEvent.lines.length > 2) {
+                setIsTruncated(true);
+              }
+            }}
+            onPress={() => setIsExpanded(!isExpanded)}
+          >
             <Text style={styles.captionUsername}>{username} </Text>
             {post.caption}
           </Text>
+          {!isExpanded && isTruncated && (
+            <TouchableOpacity onPress={() => setIsExpanded(true)}>
+              <Text style={styles.readMoreText}>more</Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
@@ -319,6 +335,10 @@ const styles = StyleSheet.create({
   },
   captionUsername: {
     fontWeight: "600",
+  },
+  readMoreText: {
+    color: "#8e8e8e",
+    marginTop: 2,
   },
   // Timestamp
   timestamp: {

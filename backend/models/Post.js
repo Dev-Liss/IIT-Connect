@@ -30,7 +30,7 @@ const PostSchema = new mongoose.Schema(
     caption: {
       type: String,
       trim: true,
-      maxlength: [500, "Caption cannot exceed 500 characters"],
+      maxlength: [5000, "Caption cannot exceed 5000 characters"],
     },
     category: {
       type: String,
