@@ -187,7 +187,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   };
 
   const isOrganizer = (session) => {
-    if (!user) return false;
+    if (!user || !session.organizer) return false;
     const orgId =
       typeof session.organizer === "object"
         ? session.organizer._id
@@ -196,7 +196,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   };
 
   const hasJoined = (session) => {
-    if (!user) return false;
+    if (!user || !session.attendees) return false;
     return session.attendees.some((a) => {
       const id = typeof a === "object" ? a._id : a;
       return id === user.id;
