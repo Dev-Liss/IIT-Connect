@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SignupSuccessScreen({ onContinue }) {
     return (
@@ -30,7 +31,13 @@ export default function SignupSuccessScreen({ onContinue }) {
             </Text>
 
             {/* Let's Explore Button */}
-            <TouchableOpacity style={styles.exploreButton} onPress={onContinue}>
+            <TouchableOpacity
+                style={styles.exploreButton}
+                onPress={async () => {
+                    await AsyncStorage.setItem('keepMeSignedIn', 'true');
+                    onContinue();
+                }}
+            >
                 <Text style={styles.exploreButtonText}>Lets Explore</Text>
             </TouchableOpacity>
         </SafeAreaView>

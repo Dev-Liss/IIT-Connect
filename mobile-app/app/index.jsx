@@ -15,6 +15,7 @@ import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import { useAuth } from "../src/context/AuthContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Auth screens (Clerk-based)
 import SplashScreen from "../src/screens/SplashScreen";
@@ -34,7 +35,7 @@ import NewPasswordScreen from "../src/screens/NewPasswordScreen";
 
 export default function AuthEntry() {
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useClerkAuth();
+  const { isSignedIn, isLoaded, signOut } = useClerkAuth();
   const { user, isLoading: profileLoading } = useAuth();
 
   const [currentScreen, setCurrentScreen] = useState("splash");
@@ -43,18 +44,40 @@ export default function AuthEntry() {
   const [studentId, setStudentId] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [userData, setUserData] = useState(null);
+  const [hasCheckedKeepSignedIn, setHasCheckedKeepSignedIn] = useState(false);
+
+  // First check if the user wanted to stay signed in
+  useEffect(() => {
+    if (!isLoaded || hasCheckedKeepSignedIn) return;
+
+    const checkKeepSignedIn = async () => {
+      try {
+        const keep = await AsyncStorage.getItem("keepMeSignedIn");
+        if (keep === "false" && isSignedIn) {
+          console.log("🚪 App launched but keepMeSignedIn is false. Signing out.");
+          await signOut();
+        }
+      } catch (err) {
+        console.warn("Storage check failed", err);
+      } finally {
+        setHasCheckedKeepSignedIn(true);
+      }
+    };
+
+    checkKeepSignedIn();
+  }, [isLoaded, isSignedIn, hasCheckedKeepSignedIn, signOut]);
 
   // Once Clerk confirms sign-in AND MongoDB profile is loaded, go to main app
   useEffect(() => {
-    if (currentScreen === "signupSuccess") return;
+    if (currentScreen === "signupSuccess" || !hasCheckedKeepSignedIn) return;
 
     if (isLoaded && isSignedIn && user && !profileLoading) {
       router.replace("/(tabs)");
     }
-  }, [isLoaded, isSignedIn, user, profileLoading, currentScreen]);
+  }, [isLoaded, isSignedIn, user, profileLoading, currentScreen, hasCheckedKeepSignedIn]);
 
   // While Clerk is loading, show a spinner so we don't flash the auth screens
-  if (!isLoaded || profileLoading) {
+  if (!isLoaded || profileLoading || !hasCheckedKeepSignedIn) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E53935" />

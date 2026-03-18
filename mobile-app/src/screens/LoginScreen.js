@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSignIn, useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
 import { syncGoogleUser } from "../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword }) {
   const [email, setEmail] = useState("");
@@ -62,6 +63,7 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
       // If sign-in is complete, set the session as active
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
+        await AsyncStorage.setItem('keepMeSignedIn', keepSignedIn ? 'true' : 'false');
 
         console.log("✅ Login successful for:", trimmedEmail);
         setIsLoading(false);
@@ -107,6 +109,7 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
 
             if (retrySignIn.status === "complete") {
               await setActive({ session: retrySignIn.createdSessionId });
+              await AsyncStorage.setItem('keepMeSignedIn', keepSignedIn ? 'true' : 'false');
               console.log("✅ Login successful after retry");
               if (onLoginSuccess) {
                 onLoginSuccess();
@@ -241,6 +244,7 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
 
       // Only reach here if account EXISTS in MongoDB
       console.log("✅ [Google] MongoDB account confirmed. Navigating to home.");
+      await AsyncStorage.setItem('keepMeSignedIn', keepSignedIn ? 'true' : 'false');
       if (onLoginSuccess) {
         onLoginSuccess();
       }
