@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { useAuth } from '../../src/context/AuthContext';
+import { useRouter } from 'expo-router';
 
 // Import the actual UI screens
 import StudentProfile from '../../src/screens/profiles/StudentProfile';
@@ -9,8 +10,16 @@ import AlumniProfile from '../../src/screens/profiles/AlumniProfile';
 
 export default function ProfileSwitcher() {
   const { user, isLoading } = useAuth(); // useAuth provides a loading state
+  const router = useRouter();
 
-  // 1. Handle loading state
+  // Redirect to login if a logged-out user ever hits this screen
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/");
+    }
+  }, [isLoading, user, router]);
+
+  // 1. Handle loading state or when there's no user yet (avoid flashing)
   if (isLoading || !user) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -22,7 +31,7 @@ export default function ProfileSwitcher() {
   // 2. Render the correct screen based on role
   switch (user.role) {
     case 'student':
-      return <StudentProfile user={user} />; // Pass user data down as a prop
+      return <StudentProfile user={user} />;
 
     case 'lecturer':
       return <LecturerProfile user={user} />;

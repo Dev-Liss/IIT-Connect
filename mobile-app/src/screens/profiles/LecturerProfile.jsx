@@ -74,9 +74,12 @@ export default function LecturerProfile({ user }) {
         }, [user?._id, user?.id])
     );
 
-    const handleLogout = async () => {
-        await logout();
+    const handleLogout = () => {
+        // Navigate immediately to avoid unmounting race conditions
         router.replace("/");
+        setTimeout(async () => {
+            await logout();
+        }, 100);
     };
 
     const formatDate = (dateString) => {
