@@ -31,6 +31,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { REPORTS_ENDPOINTS } from "../src/config/api";
 
 const STORAGE_KEY = "@iit_connect_my_report_ids";
+const SEEN_COUNTS_KEY = "@iit_connect_seen_response_counts";
 
 // ── Matches academic COLORS ──
 const COLORS = {
@@ -61,7 +62,7 @@ const formatTimeAgo = (dateString) => {
 };
 
 // ── Outside main component to prevent keyboard dismissal ──
-const ReportItem = ({ item, onPress }) => {
+const ReportItem = ({ item, onPress, hasNewResponse }) => {
     const statusColor = STATUS_COLORS[item.status] || STATUS_COLORS.pending;
     const responseCount = item.responses?.length ?? 0;
     const displayTitle = item.title || item.subject || "(No title)";
@@ -70,10 +71,8 @@ const ReportItem = ({ item, onPress }) => {
         <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => onPress(item._id)}>
             <View style={styles.cardHeader}>
                 <Text style={styles.cardTitle}>{displayTitle}</Text>
-                {responseCount > 0 && (
-                    <View style={styles.responseBadge}>
-                        <Text style={styles.responseBadgeText}>{responseCount}</Text>
-                    </View>
+                {hasNewResponse && (
+                    <View style={styles.newDot} />
                 )}
             </View>
 
@@ -96,9 +95,9 @@ const ReportItem = ({ item, onPress }) => {
             <Text style={styles.cardDescription} numberOfLines={2}>{item.description}</Text>
 
             <View style={styles.cardFooter}>
+                <View style={{ flex: 1 }} />
                 <Ionicons name="time-outline" size={13} color={COLORS.GREY} />
                 <Text style={styles.cardFooterText}>{formatTimeAgo(item.createdAt)}</Text>
-                <View style={{ flex: 1 }} />
                 <Ionicons name="chevron-forward" size={16} color={COLORS.LIGHT_GREY} />
             </View>
         </TouchableOpacity>
@@ -115,6 +114,7 @@ export default function AnonymousReportScreen() {
     const [reports, setReports] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [seenCounts, setSeenCounts] = useState({});
 
     const loadHistory = useCallback(async (isRefresh = false) => {
         if (isRefresh) setRefreshing(true);
@@ -130,6 +130,11 @@ export default function AnonymousReportScreen() {
             });
             const data = await res.json();
             if (data.success) setReports(data.data);
+            // Load seen counts
+            try {
+                const raw = await AsyncStorage.getItem(SEEN_COUNTS_KEY);
+                if (raw) setSeenCounts(JSON.parse(raw));
+            } catch (e) { /* ignore */ }
         } catch (err) {
             console.error("❌ History fetch error:", err);
         } finally {
@@ -339,7 +344,11 @@ export default function AnonymousReportScreen() {
                         <FlatList
                             data={reports}
                             keyExtractor={(item) => item._id}
-                            renderItem={({ item }) => <ReportItem item={item} onPress={handleReportPress} />}
+                            renderItem={({ item }) => {
+                                const currentCount = item.responses?.length ?? 0;
+                                const lastSeen = seenCounts[item._id] ?? 0;
+                                return <ReportItem item={item} onPress={handleReportPress} hasNewResponse={currentCount > lastSeen} />;
+                            }}
                             style={styles.content}
                             contentContainerStyle={styles.contentPadding}
                             showsVerticalScrollIndicator={false}
@@ -501,16 +510,15 @@ const styles = StyleSheet.create({
         flex: 1,
         marginRight: 8,
     },
-    responseBadge: {
+    newDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
         backgroundColor: COLORS.RED,
-        borderRadius: 10,
-        minWidth: 22,
-        height: 22,
-        paddingHorizontal: 6,
-        alignItems: "center",
-        justifyContent: "center",
+        position: "absolute",
+        top: 12,
+        right: 12,
     },
-    responseBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
     tagRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
     statusTag: {
         borderWidth: 1,

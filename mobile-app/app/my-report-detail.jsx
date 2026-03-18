@@ -20,7 +20,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { REPORTS_ENDPOINTS } from "../src/config/api";
+
+const SEEN_COUNTS_KEY = "@iit_connect_seen_response_counts";
 
 const COLORS = {
     RED: "#f9252b",
@@ -76,7 +79,16 @@ export default function MyReportDetailScreen() {
         try {
             const res = await fetch(REPORTS_ENDPOINTS.GET_BY_ID(id));
             const data = await res.json();
-            if (data.success) setReport(data.data);
+            if (data.success) {
+                setReport(data.data);
+                // Mark responses as seen
+                try {
+                    const raw = await AsyncStorage.getItem(SEEN_COUNTS_KEY);
+                    const seen = raw ? JSON.parse(raw) : {};
+                    seen[id] = data.data.responses?.length ?? 0;
+                    await AsyncStorage.setItem(SEEN_COUNTS_KEY, JSON.stringify(seen));
+                } catch (e) { /* ignore storage errors */ }
+            }
         } catch (err) {
             console.error("❌ MyReportDetail fetch error:", err);
         } finally {

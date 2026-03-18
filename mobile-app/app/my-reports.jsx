@@ -26,6 +26,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { REPORTS_ENDPOINTS } from "../src/config/api";
 
 const STORAGE_KEY = "@iit_connect_my_report_ids";
+const SEEN_COUNTS_KEY = "@iit_connect_seen_response_counts";
 
 // Status colours
 const STATUS_COLORS = {
@@ -51,6 +52,7 @@ export default function MyReportsScreen() {
     const [reports, setReports] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [seenCounts, setSeenCounts] = useState({});
 
     const loadReports = useCallback(async (isRefresh = false) => {
         if (isRefresh) setRefreshing(true);
@@ -72,6 +74,11 @@ export default function MyReportsScreen() {
             });
             const data = await res.json();
             if (data.success) setReports(data.data);
+            // Load seen counts
+            try {
+                const raw = await AsyncStorage.getItem(SEEN_COUNTS_KEY);
+                if (raw) setSeenCounts(JSON.parse(raw));
+            } catch (e) { /* ignore */ }
         } catch (err) {
             console.error("❌ MyReports fetch error:", err);
         } finally {
@@ -112,6 +119,8 @@ export default function MyReportsScreen() {
         const statusColor = STATUS_COLORS[item.status] || STATUS_COLORS.pending;
         const responseCount = item.responses?.length ?? 0;
         const hasResponse = responseCount > 0;
+        const lastSeen = seenCounts[item._id] ?? 0;
+        const hasNewResponse = responseCount > lastSeen;
         const displayTitle = item.title || item.subject || "(No title)";
 
         return (
@@ -128,6 +137,11 @@ export default function MyReportsScreen() {
                             {responseCount} admin {responseCount === 1 ? "response" : "responses"}
                         </Text>
                     </View>
+                )}
+
+                {/* Red dot for new unseen responses */}
+                {hasNewResponse && (
+                    <View style={styles.newDot} />
                 )}
 
                 <Text style={styles.cardTitle} numberOfLines={2}>{displayTitle}</Text>
@@ -271,6 +285,15 @@ const styles = StyleSheet.create({
         color: "#fff",
         fontSize: 11,
         fontWeight: "700",
+    },
+    newDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: "#D32F2F",
+        position: "absolute",
+        top: 12,
+        right: 12,
     },
     cardTitle: {
         fontSize: 16,
