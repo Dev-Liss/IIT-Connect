@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     SafeAreaView,
     StatusBar,
+    Alert,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -85,6 +86,36 @@ export default function AlumniProfile({ user }) {
         if (!dateString) return "";
         const options = { month: "short", day: "numeric", year: "numeric" };
         return new Date(dateString).toLocaleDateString(undefined, options);
+    };
+
+    const handleDeletePost = (postId) => {
+        Alert.alert(
+            "Delete Post",
+            "Are you sure you want to delete this post? This cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            const response = await fetch(`${API_URL}/posts/${postId}`, {
+                                method: "DELETE",
+                            });
+                            const result = await response.json();
+                            if (result.success) {
+                                setUserPosts((prev) => prev.filter((p) => p._id !== postId));
+                            } else {
+                                Alert.alert("Error", result.message || "Failed to delete post");
+                            }
+                        } catch (error) {
+                            console.error("Delete Post Error:", error);
+                            Alert.alert("Error", "Network error. Could not delete post.");
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     const SkeletonBox = ({ style }) => (
@@ -401,11 +432,11 @@ export default function AlumniProfile({ user }) {
                                                 </Text>
                                             </View>
                                         </View>
-                                        <TouchableOpacity>
+                                        <TouchableOpacity onPress={() => handleDeletePost(post._id)}>
                                             <Feather
-                                                name="more-horizontal"
+                                                name="trash-2"
                                                 size={20}
-                                                color="#666"
+                                                color="#aa1111ff"
                                             />
                                         </TouchableOpacity>
                                     </View>
