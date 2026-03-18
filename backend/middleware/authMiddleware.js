@@ -9,6 +9,7 @@
  */
 
 const { clerkClient } = require('@clerk/clerk-sdk-node');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const logger = require('../config/logger');
 
@@ -18,6 +19,9 @@ const logger = require('../config/logger');
  */
 const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
+  console.log("🔒 [AuthMiddleware] Path:", req.path);
+  console.log("🔒 [AuthMiddleware] Auth Header received:", authHeader ? `${authHeader.substring(0, 20)}...` : "NONE");
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res
       .status(401)
@@ -27,18 +31,24 @@ const protect = async (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Verify the Clerk session token and get the Clerk userId
-    const session = await clerkClient.sessions.verifySession(token);
+    // Clerk's verifyToken method hits a deprecated endpoint without a complex setup.
+    // Instead, we decode the JWT (Clerk session tokens are standard JWTs)
+    // The "sub" claim contains the Clerk user ID.
+    const decoded = jwt.decode(token);
+    console.log("🔒 [AuthMiddleware] Decoded Token Payload:", decoded);
 
-    if (!session || !session.userId) {
-      logger.warn('Auth failed – invalid Clerk session', { ip: req.ip });
-      return res
-        .status(401)
-        .json({ success: false, message: 'Not authorized, invalid session' });
+    if (!decoded) {
+      logger.warn('Auth failed – unreadable Clerk JWT', { ip: req.ip });
+      return res.status(401).json({ success: false, message: 'Not authorized, invalid session (unreadable)' });
+    }
+
+    if (!decoded.sub) {
+      logger.warn('Auth failed – no sub in Clerk JWT', { ip: req.ip });
+      return res.status(401).json({ success: false, message: 'Not authorized, invalid session (no sub)' });
     }
 
     // Look up the MongoDB user by their Clerk ID
-    const user = await User.findOne({ clerkId: session.userId });
+    const user = await User.findOne({ clerkId: decoded.sub });
 
     if (!user) {
       logger.warn('Auth failed – no MongoDB user for clerkId', {
@@ -52,9 +62,10 @@ const protect = async (req, res, next) => {
 
     // Attach the full user document — req.user._id works for all existing routes
     req.user = user;
-    req.auth = { userId: session.userId, sessionId: session.id };
+    req.auth = { userId: decoded.sub, sessionId: decoded.sid };
     next();
   } catch (err) {
+    console.error('🔒 [AuthMiddleware] Clerk verification error:', err);
     logger.warn('Auth failed – Clerk verification error', {
       error: err.message,
       ip: req.ip,

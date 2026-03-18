@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { KUPPI_ENDPOINTS } from "../config/api";
 import { useAuth } from "../context/AuthContext";
+import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -66,6 +67,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   const CURRENT_USER_ID = "69803c6732b6bf165d609ee0"; // TODO: updates this with real user ID from context/storage
 
   const { user } = useAuth(); // Get user from context
+  const { getToken } = useClerkAuth(); // Get Clerk's native token fetcher
 
   useFocusEffect(
     React.useCallback(() => {
@@ -130,7 +132,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem("token");
+      const token = await getToken();
       await axios.post(
         KUPPI_ENDPOINTS.CREATE,
         {
