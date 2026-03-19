@@ -7,12 +7,17 @@
     "scheme": "iitconnect",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "icon": "./assets/images/app-icon.png",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/app-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
       "permissions": [
         "INTERNET",
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -22,8 +27,7 @@
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO"
       ],
-      "usesCleartextTraffic": true,
-      "package": "com.anonymous.iitconnect"
+      "package": "com.iit.connect.app.v1"
     },
     "web": {
       "output": "static"
@@ -58,7 +62,7 @@
       "expo-video"
     ],
     "experiments": {
-      "reactCompiler": true
+      "reactCompiler": false
     },
     "extra": {
       "router": {},
