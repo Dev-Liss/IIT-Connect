@@ -8,20 +8,22 @@
  * Make sure your phone and laptop are on the SAME WiFi network.
  */
 
-// Read from .env file - update EXPO_PUBLIC_LAPTOP_IP in .env when your IP changes
-const LAPTOP_IP = process.env.EXPO_PUBLIC_LAPTOP_IP;
-
-// Backend port (should match PORT in backend/.env)
-const PORT = "5000";
-
 // Request timeout in milliseconds
 export const REQUEST_TIMEOUT = 15000;
 
-// Full API base URL
-export const API_BASE_URL = `http://${LAPTOP_IP}:${PORT}/api`;
+// ==========================================
+// PRODUCTION URLS (Render)
+// ==========================================
+export const SOCKET_URL = "https://iit-connect.onrender.com";
+export const API_BASE_URL = `${SOCKET_URL}/api`;
 
-// Socket.io URL (same server, different purpose)
-export const SOCKET_URL = `http://${LAPTOP_IP}:${PORT}`;
+// ==========================================
+// LOCAL DEVELOPMENT URLS (Keep for reference)
+// ==========================================
+// const LAPTOP_IP = process.env.EXPO_PUBLIC_LAPTOP_IP;
+// const PORT = "5000";
+// export const API_BASE_URL = `http://${LAPTOP_IP}:${PORT}/api`;
+// export const SOCKET_URL = `http://${LAPTOP_IP}:${PORT}`;
 
 // Auth endpoints
 export const AUTH_ENDPOINTS = {
