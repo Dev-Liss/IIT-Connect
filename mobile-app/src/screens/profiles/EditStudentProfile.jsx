@@ -256,9 +256,12 @@ export default function EditStudentProfile({ user }) {
 
                     <View style={styles.mediaSection}>
                         <View style={styles.coverPlaceholder}>
-                            {coverPicture ? (
-                                <Image source={{ uri: coverPicture }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                            ) : null}
+                            <Image
+                                source={{ uri: coverPicture || "https://img.freepik.com/free-vector/hand-drawn-education-pattern_23-2148107567.jpg" }}
+                                style={{ width: '100%', height: '100%' }}
+                                resizeMode="cover"
+                                onError={() => {}} // silently handle image load failure
+                            />
                         </View>
 
                         <View style={styles.avatarContainer}>
