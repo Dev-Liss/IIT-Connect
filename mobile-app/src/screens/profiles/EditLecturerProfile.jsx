@@ -253,6 +253,16 @@ export default function EditLecturerProfile({ user }) {
                         </View>
                     </View>
 
+                    <TouchableOpacity
+                        style={[styles.saveButton, saving && { opacity: 0.6 }]}
+                        onPress={handleSave}
+                        disabled={saving}
+                    >
+                        <Text style={styles.saveButtonText}>
+                            {saving ? "Saving Changes..." : "Save Changes"}
+                        </Text>
+                    </TouchableOpacity>
+
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -282,4 +292,17 @@ const styles = StyleSheet.create({
     readOnlyText: { color: '#777' },
     textAreaContainer: { paddingVertical: 15, alignItems: 'flex-start' },
     textArea: { flex: 1, fontSize: 16, color: '#000', minHeight: 100, width: '100%' },
+    saveButton: {
+        backgroundColor: '#D32F2F',
+        marginHorizontal: 20,
+        marginVertical: 20,
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    saveButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
 });
