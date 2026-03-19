@@ -215,10 +215,18 @@ export default function EditAlumniProfile({ user }) {
 
     if (loading) {
         return (
-            <View
-                style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-            >
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                 <ActivityIndicator size="large" color="#D32F2F" />
+                <Text style={{ marginTop: 10, color: '#666' }}>Loading Profile...</Text>
+            </View>
+        );
+    }
+
+    if (uploading) {
+        return (
+            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size="large" color="#D32F2F" />
+                <Text style={{ marginTop: 12, color: '#555', fontSize: 15 }}>Uploading image...</Text>
             </View>
         );
     }
@@ -562,6 +570,16 @@ export default function EditAlumniProfile({ user }) {
                             )}
                         </View>
                     </View>
+
+                    <TouchableOpacity
+                        style={[styles.saveButton, saving && { opacity: 0.6 }]}
+                        onPress={handleSave}
+                        disabled={saving}
+                    >
+                        <Text style={styles.saveButtonText}>
+                            {saving ? "Saving Changes..." : "Save Changes"}
+                        </Text>
+                    </TouchableOpacity>
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -713,4 +731,17 @@ const styles = StyleSheet.create({
     },
     careerYearRow: { flexDirection: "row", gap: 8 },
     careerYearInput: { flex: 1 },
+    saveButton: {
+        backgroundColor: '#D32F2F',
+        marginHorizontal: 20,
+        marginVertical: 20,
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    saveButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
 });

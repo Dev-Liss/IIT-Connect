@@ -5,10 +5,18 @@ import {
     Image,
     StyleSheet,
     ScrollView,
+    FlatList,
     TouchableOpacity,
     SafeAreaView,
     StatusBar,
     Alert,
+    Modal,
+    TextInput,
+    KeyboardAvoidingView,
+    Platform,
+    Share,
+    Dimensions,
+    ActivityIndicator,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -21,6 +29,8 @@ const DEFAULT_AVATAR =
 const DEFAULT_COVER =
     "https://img.freepik.com/free-vector/hand-drawn-education-pattern_23-2148107567.jpg";
 
+const { height } = Dimensions.get("window");
+
 export default function AlumniProfile({ user }) {
     const router = useRouter();
     const { logout } = useAuth();
@@ -30,18 +40,22 @@ export default function AlumniProfile({ user }) {
     const [userPosts, setUserPosts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Re-fetch every time this screen comes into focus so edits are reflected immediately
+    // Comments state
+    const [commentModalPost, setCommentModalPost] = useState(null);
+    const [comments, setComments] = useState([]);
+    const [commentText, setCommentText] = useState("");
+    const [commentsLoading, setCommentsLoading] = useState(false);
+    const [submittingComment, setSubmittingComment] = useState(false);
+
     useFocusEffect(
         useCallback(() => {
             const fetchAllData = async (silent = false) => {
                 if (!user || (!user._id && !user.id)) return;
                 const userId = user._id || user.id;
 
-                // First load shows skeleton; subsequent tab-focus refreshes silently
                 if (!silent) setLoading(true);
 
                 try {
-                    // Fetch profile and user-specific posts in parallel
                     const [profileResponse, postsResponse] = await Promise.all([
                         fetch(`${API_URL}/users/profile/${userId}`),
                         fetch(`${API_URL}/posts?userId=${userId}`),
@@ -72,13 +86,11 @@ export default function AlumniProfile({ user }) {
                 }
             };
 
-            // If data already loaded, refresh silently in the background
             fetchAllData(profileData !== null);
         }, [user?._id, user?.id])
     );
 
     const handleLogout = () => {
-        // Navigate immediately to avoid unmounting race conditions
         router.replace("/");
         setTimeout(async () => {
             await logout();
@@ -121,6 +133,61 @@ export default function AlumniProfile({ user }) {
         );
     };
 
+    const openComments = async (post) => {
+        setCommentModalPost(post);
+        setComments([]);
+        setCommentsLoading(true);
+        try {
+            const res = await fetch(`${API_URL}/posts/${post._id}/comments`);
+            const json = await res.json();
+            if (json.success) setComments(json.comments || []);
+        } catch (e) {
+            console.error("Fetch comments error:", e);
+        } finally {
+            setCommentsLoading(false);
+        }
+    };
+
+    const submitComment = async () => {
+        if (!commentText.trim() || !commentModalPost) return;
+        const userId = user?._id || user?.id;
+        setSubmittingComment(true);
+        try {
+            const res = await fetch(`${API_URL}/posts/${commentModalPost._id}/comment`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId, text: commentText.trim() }),
+            });
+            const json = await res.json();
+            if (json.success && json.comment) {
+                setComments((prev) => [
+                    ...prev,
+                    {
+                        ...json.comment,
+                        user: {
+                            username: profileData?.username || user?.username,
+                            profilePicture: profileData?.profilePicture,
+                        },
+                    },
+                ]);
+                setCommentText("");
+            }
+        } catch (e) {
+            console.error("Submit comment error:", e);
+        } finally {
+            setSubmittingComment(false);
+        }
+    };
+
+    const handleShare = async (post) => {
+        try {
+            const message = [post.caption, post.media?.url].filter(Boolean).join("\n");
+            await Share.share({ message: message || "Check out this post!" });
+        } catch (e) {
+            console.error("Share error:", e);
+        }
+    };
+
     const SkeletonBox = ({ style }) => (
         <View style={[{ backgroundColor: "#e4e4e4", borderRadius: 6 }, style]} />
     );
@@ -130,10 +197,7 @@ export default function AlumniProfile({ user }) {
             <SafeAreaView style={styles.container}>
                 <StatusBar barStyle="dark-content" backgroundColor="#f9f9f9" />
                 <ScrollView scrollEnabled={false} contentContainerStyle={styles.scrollContent}>
-                    {/* Cover skeleton */}
                     <View style={[styles.coverContainer, { backgroundColor: "#e4e4e4" }]} />
-
-                    {/* Avatar + action buttons skeleton */}
                     <View style={styles.profileHeader}>
                         <View style={[styles.avatarContainer]}>
                             <SkeletonBox style={styles.avatar} />
@@ -143,21 +207,15 @@ export default function AlumniProfile({ user }) {
                             <SkeletonBox style={{ width: 95, height: 36, borderRadius: 20 }} />
                         </View>
                     </View>
-
-                    {/* Name / role / detail rows skeleton */}
                     <View style={[styles.infoContainer, { gap: 8 }]}>
                         <SkeletonBox style={{ width: "55%", height: 26 }} />
                         <SkeletonBox style={{ width: "38%", height: 16 }} />
                         <SkeletonBox style={{ width: "68%", height: 16, marginTop: 4 }} />
                     </View>
-
-                    {/* Tab bar skeleton */}
                     <View style={[styles.tabContainer, { justifyContent: "space-around" }]}>
                         <SkeletonBox style={{ width: "35%", height: 14, marginVertical: 14 }} />
                         <SkeletonBox style={{ width: "35%", height: 14, marginVertical: 14 }} />
                     </View>
-
-                    {/* Content card skeleton */}
                     <View style={styles.aboutContainer}>
                         <View style={styles.card}>
                             <SkeletonBox style={{ width: "28%", height: 13, marginBottom: 16 }} />
@@ -171,7 +229,6 @@ export default function AlumniProfile({ user }) {
         );
     }
 
-    // Career journey can be stored as an array or as JSON string
     let careerJourney = [];
     if (profileData?.careerJourney) {
         if (Array.isArray(profileData.careerJourney)) {
@@ -201,9 +258,7 @@ export default function AlumniProfile({ user }) {
                 {/* Cover Image */}
                 <View style={styles.coverContainer}>
                     <Image
-                        source={{
-                            uri: profileData?.coverPicture || DEFAULT_COVER,
-                        }}
+                        source={{ uri: profileData?.coverPicture || DEFAULT_COVER }}
                         style={styles.coverImage}
                     />
                 </View>
@@ -212,33 +267,19 @@ export default function AlumniProfile({ user }) {
                 <View style={styles.profileHeader}>
                     <View style={styles.avatarContainer}>
                         <Image
-                            source={{
-                                uri:
-                                    profileData?.profilePicture ||
-                                    DEFAULT_AVATAR,
-                            }}
+                            source={{ uri: profileData?.profilePicture || DEFAULT_AVATAR }}
                             style={styles.avatar}
                         />
                     </View>
-
                     <View style={styles.actionRow}>
-                        <TouchableOpacity
-                            style={styles.iconButton}
-                            onPress={handleLogout}
-                        >
-                            <Ionicons
-                                name="log-out-outline"
-                                size={24}
-                                color="#333"
-                            />
+                        <TouchableOpacity style={styles.iconButton} onPress={handleLogout}>
+                            <Ionicons name="log-out-outline" size={24} color="#333" />
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={styles.editButton}
                             onPress={() => router.push("/edit-profile")}
                         >
-                            <Text style={styles.editButtonText}>
-                                Edit Profile
-                            </Text>
+                            <Text style={styles.editButtonText}>Edit Profile</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -250,28 +291,16 @@ export default function AlumniProfile({ user }) {
                     </Text>
                     <Text style={styles.roleText}>{roleLabel}</Text>
 
-                    {/* Email */}
                     <View style={styles.detailRow}>
-                        <Feather
-                            name="mail"
-                            size={16}
-                            color="#333"
-                            style={styles.icon}
-                        />
+                        <Feather name="mail" size={16} color="#333" style={styles.icon} />
                         <Text style={styles.detailText}>
                             {profileData?.email || user?.email || ""}
                         </Text>
                     </View>
 
-                    {/* Current Job */}
                     {(profileData?.currentJob || profileData?.company) ? (
                         <View style={styles.detailRow}>
-                            <Feather
-                                name="briefcase"
-                                size={16}
-                                color="#333"
-                                style={styles.icon}
-                            />
+                            <Feather name="briefcase" size={16} color="#333" style={styles.icon} />
                             <Text style={styles.detailText}>
                                 {[profileData?.currentJob, profileData?.company]
                                     .filter(Boolean)
@@ -280,18 +309,10 @@ export default function AlumniProfile({ user }) {
                         </View>
                     ) : null}
 
-                    {/* Location */}
                     {profileData?.location ? (
                         <View style={styles.detailRow}>
-                            <Feather
-                                name="map-pin"
-                                size={16}
-                                color="#333"
-                                style={styles.icon}
-                            />
-                            <Text style={styles.detailText}>
-                                {profileData.location}
-                            </Text>
+                            <Feather name="map-pin" size={16} color="#333" style={styles.icon} />
+                            <Text style={styles.detailText}>{profileData.location}</Text>
                         </View>
                     ) : null}
                 </View>
@@ -299,35 +320,18 @@ export default function AlumniProfile({ user }) {
                 {/* Tabs */}
                 <View style={styles.tabContainer}>
                     <TouchableOpacity
-                        style={[
-                            styles.tab,
-                            activeTab === "About" && styles.activeTab,
-                        ]}
+                        style={[styles.tab, activeTab === "About" && styles.activeTab]}
                         onPress={() => setActiveTab("About")}
                     >
-                        <Text
-                            style={[
-                                styles.tabText,
-                                activeTab === "About" && styles.activeTabText,
-                            ]}
-                        >
+                        <Text style={[styles.tabText, activeTab === "About" && styles.activeTabText]}>
                             About
                         </Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity
-                        style={[
-                            styles.tab,
-                            activeTab === "Posts" && styles.activeTab,
-                        ]}
+                        style={[styles.tab, activeTab === "Posts" && styles.activeTab]}
                         onPress={() => setActiveTab("Posts")}
                     >
-                        <Text
-                            style={[
-                                styles.tabText,
-                                activeTab === "Posts" && styles.activeTabText,
-                            ]}
-                        >
+                        <Text style={[styles.tabText, activeTab === "Posts" && styles.activeTabText]}>
                             Posts
                         </Text>
                     </TouchableOpacity>
@@ -336,7 +340,7 @@ export default function AlumniProfile({ user }) {
                 {/* Tab Content */}
                 {activeTab === "About" ? (
                     <View style={styles.aboutContainer}>
-                        {/* BIO Card */}
+                        {/* BIO */}
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>BIO</Text>
                             <Text style={styles.bioText}>
@@ -345,7 +349,7 @@ export default function AlumniProfile({ user }) {
                             </Text>
                         </View>
 
-                        {/* Career Journey Card */}
+                        {/* Career Journey */}
                         <View style={styles.card}>
                             <Text style={styles.cardTitle}>Career Journey</Text>
 
@@ -355,20 +359,14 @@ export default function AlumniProfile({ user }) {
                                         key={index}
                                         style={[
                                             styles.careerEntry,
-                                            index < careerJourney.length - 1 &&
-                                            styles.careerEntryBorder,
+                                            index < careerJourney.length - 1 && styles.careerEntryBorder,
                                         ]}
                                     >
-                                        <Text style={styles.careerTitle}>
-                                            {entry.title || "Role"}
-                                        </Text>
+                                        <Text style={styles.careerTitle}>{entry.title || "Role"}</Text>
                                         <Text style={styles.careerSubtitle}>
                                             {[
                                                 entry.company,
-                                                [
-                                                    entry.startYear,
-                                                    entry.endYear || "Present",
-                                                ]
+                                                [entry.startYear, entry.endYear || "Present"]
                                                     .filter(Boolean)
                                                     .join(" - "),
                                             ]
@@ -379,11 +377,8 @@ export default function AlumniProfile({ user }) {
                                 ))
                             ) : (
                                 <>
-                                    {/* Placeholder entries matching image style */}
                                     <View style={[styles.careerEntry, styles.careerEntryBorder]}>
-                                        <Text style={styles.careerTitleEmpty}>
-                                            No career entries yet.
-                                        </Text>
+                                        <Text style={styles.careerTitleEmpty}>No career entries yet.</Text>
                                         <Text style={styles.careerSubtitleEmpty}>
                                             Edit your profile to add your career journey.
                                         </Text>
@@ -391,21 +386,16 @@ export default function AlumniProfile({ user }) {
                                     {graduationYear ? (
                                         <View style={styles.careerEntry}>
                                             <Text style={styles.careerTitle}>Graduate</Text>
-                                            <Text style={styles.careerSubtitle}>
-                                                IIT • {graduationYear}
-                                            </Text>
+                                            <Text style={styles.careerSubtitle}>IIT • {graduationYear}</Text>
                                         </View>
                                     ) : null}
                                 </>
                             )}
 
-                            {/* Always show graduation entry at bottom if we have career entries */}
                             {careerJourney.length > 0 && graduationYear ? (
                                 <View style={styles.careerEntry}>
                                     <Text style={styles.careerTitle}>Graduate</Text>
-                                    <Text style={styles.careerSubtitle}>
-                                        IIT • {graduationYear}
-                                    </Text>
+                                    <Text style={styles.careerSubtitle}>IIT • {graduationYear}</Text>
                                 </View>
                             ) : null}
                         </View>
@@ -418,36 +408,23 @@ export default function AlumniProfile({ user }) {
                                     <View style={styles.postHeader}>
                                         <View style={styles.postUserRow}>
                                             <Image
-                                                source={{
-                                                    uri:
-                                                        profileData?.profilePicture ||
-                                                        DEFAULT_AVATAR,
-                                                }}
+                                                source={{ uri: profileData?.profilePicture || DEFAULT_AVATAR }}
                                                 style={styles.smallAvatar}
                                             />
                                             <View>
                                                 <Text style={styles.postUsername}>
-                                                    {profileData?.username ||
-                                                        user?.username}
+                                                    {profileData?.username || user?.username}
                                                 </Text>
-                                                <Text style={styles.postDate}>
-                                                    {formatDate(post.createdAt)}
-                                                </Text>
+                                                <Text style={styles.postDate}>{formatDate(post.createdAt)}</Text>
                                             </View>
                                         </View>
                                         <TouchableOpacity onPress={() => handleDeletePost(post._id)}>
-                                            <Feather
-                                                name="trash-2"
-                                                size={20}
-                                                color="#aa1111ff"
-                                            />
+                                            <Feather name="trash-2" size={20} color="#aa1111ff" />
                                         </TouchableOpacity>
                                     </View>
 
                                     {post.caption ? (
-                                        <Text style={styles.postBodyText}>
-                                            {post.caption}
-                                        </Text>
+                                        <Text style={styles.postBodyText}>{post.caption}</Text>
                                     ) : null}
 
                                     {post.media?.url ? (
@@ -460,54 +437,98 @@ export default function AlumniProfile({ user }) {
 
                                     <View style={styles.statsRow}>
                                         <View style={styles.statItem}>
-                                            <Feather
-                                                name="heart"
-                                                size={18}
-                                                color="#D32F2F"
-                                            />
-                                            <Text style={styles.statText}>
-                                                {post.likes?.length || 0}
-                                            </Text>
+                                            <Feather name="heart" size={18} color="#D32F2F" />
+                                            <Text style={styles.statText}>{post.likes?.length || 0}</Text>
                                         </View>
-                                        <View style={styles.statItem}>
-                                            <Feather
-                                                name="message-circle"
-                                                size={18}
-                                                color="#333"
-                                            />
+                                        <TouchableOpacity style={styles.statItem} onPress={() => openComments(post)}>
+                                            <Feather name="message-circle" size={18} color="#333" />
                                             <Text style={styles.statText}>
-                                                Comment
+                                                {post.comments?.length || 0} Comment{post.comments?.length !== 1 ? "s" : ""}
                                             </Text>
-                                        </View>
-                                        <View style={styles.statItem}>
-                                            <Feather
-                                                name="share"
-                                                size={18}
-                                                color="#333"
-                                            />
-                                            <Text style={styles.statText}>
-                                                Share
-                                            </Text>
-                                        </View>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.statItem} onPress={() => handleShare(post)}>
+                                            <Feather name="share-2" size={18} color="#333" />
+                                            <Text style={styles.statText}>Share</Text>
+                                        </TouchableOpacity>
                                     </View>
                                 </View>
                             ))
                         ) : (
                             <View style={styles.emptyState}>
-                                <Feather
-                                    name="file-text"
-                                    size={40}
-                                    color="#ccc"
-                                    style={{ marginBottom: 10 }}
-                                />
-                                <Text style={{ color: "#999", fontSize: 16 }}>
-                                    No posts yet.
-                                </Text>
+                                <Feather name="file-text" size={40} color="#ccc" style={{ marginBottom: 10 }} />
+                                <Text style={{ color: "#999", fontSize: 16 }}>No posts yet.</Text>
                             </View>
                         )}
                     </View>
                 )}
             </ScrollView>
+
+            {/* Comments Modal */}
+            <Modal
+                visible={!!commentModalPost}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setCommentModalPost(null)}
+            >
+                <KeyboardAvoidingView
+                    style={styles.modalBackdrop}
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                >
+                    <View style={styles.commentsSheet}>
+                        <View style={styles.commentsHeader}>
+                            <Text style={styles.commentsTitle}>Comments</Text>
+                            <TouchableOpacity onPress={() => setCommentModalPost(null)}>
+                                <Ionicons name="close" size={24} color="#333" />
+                            </TouchableOpacity>
+                        </View>
+                        {commentsLoading ? (
+                            <ActivityIndicator size="small" color="#D32F2F" style={{ marginTop: 30 }} />
+                        ) : (
+                            <FlatList
+                                data={comments}
+                                keyExtractor={(item, i) => item._id || String(i)}
+                                contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}
+                                ListEmptyComponent={
+                                    <Text style={styles.noCommentsText}>No comments yet. Be the first!</Text>
+                                }
+                                renderItem={({ item }) => (
+                                    <View style={styles.commentRow}>
+                                        <Image
+                                            source={{ uri: item.user?.profilePicture || DEFAULT_AVATAR }}
+                                            style={styles.commentAvatar}
+                                        />
+                                        <View style={styles.commentBubble}>
+                                            <Text style={styles.commentUsername}>{item.user?.username || "User"}</Text>
+                                            <Text style={styles.commentText}>{item.text}</Text>
+                                        </View>
+                                    </View>
+                                )}
+                            />
+                        )}
+                        <View style={styles.commentInputRow}>
+                            <TextInput
+                                style={styles.commentInput}
+                                placeholder="Add a comment..."
+                                placeholderTextColor="#aaa"
+                                value={commentText}
+                                onChangeText={setCommentText}
+                                multiline
+                            />
+                            <TouchableOpacity
+                                style={[styles.sendButton, (!commentText.trim() || submittingComment) && { opacity: 0.4 }]}
+                                onPress={submitComment}
+                                disabled={!commentText.trim() || submittingComment}
+                            >
+                                {submittingComment ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <Ionicons name="send" size={18} color="#fff" />
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -516,16 +537,9 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#f9f9f9" },
     scrollContent: { paddingBottom: 80 },
 
-    // Cover
     coverContainer: { height: 130, width: "100%", overflow: "hidden" },
-    coverImage: {
-        width: "100%",
-        height: "100%",
-        resizeMode: "cover",
-        opacity: 0.9,
-    },
+    coverImage: { width: "100%", height: "100%", resizeMode: "cover", opacity: 0.9 },
 
-    // Header
     profileHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -533,37 +547,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         marginTop: -55,
     },
-    avatarContainer: {
-        padding: 4,
-        backgroundColor: "#f9f9f9",
-        borderRadius: 65,
-    },
-    avatar: {
-        width: 105,
-        height: 105,
-        borderRadius: 52.5,
-        backgroundColor: "#e0e0e0",
-    },
-    actionRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 10,
-        gap: 10,
-    },
-    iconButton: {
-        padding: 8,
-        backgroundColor: "#eef2f5",
-        borderRadius: 20,
-    },
-    editButton: {
-        backgroundColor: "#eef2f5",
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 20,
-    },
+    avatarContainer: { padding: 4, backgroundColor: "#f9f9f9", borderRadius: 65 },
+    avatar: { width: 105, height: 105, borderRadius: 52.5, backgroundColor: "#e0e0e0" },
+    actionRow: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 10 },
+    iconButton: { padding: 8, backgroundColor: "#eef2f5", borderRadius: 20 },
+    editButton: { backgroundColor: "#eef2f5", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
     editButtonText: { fontWeight: "700", color: "#333", fontSize: 13 },
 
-    // Info
     infoContainer: { paddingHorizontal: 20, marginTop: 10 },
     name: { fontSize: 26, fontWeight: "bold", color: "#111", marginBottom: 2 },
     roleText: { fontSize: 14, color: "#555", marginBottom: 10 },
@@ -571,7 +561,6 @@ const styles = StyleSheet.create({
     icon: { marginRight: 8, width: 20 },
     detailText: { fontSize: 15, color: "#333", flex: 1 },
 
-    // Tabs
     tabContainer: {
         flexDirection: "row",
         marginTop: 20,
@@ -580,18 +569,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     tab: { flex: 1, alignItems: "center", paddingVertical: 12 },
-    activeTab: { borderBottomWidth: 2, borderBottomColor: "#111" },
+    activeTab: { borderBottomWidth: 2, borderBottomColor: "#D32F2F" },
     tabText: { fontSize: 15, color: "#888", fontWeight: "600" },
-    activeTabText: { color: "#111", fontWeight: "bold" },
+    activeTabText: { color: "#D32F2F", fontWeight: "bold" },
 
-    // About
     aboutContainer: { padding: 20 },
     card: {
         backgroundColor: "#fff",
         borderRadius: 16,
         padding: 20,
         marginBottom: 20,
-        boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.05)",
         elevation: 2,
         borderWidth: 1,
         borderColor: "#eee",
@@ -606,61 +593,31 @@ const styles = StyleSheet.create({
     },
     bioText: { fontSize: 15, color: "#555", lineHeight: 24 },
 
-    // Career Journey
     careerEntry: { paddingVertical: 12 },
-    careerEntryBorder: {
-        borderBottomWidth: 1,
-        borderBottomColor: "#f0f0f0",
-    },
-    careerTitle: {
-        fontSize: 15,
-        fontWeight: "700",
-        color: "#111",
-        marginBottom: 3,
-    },
+    careerEntryBorder: { borderBottomWidth: 1, borderBottomColor: "#f0f0f0" },
+    careerTitle: { fontSize: 15, fontWeight: "700", color: "#111", marginBottom: 3 },
     careerSubtitle: { fontSize: 13, color: "#666" },
     careerTitleEmpty: { fontSize: 14, color: "#999" },
     careerSubtitleEmpty: { fontSize: 13, color: "#bbb", marginTop: 2 },
 
-    // Posts
     feedContainer: { padding: 15 },
+    emptyState: { padding: 40, alignItems: "center", marginTop: 20 },
     postCard: {
         backgroundColor: "#fff",
         borderRadius: 12,
         padding: 15,
         marginBottom: 15,
-        boxShadow: "0px 1px 2px 0px rgba(0, 0, 0, 0.1)",
         elevation: 2,
+        borderWidth: 1,
+        borderColor: "#f0f0f0",
     },
-    postHeader: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 10,
-    },
+    postHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
     postUserRow: { flexDirection: "row", alignItems: "center" },
-    smallAvatar: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: "#ddd",
-        marginRight: 10,
-    },
+    smallAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#ddd", marginRight: 10 },
     postUsername: { fontWeight: "bold", fontSize: 15, color: "#000" },
     postDate: { fontSize: 12, color: "#888", marginTop: 2 },
-    postBodyText: {
-        fontSize: 15,
-        marginBottom: 12,
-        lineHeight: 22,
-        color: "#333",
-    },
-    postImage: {
-        width: "100%",
-        height: 250,
-        borderRadius: 12,
-        marginBottom: 15,
-        backgroundColor: "#E0E0E0",
-    },
+    postBodyText: { fontSize: 15, marginBottom: 12, lineHeight: 22, color: "#333" },
+    postImage: { width: "100%", height: 250, borderRadius: 12, marginBottom: 15, backgroundColor: "#E0E0E0" },
     statsRow: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -671,5 +628,62 @@ const styles = StyleSheet.create({
     },
     statItem: { flexDirection: "row", alignItems: "center" },
     statText: { marginLeft: 6, fontSize: 14, fontWeight: "500", color: "#555" },
-    emptyState: { padding: 40, alignItems: "center", marginTop: 20 },
+
+    // Comments modal
+    modalBackdrop: {
+        flex: 1,
+        justifyContent: "flex-end",
+        backgroundColor: "rgba(0,0,0,0.45)",
+    },
+    commentsSheet: {
+        backgroundColor: "#fff",
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        maxHeight: height * 0.75,
+        minHeight: height * 0.45,
+    },
+    commentsHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: "#f0f0f0",
+    },
+    commentsTitle: { fontSize: 17, fontWeight: "700", color: "#111" },
+    noCommentsText: { textAlign: "center", color: "#aaa", marginTop: 30, fontSize: 14 },
+    commentRow: { flexDirection: "row", marginBottom: 14, alignItems: "flex-start" },
+    commentAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#ddd", marginRight: 10, marginTop: 2 },
+    commentBubble: { flex: 1, backgroundColor: "#f5f5f5", borderRadius: 12, padding: 10 },
+    commentUsername: { fontWeight: "700", fontSize: 13, color: "#111", marginBottom: 3 },
+    commentText: { fontSize: 14, color: "#333", lineHeight: 20 },
+    commentInputRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderTopColor: "#f0f0f0",
+        backgroundColor: "#fff",
+        gap: 10,
+    },
+    commentInput: {
+        flex: 1,
+        backgroundColor: "#f5f5f5",
+        borderRadius: 20,
+        paddingHorizontal: 15,
+        paddingVertical: 10,
+        fontSize: 14,
+        color: "#000",
+        maxHeight: 80,
+    },
+    sendButton: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: "#D32F2F",
+        alignItems: "center",
+        justifyContent: "center",
+    },
 });
