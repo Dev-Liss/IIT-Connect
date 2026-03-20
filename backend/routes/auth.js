@@ -57,9 +57,33 @@ router.post("/check-email", async (req, res) => {
     }
 });
 
-// Imports moved to top
-
-// ... existing routes ...
+// GET ALL USERS ROUTE
+// GET /api/auth/users
+// Returns all registered users (used by messaging to list available contacts)
+router.get("/users", async (req, res) => {
+    try {
+        const users = await User.find().select("username email studentId role profilePicture batch");
+        res.json({
+            success: true,
+            users: users.map(u => ({
+                id: u._id,
+                _id: u._id,
+                username: u.username,
+                email: u.email,
+                studentId: u.studentId,
+                role: u.role,
+                profilePicture: u.profilePicture,
+                batch: u.batch,
+            })),
+        });
+    } catch (error) {
+        console.error("❌ Fetch users error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch users",
+        });
+    }
+});
 
 // SYNC GOOGLE USER ROUTE
 // POST /api/auth/sync-google-user

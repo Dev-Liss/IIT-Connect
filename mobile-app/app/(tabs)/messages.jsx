@@ -36,7 +36,7 @@ export default function MessagesScreen() {
   useEffect(() => {
     const initialize = async () => {
       try {
-        const userData = await AsyncStorage.getItem("userData");
+        const userData = await AsyncStorage.getItem("@iit_connect_user");
         if (userData) {
           const user = JSON.parse(userData);
           setCurrentUser(user);
