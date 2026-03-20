@@ -52,7 +52,7 @@ const protect = async (req, res, next) => {
 
     if (!user) {
       logger.warn('Auth failed – no MongoDB user for clerkId', {
-        clerkId: session.userId,
+        clerkId: decoded.sub,
         ip: req.ip,
       });
       return res
