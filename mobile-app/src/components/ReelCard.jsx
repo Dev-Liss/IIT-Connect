@@ -48,9 +48,11 @@ export default function ReelCard({ reel, isActive, height }) {
   const { user } = useAuth();
   const videoRef = useRef(null);
 
+  const currentUserId = user?._id || user?.id;
+
   // ── Like state (optimistic UI) ──
   const [isLiked, setIsLiked] = useState(
-    () => reel.likes?.some((id) => id === user?.id) ?? false,
+    () => reel.likes?.some((id) => id === currentUserId) ?? false,
   );
   const [likeCount, setLikeCount] = useState(reel.likes?.length || 0);
 
@@ -94,7 +96,7 @@ export default function ReelCard({ reel, isActive, height }) {
       const response = await fetch(POST_ENDPOINTS.TOGGLE_LIKE(reel._id), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ userId: currentUserId }),
       });
 
       const data = await response.json();
