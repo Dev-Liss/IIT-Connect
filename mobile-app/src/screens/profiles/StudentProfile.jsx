@@ -709,11 +709,12 @@ const styles = StyleSheet.create({
   statItem: { flexDirection: "row", alignItems: "center" },
   statText: { marginLeft: 6, fontSize: 14, fontWeight: "500", color: "#555" },
 
-  // Reels grid
-  reelsGrid: { flexDirection: "row", flexWrap: "wrap", padding: 2 },
+  // Reels grid — 3 tiles per row
+  // Each tile has margin:1 on all sides → 2px per tile × 3 tiles = 6px total horizontal space
+  reelsGrid: { flexDirection: "row", flexWrap: "wrap" },
   reelTile: {
-    width: (width - 4) / 3,
-    height: (width - 4) / 3,
+    width: (width - 6) / 3,
+    height: (width - 6) / 3,
     margin: 1,
     backgroundColor: "#e0e0e0",
     overflow: "hidden",
