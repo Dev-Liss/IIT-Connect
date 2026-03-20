@@ -27,7 +27,7 @@ import { API_BASE_URL as API_URL } from "../../config/api";
 const DEFAULT_AVATAR =
     "https://avataaars.io/?avatarStyle=Circle&topType=ShortHairShortFlat&accessoriesType=Prescription02&hairColor=Black&facialHairType=BeardLight&clotheType=BlazerShirt&eyeType=Happy&eyebrowType=Default&mouthType=Default&skinColor=Light";
 const DEFAULT_COVER =
-    "https://img.freepik.com/free-vector/hand-drawn-education-pattern_23-2148107567.jpg";
+    "https://placehold.co/800x300/e0e0e0/e0e0e0.png";
 
 const { height } = Dimensions.get("window");
 
@@ -77,8 +77,8 @@ export default function AlumniProfile({ user }) {
                     }
                 } catch (error) {
                     if (error.message && error.message.includes('_id')) {
-                         console.log('Waiting for user ID...');
-                         return;
+                        console.log('Waiting for user ID...');
+                        return;
                     }
                     console.error("Data Fetch Error:", error);
                 } finally {

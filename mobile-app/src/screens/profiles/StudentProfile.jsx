@@ -33,7 +33,7 @@ const { width, height } = Dimensions.get("window");
 const DEFAULT_AVATAR =
   "https://avataaars.io/?avatarStyle=Circle&topType=ShortHairShortFlat&accessoriesType=Prescription02&hairColor=Black&facialHairType=BeardLight&clotheType=BlazerShirt&eyeType=Happy&eyebrowType=Default&mouthType=Default&skinColor=Light";
 const DEFAULT_COVER =
-  "https://img.freepik.com/free-vector/hand-drawn-education-pattern_23-2148107567.jpg";
+  "https://placehold.co/800x300/e0e0e0/e0e0e0.png";
 
 export default function StudentProfile({ user }) {
   const router = useRouter();
@@ -224,7 +224,7 @@ export default function StudentProfile({ user }) {
 
   const closeMediaModal = () => {
     if (videoPlayer) {
-      try { videoPlayer.pause(); } catch (_) {}
+      try { videoPlayer.pause(); } catch (_) { }
     }
     setMediaModalPost(null);
   };
@@ -245,6 +245,9 @@ export default function StudentProfile({ user }) {
   // ==========================================
   // MAIN RENDER
   // ==========================================
+  const imagePosts = userPosts.filter(post => !post.media || post.media.type !== "video");
+  const reelPosts = userPosts.filter(post => post.media && post.media.type === "video");
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f9f9f9" />
@@ -339,8 +342,8 @@ export default function StudentProfile({ user }) {
         {/* Tab Content */}
         {activeTab === "Posts" ? (
           <View style={styles.feedContainer}>
-            {userPosts.length > 0 ? (
-              userPosts.map((post) => (
+            {imagePosts.length > 0 ? (
+              imagePosts.map((post) => (
                 <View key={post._id} style={styles.postCard}>
                   {/* Post Header */}
                   <View style={styles.postHeader}>
@@ -419,8 +422,8 @@ export default function StudentProfile({ user }) {
         ) : (
           // Reels Tab — 3-column grid
           <View style={styles.reelsGrid}>
-            {userPosts.length > 0 ? (
-              userPosts.map((post) => (
+            {reelPosts.length > 0 ? (
+              reelPosts.map((post) => (
                 <TouchableOpacity
                   key={post._id}
                   style={styles.reelTile}

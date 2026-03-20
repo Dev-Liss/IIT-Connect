@@ -21,7 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { API_BASE_URL as API_URL } from "../../config/api";
 
 const DEFAULT_AVATAR = "https://avataaars.io/?avatarStyle=Circle&topType=ShortHairShortFlat&accessoriesType=Prescription02&hairColor=Black&facialHairType=BeardLight&clotheType=BlazerShirt&eyeType=Happy&eyebrowType=Default&mouthType=Default&skinColor=Light";
-const DEFAULT_COVER = "https://img.freepik.com/free-vector/hand-drawn-education-pattern_23-2148107567.jpg";
+const DEFAULT_COVER = "https://placehold.co/800x300/e0e0e0/e0e0e0.png";
 
 export default function EditLecturerProfile({ user }) {
     const router = useRouter();
