@@ -29,6 +29,24 @@ import { API_BASE_URL } from "../../config/api";
 
 const { width, height } = Dimensions.get("window");
 
+// ==========================================
+// HELPER: Derive a thumbnail URL from a Cloudinary video URL.
+// Replaces the extension with .jpg and injects `so_0` (grab frame at 0s).
+// Falls back to the original URL if it doesn't look like a Cloudinary video.
+// ==========================================
+const getVideoThumbnailUrl = (videoUrl) => {
+  if (!videoUrl) return null;
+  try {
+    // Cloudinary video URLs contain "/video/upload/"
+    if (videoUrl.includes("/video/upload/")) {
+      return videoUrl
+        .replace("/video/upload/", "/video/upload/so_0/")
+        .replace(/\.(mp4|mov|avi|webm|mkv)(\?.*)?$/i, ".jpg");
+    }
+  } catch (_) {}
+  return videoUrl;
+};
+
 // Default Images if the user hasn't uploaded any
 const DEFAULT_AVATAR =
   "https://avataaars.io/?avatarStyle=Circle&topType=ShortHairShortFlat&accessoriesType=Prescription02&hairColor=Black&facialHairType=BeardLight&clotheType=BlazerShirt&eyeType=Happy&eyebrowType=Default&mouthType=Default&skinColor=Light";
@@ -433,7 +451,7 @@ export default function StudentProfile({ user }) {
                   {post.media?.url ? (
                     <>
                       <Image
-                        source={{ uri: post.media.url }}
+                        source={{ uri: getVideoThumbnailUrl(post.media.url) }}
                         style={styles.reelImage}
                         resizeMode="cover"
                       />
