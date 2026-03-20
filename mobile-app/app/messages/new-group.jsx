@@ -15,13 +15,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthToken } from '../../src/utils/getAuthToken';
 import { API_BASE_URL } from '../../src/config/api';
 
 export default function NewGroupScreen() {
   const router = useRouter();
   const { type } = useLocalSearchParams(); // 'group' or 'community'
   const isGroup = type === 'group';
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [users, setUsers] = useState([]);
@@ -32,8 +33,8 @@ export default function NewGroupScreen() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const userData = await AsyncStorage.getItem('userData');
-        const token = await AsyncStorage.getItem('authToken');
+        const userData = await AsyncStorage.getItem('@iit_connect_user');
+        const token = await getAuthToken();
 
         const response = await fetch(`${API_BASE_URL}/auth/users`, {
           headers: {
@@ -43,7 +44,7 @@ export default function NewGroupScreen() {
         });
 
         const data = await response.json();
-        
+
         if (data.success && data.users) {
           const parsedUser = JSON.parse(userData);
           const currentUserId = parsedUser?.id || parsedUser?._id;
@@ -152,7 +153,7 @@ export default function NewGroupScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
@@ -172,33 +173,33 @@ export default function NewGroupScreen() {
           </TouchableOpacity>
         </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by name, email, or department..."
-          placeholderTextColor="#999"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by name, email, or department..."
+            placeholderTextColor="#999"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        {/* Selected Count */}
+        <View style={styles.selectedInfo}>
+          <Text style={styles.selectedCount}>{selectedUsers.length} selected</Text>
+          <Text style={styles.minimumText}>Select at least 1 member</Text>
+        </View>
+
+        {/* Users List */}
+        <FlatList
+          data={filteredUsers}
+          renderItem={renderUser}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         />
-      </View>
-
-      {/* Selected Count */}
-      <View style={styles.selectedInfo}>
-        <Text style={styles.selectedCount}>{selectedUsers.length} selected</Text>
-        <Text style={styles.minimumText}>Select at least 1 member</Text>
-      </View>
-
-      {/* Users List */}
-      <FlatList
-        data={filteredUsers}
-        renderItem={renderUser}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

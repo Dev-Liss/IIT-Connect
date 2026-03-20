@@ -53,8 +53,13 @@ exports.updateUserProfile = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // TODO: Check if req.user.id matches req.params.id (Authorization)
-        // For now, assuming the middleware handles basic auth or we confim identity here
+        // Role-based guard: strip alumni-only fields for non-alumni users
+        // This prevents student/lecturer documents from ever receiving these
+        // fields via the API, regardless of what the request body contains.
+        const ALUMNI_ONLY_FIELDS = ["graduationYear", "currentJob", "company", "location", "careerJourney"];
+        if (user.role !== "alumni") {
+            ALUMNI_ONLY_FIELDS.forEach((field) => delete profileFields[field]);
+        }
 
         user = await User.findByIdAndUpdate(
             req.params.id,

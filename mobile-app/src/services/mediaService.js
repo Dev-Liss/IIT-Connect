@@ -12,7 +12,7 @@ import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthToken } from '../utils/getAuthToken';
 import { UPLOAD_ENDPOINTS } from '../config/api';
 
 /**
@@ -208,20 +208,19 @@ export const recordVideo = async (options = {}) => {
  */
 export const pickDocument = async (options = {}) => {
     try {
-        const result = await DocumentPicker.getDocumentAsync({
-            type: options.type ?? [
-                'application/pdf',
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'application/vnd.ms-excel',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'application/vnd.ms-powerpoint',
-                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                'text/plain',
-            ],
+        const pickerOptions = {
             copyToCacheDirectory: true,
             multiple: options.multiple ?? false,
-        });
+        };
+
+        // WARNING: Do not pass '*/*' as the type explicitly. On Android 13+, this can cause
+        // the native intent to crash/abort silently, permanently locking the picker with the
+        // "Different document picking in progress" error. Omitting 'type' defaults to all files safely.
+        if (options.type) {
+            pickerOptions.type = options.type;
+        }
+
+        const result = await DocumentPicker.getDocumentAsync(pickerOptions);
 
         if (result.canceled) {
             return null;
@@ -306,7 +305,7 @@ export const formatFileSize = (bytes) => {
  */
 export const uploadFile = async (file, onProgress = null) => {
     try {
-        const token = await AsyncStorage.getItem('authToken');
+        const token = await getAuthToken();
         if (!token) {
             throw new Error('Not authenticated');
         }
@@ -378,7 +377,7 @@ export const uploadFile = async (file, onProgress = null) => {
  */
 export const uploadMultipleFiles = async (files, onProgress = null) => {
     try {
-        const token = await AsyncStorage.getItem('authToken');
+        const token = await getAuthToken();
         if (!token) {
             throw new Error('Not authenticated');
         }

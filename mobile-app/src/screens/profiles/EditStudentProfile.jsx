@@ -256,9 +256,12 @@ export default function EditStudentProfile({ user }) {
 
                     <View style={styles.mediaSection}>
                         <View style={styles.coverPlaceholder}>
-                            {coverPicture ? (
-                                <Image source={{ uri: coverPicture }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                            ) : null}
+                            <Image
+                                source={{ uri: coverPicture || "https://placehold.co/800x300/e0e0e0/e0e0e0.png" }}
+                                style={{ width: '100%', height: '100%' }}
+                                resizeMode="cover"
+                                onError={() => {}} // silently handle image load failure
+                            />
                         </View>
 
                         <View style={styles.avatarContainer}>

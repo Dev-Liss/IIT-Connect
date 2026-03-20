@@ -6,7 +6,7 @@
  * Provides options for camera, gallery, video, and documents.
  */
 
-import React from 'react';
+import React, { useRef } from 'react';
 import {
     View,
     Text,
@@ -27,9 +27,30 @@ const AttachmentOption = ({ icon, label, color, onPress }) => (
 );
 
 const AttachmentPicker = ({ visible, onClose, onSelectOption }) => {
-    const handleSelect = (type) => {
-        onSelectOption(type);
-        onClose();
+    const [isPicking, setIsPicking] = React.useState(false);
+    // Use a synchronous ref lock to prevent extremely fast double-taps
+    // from bypassing React's asynchronous state updates.
+    const pickingLock = useRef(false);
+
+    const handleSelect = async (type) => {
+        if (pickingLock.current || isPicking) return;
+        pickingLock.current = true;
+        setIsPicking(true);
+
+        try {
+            console.log(`[AttachmentPicker] Triggering picker for: ${type} (Context preserved)`);
+            // WARNING: DO NOT close the Modal before launching the picker on Android.
+            // Destroying the React component context while the native Intent is launching
+            // causes the "picking in progress" lock. We must await the result first.
+            await onSelectOption(type);
+        } catch (error) {
+            console.error(`[AttachmentPicker] Picker error for ${type}:`, error);
+        } finally {
+            pickingLock.current = false;
+            setIsPicking(false);
+            // Now that the system picker has returned (or failed), it is safe to close our UI.
+            onClose();
+        }
     };
 
     return (

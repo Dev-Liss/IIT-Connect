@@ -20,6 +20,14 @@ const SALT_ROUNDS = 12;
 
 const UserSchema = new mongoose.Schema(
   {
+    // Clerk user ID — set on first Clerk login/signup, sparse so legacy users
+    // without it are not rejected by the unique constraint.
+    clerkId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     username: {
       type: String,
       required: [true, "Username is required"],
@@ -35,20 +43,36 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
+    // Password is optional — Clerk manages authentication.
+    // Kept for backward compatibility with existing documents.
     password: {
       type: String,
-      required: [true, "Password is required"],
+      required: false,
       minlength: [6, "Password must be at least 6 characters"],
       select: false, // Never return password by default
     },
+    // studentId is optional — only populated for the student role.
     studentId: {
       type: String,
-      required: [true, "Student ID is required"],
+      required: false,
+      trim: true,
+    },
+    // Alumni-specific identity fields
+    alumniId: {
+      type: String,
+      required: false, // National ID for alumni verification
+      trim: true,
+    },
+    pastIitId: {
+      type: String,
+      required: false, // Past IIT student ID for alumni
       trim: true,
     },
     role: {
       type: String,
-      enum: ["student", "lecturer", "admin", "alumni"],
+      // 'lecture' is the value used by the Clerk auth branch;
+      // 'lecturer' is used by the rest of the app — both are accepted.
+      enum: ["student", "lecturer", "lecture", "admin", "alumni"],
       default: "student",
     },
     profilePicture: {
@@ -79,25 +103,22 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // Alumni-only fields — no defaults so these keys are NOT written
+    // to student/lecturer documents at creation time
     graduationYear: {
       type: String,
-      default: "",
     },
     currentJob: {
       type: String,
-      default: "",
     },
     company: {
       type: String,
-      default: "",
     },
     location: {
       type: String,
-      default: "",
     },
     careerJourney: {
       type: String,
-      default: "",
     },
   },
   {

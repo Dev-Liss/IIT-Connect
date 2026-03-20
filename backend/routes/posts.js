@@ -421,4 +421,59 @@ router.get("/:id/comments", async (req, res) => {
   }
 });
 
+// ====================================
+// DELETE POST
+// DELETE /api/posts/:id
+// ====================================
+router.delete("/:id", async (req, res) => {
+  try {
+    let post = await Post.findById(req.params.id);
+    let isReel = false;
+
+    if (!post) {
+      post = await Reel.findById(req.params.id);
+      isReel = true;
+    }
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    // Delete media from Cloudinary if it exists
+    if (post.media && post.media.publicId) {
+      try {
+        await cloudinary.uploader.destroy(post.media.publicId, {
+          resource_type: post.media.type || (isReel ? "video" : "image"),
+        });
+        console.log("🧹 Cleaned up Cloudinary asset on deletion:", post.media.publicId);
+      } catch (cleanupError) {
+        console.error("⚠️ Cloudinary cleanup failed:", cleanupError);
+      }
+    }
+
+    // Delete from MongoDB
+    if (isReel) {
+      await Reel.findByIdAndDelete(req.params.id);
+    } else {
+      await Post.findByIdAndDelete(req.params.id);
+    }
+
+    console.log(`🗑️ Deleted ${isReel ? "Reel" : "Post"} ${req.params.id}`);
+
+    res.json({
+      success: true,
+      message: "Post deleted successfully",
+    });
+  } catch (error) {
+    console.error("❌ Delete Post Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to delete post",
+    });
+  }
+});
+
 module.exports = router;

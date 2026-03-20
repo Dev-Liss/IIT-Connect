@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthToken } from '../../src/utils/getAuthToken';
 import { API_BASE_URL, CONVERSATION_ENDPOINTS } from '../../src/config/api';
 
 export default function NewChatScreen() {
@@ -29,9 +30,9 @@ export default function NewChatScreen() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const userData = await AsyncStorage.getItem('userData');
-        const token = await AsyncStorage.getItem('authToken');
-        
+        const userData = await AsyncStorage.getItem('@iit_connect_user');
+        const token = await getAuthToken();
+
         if (userData) {
           setCurrentUser(JSON.parse(userData));
         }
@@ -45,7 +46,7 @@ export default function NewChatScreen() {
         });
 
         const data = await response.json();
-        
+
         if (data.success && data.users) {
           // Filter out current user - use 'id' from API response
           const parsedUser = JSON.parse(userData);
@@ -70,7 +71,7 @@ export default function NewChatScreen() {
       setFilteredUsers(users);
     } else {
       const query = searchQuery.toLowerCase();
-      const filtered = users.filter((user) => 
+      const filtered = users.filter((user) =>
         user.username?.toLowerCase().includes(query) ||
         user.email?.toLowerCase().includes(query) ||
         user.studentId?.toLowerCase().includes(query)
@@ -94,8 +95,8 @@ export default function NewChatScreen() {
 
   const handleUserSelect = async (user) => {
     try {
-      const token = await AsyncStorage.getItem('authToken');
-      
+      const token = await getAuthToken();
+
       // Create or get existing direct conversation
       const response = await fetch(CONVERSATION_ENDPOINTS.CREATE_DIRECT, {
         method: 'POST',
@@ -112,10 +113,10 @@ export default function NewChatScreen() {
         // Navigate to the chat
         router.replace({
           pathname: '/messages/chat',
-          params: { 
-            id: data.conversation._id, 
-            name: user.username || user.name, 
-            type: 'direct' 
+          params: {
+            id: data.conversation._id,
+            name: user.username || user.name,
+            type: 'direct'
           },
         });
       } else {
@@ -164,7 +165,7 @@ export default function NewChatScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
@@ -182,12 +183,12 @@ export default function NewChatScreen() {
           <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-          placeholder="Search by name, email, or student ID..."
-          placeholderTextColor="#999"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
+            placeholder="Search by name, email, or student ID..."
+            placeholderTextColor="#999"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
 
         {/* Users List */}
         <FlatList

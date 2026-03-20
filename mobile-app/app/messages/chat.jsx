@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthToken } from '../../src/utils/getAuthToken';
 import socketService from '../../src/services/socketService';
 import { MESSAGE_ENDPOINTS } from '../../src/config/api';
 import MediaMessage from '../../src/components/MediaMessage';
@@ -56,11 +57,11 @@ export default function ChatScreen() {
   useEffect(() => {
     const initialize = async () => {
       try {
-        const userData = await AsyncStorage.getItem('userData');
+        const userData = await AsyncStorage.getItem('@iit_connect_user');
         if (userData) {
           const user = JSON.parse(userData);
           setCurrentUser(user);
-          
+
           // Connect to socket if not already connected - use id or _id
           const userId = user.id || user._id;
           if (!socketService.getConnectionStatus() && userId) {
@@ -92,8 +93,8 @@ export default function ChatScreen() {
     const fetchMessages = async () => {
       try {
         setIsLoading(true);
-        const token = await AsyncStorage.getItem('authToken');
-        
+        const token = await getAuthToken();
+
         const response = await fetch(MESSAGE_ENDPOINTS.GET_MESSAGES(conversationId), {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -102,7 +103,7 @@ export default function ChatScreen() {
         });
 
         const data = await response.json();
-        
+
         if (data.success) {
           setMessages(data.messages);
           setHasMore(data.hasMore || false);
@@ -115,7 +116,7 @@ export default function ChatScreen() {
     };
 
     fetchMessages();
-    
+
     // Join conversation room
     socketService.joinConversation(conversationId);
     socketService.markAsRead(conversationId);
@@ -247,7 +248,7 @@ export default function ChatScreen() {
   const handleAttachmentSelect = async (type) => {
     try {
       let media = null;
-      
+
       switch (type) {
         case 'camera':
           media = await takePhoto();
@@ -372,7 +373,7 @@ export default function ChatScreen() {
 
     setLoadingMore(true);
     try {
-      const token = await AsyncStorage.getItem('authToken');
+      const token = await getAuthToken();
       const oldestMessage = messages[0];
       const response = await fetch(
         `${MESSAGE_ENDPOINTS.GET_MESSAGES(conversationId)}?before=${oldestMessage.createdAt}&limit=50`,
@@ -461,7 +462,7 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
@@ -542,7 +543,7 @@ export default function ChatScreen() {
 
         {/* Input Area */}
         <View style={styles.inputContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.attachButton}
             onPress={() => setShowAttachmentPicker(true)}
             disabled={isUploading}
@@ -560,7 +561,7 @@ export default function ChatScreen() {
           />
           <TouchableOpacity
             style={[
-              styles.sendButton, 
+              styles.sendButton,
               (inputText.trim() === '' && !selectedMedia) && styles.sendButtonDisabled
             ]}
             onPress={handleSend}
@@ -569,10 +570,10 @@ export default function ChatScreen() {
             {isUploading ? (
               <ActivityIndicator size="small" color="#D32F2F" />
             ) : (
-              <Ionicons 
-                name="send" 
-                size={20} 
-                color={(inputText.trim() === '' && !selectedMedia) || !isConnected ? '#ccc' : '#D32F2F'} 
+              <Ionicons
+                name="send"
+                size={20}
+                color={(inputText.trim() === '' && !selectedMedia) || !isConnected ? '#ccc' : '#D32F2F'}
               />
             )}
           </TouchableOpacity>

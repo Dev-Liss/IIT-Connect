@@ -120,7 +120,7 @@ export default function CommentsBottomSheet({
       const response = await fetch(POST_ENDPOINTS.ADD_COMMENT(postId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id, text: trimmedText }),
+        body: JSON.stringify({ userId: user._id || user.id, text: trimmedText }),
       });
 
       const data = await response.json();
@@ -273,7 +273,7 @@ export default function CommentsBottomSheet({
               style={[
                 styles.postButtonText,
                 (!commentText.trim() || isSubmitting) &&
-                  styles.postButtonDisabled,
+                styles.postButtonDisabled,
               ]}
             >
               {isSubmitting ? "Sending" : "Post"}

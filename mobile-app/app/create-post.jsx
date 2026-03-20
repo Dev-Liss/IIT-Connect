@@ -105,7 +105,10 @@ export default function CreatePostScreen() {
     if (Platform.OS !== "android") return undefined;
 
     const keyboardShowSub = Keyboard.addListener("keyboardDidShow", (event) => {
-      const nextHeight = Math.max(0, event.endCoordinates.height - insets.bottom);
+      const nextHeight = Math.max(
+        0,
+        event.endCoordinates.height - insets.bottom,
+      );
       setKeyboardHeight(nextHeight);
     });
 
@@ -204,7 +207,7 @@ export default function CreatePostScreen() {
 
     try {
       const formData = new FormData();
-      formData.append("userId", user.id);
+      formData.append("userId", user._id || user.id);
       formData.append("caption", caption.trim());
       formData.append("category", category);
 

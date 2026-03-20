@@ -391,7 +391,7 @@ const StoriesRail = () => {
   const fetchStories = useCallback(async () => {
     try {
       const url = user
-        ? `${STORY_ENDPOINTS.GET_ALL}?userId=${user.id}`
+        ? `${STORY_ENDPOINTS.GET_ALL}?userId=${user._id || user.id}`
         : STORY_ENDPOINTS.GET_ALL;
 
       const response = await fetch(url);
@@ -399,8 +399,9 @@ const StoriesRail = () => {
 
       if (data.success) {
         const groups = data.data;
-        const myGroup = groups.find((g) => g.user?._id === user?.id) || null;
-        const otherGroups = groups.filter((g) => g.user?._id !== user?.id);
+        const userId = user?._id || user?.id;
+        const myGroup = groups.find((g) => g.user?._id === userId) || null;
+        const otherGroups = groups.filter((g) => g.user?._id !== userId);
 
         setMyStoryGroup(myGroup);
         setStoryGroups(otherGroups);
@@ -448,7 +449,7 @@ const StoriesRail = () => {
 
       // Build multipart form
       const formData = new FormData();
-      formData.append("userId", user.id);
+      formData.append("userId", user._id || user.id);
       formData.append("media", {
         uri: selectedImage.uri,
         type: selectedImage.mimeType || "image/jpeg",
@@ -497,7 +498,7 @@ const StoriesRail = () => {
       fetch(STORY_ENDPOINTS.MARK_VIEWED(storyId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ userId: user._id || user.id }),
       }).catch((err) => console.error("❌ Failed to mark viewed:", err));
 
       // Optimistic local update

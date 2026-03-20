@@ -36,9 +36,11 @@ const DEFAULT_AVATAR =
 export default function PostCard({ post, onLike, onShare }) {
   const { user } = useAuth();
 
+  const currentUserId = user?._id || user?.id;
+
   // Initialize state from real data
   const [isLiked, setIsLiked] = useState(
-    () => post.likes?.some((id) => id === user?.id) ?? false,
+    () => post.likes?.some((id) => id === currentUserId) ?? false,
   );
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
   const [commentCount, setCommentCount] = useState(post.comments?.length || 0);
@@ -97,7 +99,7 @@ export default function PostCard({ post, onLike, onShare }) {
       const response = await fetch(POST_ENDPOINTS.TOGGLE_LIKE(post._id), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ userId: currentUserId }),
       });
 
       const data = await response.json();
