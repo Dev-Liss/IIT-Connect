@@ -29,7 +29,7 @@ import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
-import { POST_ENDPOINTS } from "../config/api";
+import { POST_ENDPOINTS, CONTENT_REPORT_ENDPOINTS } from "../config/api";
 import CommentsBottomSheet from "./CommentsBottomSheet";
 
 // ====================================
@@ -115,6 +115,37 @@ export default function ReelCard({ reel, isActive, height }) {
       Alert.alert("Error", "Could not update like. Please try again.");
       console.error("❌ Like toggle failed:", error);
     }
+  };
+
+  const handleReport = async () => {
+    if (!user) return;
+    try {
+      const response = await fetch(CONTENT_REPORT_ENDPOINTS.CREATE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetId: reel._id,
+          targetType: "Reel",
+          reportedBy: currentUserId,
+          reason: "Inappropriate Content",
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        Alert.alert("Reported", "Thank you for letting us know. We will review this reel.");
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Could not submit report. Please try again.");
+    }
+  };
+
+  const showMenu = () => {
+    Alert.alert("Options", "Choose an action", [
+      { text: "Report Reel", onPress: handleReport, style: "destructive" },
+      { text: "Cancel", style: "cancel" }
+    ]);
   };
 
   // ====================================
@@ -236,6 +267,14 @@ export default function ReelCard({ reel, isActive, height }) {
               activeOpacity={0.7}
             >
               <Ionicons name="bookmark-outline" size={28} color="#fff" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={showMenu}
+              style={styles.actionItem}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="ellipsis-vertical" size={28} color="#fff" />
             </TouchableOpacity>
           </View>
         </>

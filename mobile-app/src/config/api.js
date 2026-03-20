@@ -109,6 +109,14 @@ export const REPORT_ENDPOINTS = {
   ADD_RESPONSE: (id) => `${API_BASE_URL}/reports/${id}/response`,
 };
 
+// Content Report endpoints
+export const CONTENT_REPORT_ENDPOINTS = {
+  CREATE: `${API_BASE_URL}/content-reports`,
+  GET_ALL: `${API_BASE_URL}/content-reports`,
+  DISMISS: (id) => `${API_BASE_URL}/content-reports/${id}/dismiss`,
+  REMOVE_CONTENT: (id) => `${API_BASE_URL}/content-reports/${id}/remove-content`,
+};
+
 // Conversation endpoints
 export const CONVERSATION_ENDPOINTS = {
   GET_ALL: `${API_BASE_URL}/conversations`,
@@ -155,6 +163,7 @@ export default {
   ANNOUNCEMENTS_ENDPOINTS,
   REPORTS_ENDPOINTS,
   REPORT_ENDPOINTS,
+  CONTENT_REPORT_ENDPOINTS,
   CONVERSATION_ENDPOINTS,
   MESSAGE_ENDPOINTS,
   UPLOAD_ENDPOINTS,

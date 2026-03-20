@@ -23,7 +23,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import ReportCard from "../src/components/ReportCard";
-import { REPORT_ENDPOINTS } from "../src/config/api";
+import ContentReportCard from "../src/components/ContentReportCard";
+import { REPORT_ENDPOINTS, CONTENT_REPORT_ENDPOINTS } from "../src/config/api";
 
 export default function AdminDashboardScreen() {
     const router = useRouter();
@@ -31,6 +32,7 @@ export default function AdminDashboardScreen() {
     // State
     const [activeTab, setActiveTab] = useState("reports");
     const [reports, setReports] = useState([]);
+    const [contentReports, setContentReports] = useState([]);
     const [filterStatus, setFilterStatus] = useState("all");
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -48,23 +50,31 @@ export default function AdminDashboardScreen() {
                 }
                 setError(null);
 
-                const url =
-                    filterStatus === "all"
-                        ? REPORT_ENDPOINTS.GET_ALL
-                        : `${REPORT_ENDPOINTS.GET_ALL}?status=${filterStatus}`;
+                if (activeTab === "reports") {
+                    const url =
+                        filterStatus === "all"
+                            ? REPORT_ENDPOINTS.GET_ALL
+                            : `${REPORT_ENDPOINTS.GET_ALL}?status=${filterStatus}`;
 
-                console.log("📡 Fetching reports from:", url);
+                    const response = await fetch(url);
+                    const data = await response.json();
 
-                const response = await fetch(url);
-                const data = await response.json();
+                    if (data.success) {
+                        setReports(data.data || []);
+                        setCounts(data.counts || { pending: 0, ongoing: 0, solved: 0, rejected: 0 });
+                    } else {
+                        setError(data.message || "Failed to fetch reports");
+                    }
+                } else if (activeTab === "moderation") {
+                    const url = CONTENT_REPORT_ENDPOINTS.GET_ALL;
+                    const response = await fetch(url);
+                    const data = await response.json();
 
-                console.log("📥 Received reports:", data);
-
-                if (data.success) {
-                    setReports(data.data || []);
-                    setCounts(data.counts || { pending: 0, ongoing: 0, solved: 0, rejected: 0 });
-                } else {
-                    setError(data.message || "Failed to fetch reports");
+                    if (data.success) {
+                        setContentReports(data.data || []);
+                    } else {
+                        setError(data.message || "Failed to fetch content reports");
+                    }
                 }
             } catch (err) {
                 console.error("❌ Fetch error:", err);
@@ -74,7 +84,7 @@ export default function AdminDashboardScreen() {
                 setIsRefreshing(false);
             }
         },
-        [filterStatus]
+        [filterStatus, activeTab]
     );
 
     // Fetch reports when screen comes into focus
@@ -84,10 +94,10 @@ export default function AdminDashboardScreen() {
         }, [fetchReports])
     );
 
-    // Fetch reports when filter status changes
+    // Fetch reports when filter status or tab changes
     useEffect(() => {
         fetchReports();
-    }, [filterStatus]);
+    }, [filterStatus, activeTab, fetchReports]);
 
     // Pull to refresh handler
     const onRefresh = () => {
@@ -123,15 +133,14 @@ export default function AdminDashboardScreen() {
             <TouchableOpacity
                 style={[
                     styles.tab,
-                    activeTab === "moderation" && styles.tabInactive,
+                    activeTab === "moderation" && styles.tabActive,
                 ]}
                 onPress={() => setActiveTab("moderation")}
-                disabled
             >
                 <Text
                     style={[
                         styles.tabText,
-                        activeTab === "moderation" && styles.tabTextInactive,
+                        activeTab === "moderation" && styles.tabTextActive,
                     ]}
                 >
                     Content Moderation
@@ -142,19 +151,13 @@ export default function AdminDashboardScreen() {
                 style={[styles.tab, activeTab === "reports" && styles.tabActive]}
                 onPress={() => setActiveTab("reports")}
             >
-                <Ionicons
-                    name="flag"
-                    size={16}
-                    color={activeTab === "reports" ? "#fff" : "#262626"}
-                    style={{ marginRight: 6 }}
-                />
                 <Text
                     style={[
                         styles.tabText,
                         activeTab === "reports" && styles.tabTextActive,
                     ]}
                 >
-                    Reports
+                    Anonymous Reports
                 </Text>
             </TouchableOpacity>
         </View>
@@ -292,16 +295,20 @@ export default function AdminDashboardScreen() {
 
             <FlatList
                 style={{ flex: 1 }}
-                data={reports}
+                data={activeTab === "reports" ? reports : contentReports}
                 keyExtractor={(item) => item._id}
                 renderItem={({ item }) => (
-                    <ReportCard report={item} onPress={handleReportPress} />
+                    activeTab === "reports"
+                        ? <ReportCard report={item} onPress={handleReportPress} />
+                        : <ContentReportCard report={item} onActionComplete={fetchReports} />
                 )}
                 ListHeaderComponent={
-                    <>
-                        {renderStats()}
-                        {renderFilters()}
-                    </>
+                    activeTab === "reports" ? (
+                        <>
+                            {renderStats()}
+                            {renderFilters()}
+                        </>
+                    ) : null
                 }
                 refreshControl={
                     <RefreshControl

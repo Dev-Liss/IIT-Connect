@@ -34,6 +34,7 @@ const { startStoryCleanupJob } = require("./jobs/storyCleanup");
 const conversationRoutes = require("./routes/conversation");
 const messageRoutes = require("./routes/message");
 const uploadRoutes = require("./routes/upload");
+const contentReportsRoutes = require("./routes/contentReports");
 
 // Import Socket Handler
 const socketHandler = require("./socket/socketHandler");
@@ -205,6 +206,9 @@ app.use("/api/announcements", announcementsRoutes);
 
 // Reports routes (anonymous)
 app.use("/api/reports", reportsRoutes);
+
+// Content moderation reports routes (Posts & Reels)
+app.use("/api/content-reports", contentReportsRoutes);
 
 // Messaging routes
 app.use("/api/conversations", conversationRoutes);

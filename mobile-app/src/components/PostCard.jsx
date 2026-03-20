@@ -25,7 +25,7 @@ import {
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
-import { POST_ENDPOINTS } from "../config/api";
+import { POST_ENDPOINTS, CONTENT_REPORT_ENDPOINTS } from "../config/api";
 import CommentsBottomSheet from "./CommentsBottomSheet";
 
 // Get screen width for dynamic image sizing
@@ -120,6 +120,37 @@ export default function PostCard({ post, onLike, onShare }) {
     }
   };
 
+  const handleReport = async () => {
+    if (!user) return;
+    try {
+      const response = await fetch(CONTENT_REPORT_ENDPOINTS.CREATE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetId: post._id,
+          targetType: "Post",
+          reportedBy: currentUserId,
+          reason: "Inappropriate Content",
+        }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        Alert.alert("Reported", "Thank you for letting us know. We will review this post.");
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Could not submit report. Please try again.");
+    }
+  };
+
+  const showMenu = () => {
+    Alert.alert("Options", "Choose an action", [
+      { text: "Report Post", onPress: handleReport, style: "destructive" },
+      { text: "Cancel", style: "cancel" }
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       {/* ========== HEADER ========== */}
@@ -133,7 +164,7 @@ export default function PostCard({ post, onLike, onShare }) {
             )}
           </View>
         </View>
-        <TouchableOpacity style={styles.menuButton}>
+        <TouchableOpacity style={styles.menuButton} onPress={showMenu}>
           <Ionicons name="ellipsis-horizontal" size={20} color="#262626" />
         </TouchableOpacity>
       </View>
