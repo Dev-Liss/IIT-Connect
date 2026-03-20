@@ -13,9 +13,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as Linking from "expo-linking";
 import { useSignIn, useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
 import { syncGoogleUser } from "../services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as WebBrowser from "expo-web-browser";
+import { useWarmUpBrowser } from "../hooks/useWarmUpBrowser";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword }) {
   const [email, setEmail] = useState("");
@@ -23,6 +28,9 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
   const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Warm up the android browser to improve UX and prevent OAuth lockups
+  useWarmUpBrowser();
 
   const { signIn, setActive } = useSignIn();
   const { isSignedIn, signOut } = useAuth();
@@ -169,7 +177,9 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
       }
 
       console.log("🔵 [Google] Starting OAuth flow...");
-      const oauthResult = await startOAuthFlow();
+      const oauthResult = await startOAuthFlow({
+        redirectUrl: Linking.createURL("/", { scheme: "iitconnect" }),
+      });
       const { createdSessionId, setActive: oauthSetActive, signIn: oauthSignIn, signUp: oauthSignUp } = oauthResult;
 
       // User cancelled the Google picker
