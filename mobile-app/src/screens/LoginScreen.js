@@ -22,7 +22,11 @@ import { useWarmUpBrowser } from "../hooks/useWarmUpBrowser";
 
 WebBrowser.maybeCompleteAuthSession();
 
-export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword }) {
+export default function LoginScreen({
+  onSignUp,
+  onLoginSuccess,
+  onForgotPassword,
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [keepSignedIn, setKeepSignedIn] = useState(false);
@@ -44,9 +48,6 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
 
   // Guard ref to prevent double-runs
   const isSyncingRef = useRef(false);
-
-
-
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim().toLowerCase();
@@ -71,7 +72,10 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
       // If sign-in is complete, set the session as active
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
-        await AsyncStorage.setItem('keepMeSignedIn', keepSignedIn ? 'true' : 'false');
+        await AsyncStorage.setItem(
+          "keepMeSignedIn",
+          keepSignedIn ? "true" : "false",
+        );
 
         console.log("✅ Login successful for:", trimmedEmail);
         setIsLoading(false);
@@ -83,9 +87,11 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
       } else {
         // Handle other statuses if needed
         setIsLoading(false);
-        Alert.alert("Error", "Login requires additional steps. Please contact support.");
+        Alert.alert(
+          "Error",
+          "Login requires additional steps. Please contact support.",
+        );
       }
-
     } catch (error) {
       setIsLoading(false);
 
@@ -95,12 +101,24 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
 
         if (clerkError.code === "form_identifier_not_found") {
           // Email doesn't exist - this is an expected error, not a bug
-          console.log("ℹ️ Login attempt with unregistered email:", trimmedEmail);
-          Alert.alert("No Account Found", "No account exists for this email. Please sign up first.");
+          console.log(
+            "ℹ️ Login attempt with unregistered email:",
+            trimmedEmail,
+          );
+          Alert.alert(
+            "No Account Found",
+            "No account exists for this email. Please sign up first.",
+          );
         } else if (clerkError.code === "form_password_incorrect") {
           // Wrong password - this is an expected error, not a bug
-          console.log("ℹ️ Login attempt with incorrect password for:", trimmedEmail);
-          Alert.alert("Incorrect Password", "The password you entered is incorrect. Please try again.");
+          console.log(
+            "ℹ️ Login attempt with incorrect password for:",
+            trimmedEmail,
+          );
+          Alert.alert(
+            "Incorrect Password",
+            "The password you entered is incorrect. Please try again.",
+          );
         } else if (clerkError.code === "session_exists") {
           // Already logged in - we need to sign out first and retry
           console.log("⚠️ Session exists, signing out and retrying login...");
@@ -109,7 +127,7 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
             console.log("🚪 Signed out, retrying login...");
 
             // Retry the login
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise((resolve) => setTimeout(resolve, 500));
             const retrySignIn = await signIn.create({
               identifier: trimmedEmail,
               password: password,
@@ -117,7 +135,10 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
 
             if (retrySignIn.status === "complete") {
               await setActive({ session: retrySignIn.createdSessionId });
-              await AsyncStorage.setItem('keepMeSignedIn', keepSignedIn ? 'true' : 'false');
+              await AsyncStorage.setItem(
+                "keepMeSignedIn",
+                keepSignedIn ? "true" : "false",
+              );
               console.log("✅ Login successful after retry");
               if (onLoginSuccess) {
                 onLoginSuccess();
@@ -129,13 +150,26 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
               const retryClerkError = retryError.errors[0];
               if (retryClerkError.code === "form_identifier_not_found") {
                 console.log("ℹ️ Retry: Login attempt with unregistered email");
-                Alert.alert("No Account Found", "No account exists for this email. Please sign up first.");
+                Alert.alert(
+                  "No Account Found",
+                  "No account exists for this email. Please sign up first.",
+                );
               } else if (retryClerkError.code === "form_password_incorrect") {
                 console.log("ℹ️ Retry: Login attempt with incorrect password");
-                Alert.alert("Incorrect Password", "The password you entered is incorrect. Please try again.");
+                Alert.alert(
+                  "Incorrect Password",
+                  "The password you entered is incorrect. Please try again.",
+                );
               } else {
-                console.log("ℹ️ Retry: Login failed with error:", retryClerkError.code);
-                Alert.alert("Login Failed", retryClerkError.message || "Invalid credentials. Please try again.");
+                console.log(
+                  "ℹ️ Retry: Login failed with error:",
+                  retryClerkError.code,
+                );
+                Alert.alert(
+                  "Login Failed",
+                  retryClerkError.message ||
+                    "Invalid credentials. Please try again.",
+                );
               }
             } else {
               console.log("ℹ️ Retry: Login failed with unknown error");
@@ -145,22 +179,27 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
         } else if (clerkError.code === "network_error") {
           Alert.alert(
             "Connection Error",
-            "Unable to connect to the server. Please check your internet connection and try again."
+            "Unable to connect to the server. Please check your internet connection and try again.",
           );
         } else {
-          Alert.alert("Login Failed", clerkError.message || "Invalid credentials. Please try again.");
+          Alert.alert(
+            "Login Failed",
+            clerkError.message || "Invalid credentials. Please try again.",
+          );
         }
       } else if (error.message && error.message.includes("network")) {
         Alert.alert(
           "Network Error",
-          "Could not connect to server. Please check your internet connection."
+          "Could not connect to server. Please check your internet connection.",
         );
       } else {
-        Alert.alert("Login Failed", error.message || "Invalid credentials. Please try again.");
+        Alert.alert(
+          "Login Failed",
+          error.message || "Invalid credentials. Please try again.",
+        );
       }
     }
   };
-
 
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
 
@@ -180,7 +219,12 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
       const oauthResult = await startOAuthFlow({
         redirectUrl: Linking.createURL("/", { scheme: "iitconnect" }),
       });
-      const { createdSessionId, setActive: oauthSetActive, signIn: oauthSignIn, signUp: oauthSignUp } = oauthResult;
+      const {
+        createdSessionId,
+        setActive: oauthSetActive,
+        signIn: oauthSignIn,
+        signUp: oauthSignUp,
+      } = oauthResult;
 
       // User cancelled the Google picker
       if (!createdSessionId) {
@@ -198,18 +242,25 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
 
       // Try from signIn object (returning user)
       if (oauthSignIn) {
-        console.log("🔍 [Google] oauthSignIn data:", JSON.stringify(oauthSignIn, null, 2));
+        console.log(
+          "🔍 [Google] oauthSignIn data:",
+          JSON.stringify(oauthSignIn, null, 2),
+        );
         const si = oauthSignIn;
-        googleEmail = si.identifier
-          || si.userData?.emailAddresses?.[0]?.emailAddress
-          || null;
+        googleEmail =
+          si.identifier ||
+          si.userData?.emailAddresses?.[0]?.emailAddress ||
+          null;
         googleClerkId = si.userData?.id || null;
         googleUsername = si.userData?.firstName || googleUsername;
       }
 
       // Try from signUp object (new Clerk user created via Google)
       if (oauthSignUp && (!googleEmail || !googleClerkId)) {
-        console.log("🔍 [Google] oauthSignUp data:", JSON.stringify(oauthSignUp, null, 2));
+        console.log(
+          "🔍 [Google] oauthSignUp data:",
+          JSON.stringify(oauthSignUp, null, 2),
+        );
         const su = oauthSignUp;
         googleEmail = su.emailAddress || su.identifier || null;
         googleClerkId = su.createdUserId || null;
@@ -222,16 +273,19 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
 
       // Last-resort: wait up to 3 seconds for clerkUser to populate via the hook
       if (!googleEmail || !googleClerkId) {
-        console.log("⏳ [Google] Email/ClerkId not in OAuth result, polling clerkUserRef...");
+        console.log(
+          "⏳ [Google] Email/ClerkId not in OAuth result, polling clerkUserRef...",
+        );
         let waited = 0;
         while (waited < 3000) {
-          await new Promise(r => setTimeout(r, 200));
+          await new Promise((r) => setTimeout(r, 200));
           waited += 200;
           const u = clerkUserRef.current;
           if (u && u.id) {
-            googleEmail = u.primaryEmailAddress?.emailAddress
-              || u.emailAddresses?.[0]?.emailAddress
-              || null;
+            googleEmail =
+              u.primaryEmailAddress?.emailAddress ||
+              u.emailAddresses?.[0]?.emailAddress ||
+              null;
             googleClerkId = u.id;
             googleUsername = u.fullName || u.firstName || googleUsername;
             if (googleEmail && googleClerkId) break;
@@ -239,12 +293,24 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
         }
       }
 
-      console.log("📧 [Google] Final email:", googleEmail, " clerkId:", googleClerkId);
+      console.log(
+        "📧 [Google] Final email:",
+        googleEmail,
+        " clerkId:",
+        googleClerkId,
+      );
 
       if (!googleEmail || !googleClerkId) {
-        console.error("❌ [Google] Could not resolve email or clerkId. Signing out.");
-        try { await signOut(); } catch (_) { }
-        Alert.alert("Sign In Error", "Could not retrieve your Google account details. Please try again.");
+        console.error(
+          "❌ [Google] Could not resolve email or clerkId. Signing out.",
+        );
+        try {
+          await signOut();
+        } catch (_) {}
+        Alert.alert(
+          "Sign In Error",
+          "Could not retrieve your Google account details. Please try again.",
+        );
         return;
       }
 
@@ -254,23 +320,37 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
 
       // Only reach here if account EXISTS in MongoDB
       console.log("✅ [Google] MongoDB account confirmed. Navigating to home.");
-      await AsyncStorage.setItem('keepMeSignedIn', keepSignedIn ? 'true' : 'false');
+      await AsyncStorage.setItem(
+        "keepMeSignedIn",
+        keepSignedIn ? "true" : "false",
+      );
       if (onLoginSuccess) {
         onLoginSuccess();
       }
-
     } catch (err) {
-      console.log("❌ [Google] Error:", err.message, " requiresSignup:", err.requiresSignup);
+      console.log(
+        "❌ [Google] Error:",
+        err.message,
+        " requiresSignup:",
+        err.requiresSignup,
+      );
       if (err.requiresSignup) {
         // Backend found no MongoDB account and deleted the Clerk user
-        try { await signOut(); } catch (_) { }
+        try {
+          await signOut();
+        } catch (_) {}
         Alert.alert(
           "No Account Found",
-          "There is no account linked to this Google email.\nPlease sign up first."
+          "There is no account linked to this Google email.\nPlease sign up first.",
         );
       } else {
-        try { await signOut(); } catch (_) { }
-        Alert.alert("Google Sign In Error", err.message || "Failed to sign in with Google. Please try again.");
+        try {
+          await signOut();
+        } catch (_) {}
+        Alert.alert(
+          "Google Sign In Error",
+          err.message || "Failed to sign in with Google. Please try again.",
+        );
       }
     } finally {
       isSyncingRef.current = false;
@@ -291,7 +371,7 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -316,7 +396,12 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
           {/* Email Input */}
           <Text style={styles.label}>Email</Text>
           <View style={styles.inputContainer}>
-            <Ionicons name="mail-outline" size={20} color="#E31E24" style={styles.icon} />
+            <Ionicons
+              name="mail-outline"
+              size={20}
+              color="#E31E24"
+              style={styles.icon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Enter your email"
@@ -331,7 +416,12 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
           {/* Password Input */}
           <Text style={styles.label}>Password</Text>
           <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#E31E24" style={styles.icon} />
+            <Ionicons
+              name="lock-closed-outline"
+              size={20}
+              color="#E31E24"
+              style={styles.icon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Enter your password"
@@ -356,19 +446,29 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
               style={styles.checkboxContainer}
               onPress={() => setKeepSignedIn(!keepSignedIn)}
             >
-              <View style={[styles.checkbox, keepSignedIn && styles.checkboxChecked]}>
-                {keepSignedIn && <Ionicons name="checkmark" size={12} color="#E31E24" />}
+              <View
+                style={[
+                  styles.checkbox,
+                  keepSignedIn && styles.checkboxChecked,
+                ]}
+              >
+                {keepSignedIn && (
+                  <Ionicons name="checkmark" size={12} color="#E31E24" />
+                )}
               </View>
-              <Text style={styles.checkboxLabel}>Keep me signed in</Text>
+              <Text style={styles.checkboxLabel}>Remember me</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleForgotPassword}>
-              <Text style={styles.forgotPassword}>Forgot password</Text>
+              <Text style={styles.forgotPassword}>Forgot password?</Text>
             </TouchableOpacity>
           </View>
 
           {/* Sign In Button */}
           <TouchableOpacity
-            style={[styles.signInButton, isLoading && styles.signInButtonDisabled]}
+            style={[
+              styles.signInButton,
+              isLoading && styles.signInButtonDisabled,
+            ]}
             onPress={handleLogin}
             disabled={isLoading}
           >
@@ -378,10 +478,13 @@ export default function LoginScreen({ onSignUp, onLoginSuccess, onForgotPassword
           </TouchableOpacity>
 
           {/* Divider Text */}
-          <Text style={styles.dividerText}>You can Connect with</Text>
+          <Text style={styles.dividerText}>Or Sign In With</Text>
 
           {/* Google Sign In */}
-          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
+          <TouchableOpacity
+            style={styles.googleButton}
+            onPress={handleGoogleSignIn}
+          >
             <Image
               source={{ uri: "https://www.google.com/favicon.ico" }}
               style={styles.googleIcon}
