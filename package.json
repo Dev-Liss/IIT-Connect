@@ -1,21 +1,15 @@
 {
   "name": "iit-connect",
   "version": "1.0.0",
-  "description": "IIT Connect - Full Stack Application",
+  "description": "Monorepo root for IIT Connect – runs backend and Expo mobile app together",
+  "private": true,
   "scripts": {
-    "start:backend": "cd backend && npm start",
-    "dev:backend": "cd backend && npm run dev",
-    "start:mobile": "cd mobile-app && npx expo start",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run start:mobile\"",
-    "start": "concurrently \"npm run start:backend\" \"npm run start:mobile\"",
-    "postinstall": "cd backend && npm install && cd ../mobile-app && npm install"
+    "dev": "concurrently --names \"BACKEND,EXPO\" --prefix-colors \"cyan,magenta\" \"npm run dev --prefix backend\" \"cd mobile-app && npx expo start\"",
+    "backend": "npm run dev --prefix backend",
+    "mobile": "cd mobile-app && npx expo start",
+    "install:all": "npm install --prefix backend && npm install --prefix mobile-app"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
-  },
-  "license": "ISC",
-  "dependencies": {
-    "expo": "^54.0.33",
-    "expo-dev-client": "~6.0.20"
+    "concurrently": "^9.1.2"
   }
 }

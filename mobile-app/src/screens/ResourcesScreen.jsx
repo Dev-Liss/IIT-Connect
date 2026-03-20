@@ -705,8 +705,6 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     alignItems: "center",
-    boxShadow: "0px 2px 4px 0px rgba(0, 0, 0, 0.1)",
-    elevation: 3,
     borderWidth: 1,
     borderColor: "#f0f0f0",
   },

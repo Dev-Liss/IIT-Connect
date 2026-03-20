@@ -8,19 +8,21 @@
  * Make sure your phone and laptop are on the SAME WiFi network.
  */
 
-// Read from .env file - update EXPO_PUBLIC_LAPTOP_IP in .env when your IP changes
-const LAPTOP_IP = process.env.EXPO_PUBLIC_LAPTOP_IP;
-
-// Backend port (should match PORT in backend/.env)
-const PORT = "5000";
-
 // Request timeout in milliseconds
 export const REQUEST_TIMEOUT = 15000;
 
-// Full API base URL
-export const API_BASE_URL = `http://${LAPTOP_IP}:${PORT}/api`;
+// ==========================================
+// PRODUCTION URLS
+// ==========================================
+// export const SOCKET_URL = "https://iit-connect.onrender.com";
+// export const API_BASE_URL = `${SOCKET_URL}/api`;
 
-// Socket.io URL (same server, different purpose)
+// ==========================================
+// LOCAL DEVELOPMENT URLS
+// ==========================================
+const LAPTOP_IP = process.env.EXPO_PUBLIC_LAPTOP_IP;
+const PORT = "5000";
+export const API_BASE_URL = `http://${LAPTOP_IP}:${PORT}/api`;
 export const SOCKET_URL = `http://${LAPTOP_IP}:${PORT}`;
 
 // Auth endpoints
@@ -114,22 +116,27 @@ export const CONVERSATION_ENDPOINTS = {
   CREATE_DIRECT: `${API_BASE_URL}/conversations/direct`,
   CREATE_GROUP: `${API_BASE_URL}/conversations/group`,
   ADD_PARTICIPANT: (id) => `${API_BASE_URL}/conversations/${id}/participants`,
-  REMOVE_PARTICIPANT: (id, userId) => `${API_BASE_URL}/conversations/${id}/participants/${userId}`,
+  REMOVE_PARTICIPANT: (id, userId) =>
+    `${API_BASE_URL}/conversations/${id}/participants/${userId}`,
 };
 
 // Message endpoints
 export const MESSAGE_ENDPOINTS = {
-  GET_MESSAGES: (conversationId) => `${API_BASE_URL}/messages/${conversationId}`,
-  SEND_MESSAGE: (conversationId) => `${API_BASE_URL}/messages/${conversationId}`,
+  GET_MESSAGES: (conversationId) =>
+    `${API_BASE_URL}/messages/${conversationId}`,
+  SEND_MESSAGE: (conversationId) =>
+    `${API_BASE_URL}/messages/${conversationId}`,
   MARK_READ: (messageId) => `${API_BASE_URL}/messages/${messageId}/read`,
-  SEARCH: (conversationId) => `${API_BASE_URL}/messages/${conversationId}/search`,
+  SEARCH: (conversationId) =>
+    `${API_BASE_URL}/messages/${conversationId}/search`,
 };
 
 // Upload endpoints
 export const UPLOAD_ENDPOINTS = {
   UPLOAD_MEDIA: `${API_BASE_URL}/upload/media`,
   UPLOAD_MULTIPLE: `${API_BASE_URL}/upload/multiple`,
-  DELETE_FILE: (publicId) => `${API_BASE_URL}/upload/${encodeURIComponent(publicId)}`,
+  DELETE_FILE: (publicId) =>
+    `${API_BASE_URL}/upload/${encodeURIComponent(publicId)}`,
 };
 
 // Health check endpoint (for testing connection)
@@ -152,6 +159,4 @@ export default {
   MESSAGE_ENDPOINTS,
   UPLOAD_ENDPOINTS,
   HEALTH_CHECK_URL,
-  LAPTOP_IP,
-  PORT,
 };

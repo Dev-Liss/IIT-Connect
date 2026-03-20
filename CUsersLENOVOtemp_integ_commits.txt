@@ -1,0 +1,32 @@
+COMMIT: 7350cd7 | fix(profile): Remove empty column in reel preview grid
+COMMIT: d6ef1b0 | fix(profile): Load reel thumbnails from cloudinary
+COMMIT: b054710 | Merge remote-tracking branch 'origin/integration-branch' into profile-edits-for-yasidu -# Please enter a commit message to explain why this merge is necessary, - Integrate EAS configurations
+COMMIT: 7d01bb7 | Merge pull request #15 from Dev-Liss/main
+COMMIT: e82bcff | fix: add filtering logic to seperate reels and post, ui changes
+COMMIT: 679c87b | refactor: New app logo image for mobile app
+COMMIT: 4341958 | fix: minor dependency mismatchs
+COMMIT: 9cfc6af | refactor: Add app logo to the build
+COMMIT: de421bf | feat: Add initial Expo project configuration and EAS build settings.
+COMMIT: d2e1db7 | chore: Replace local URL with development URL
+COMMIT: f7f6818 | fix: minor ui chnages, comments and share on posts
+COMMIT: 8135540 | fix: minor ui chnages, comments and share on posts
+COMMIT: b7e646d | fix: minor ui changes, comment read, like count and seperate part for reels added
+COMMIT: 34216e9 | fix: update the logout handling in profiles
+COMMIT: ac95145 | feat: implement post deletion on user profiles
+COMMIT: 818ce3e | fix: prevent alumni-only fields from being written to student/lecturer documents
+COMMIT: 7d36535 | Merge branch 'integration-branch' - refactor: run both backend and frontend in root directory
+COMMIT: b7dd5e7 | feat(package): Install concurrently to run both backend and mobile-app simultaneously
+COMMIT: 15b1f67 | Merge branch 'integration-branch' - Add new redesigned alert component
+COMMIT: 07ec557 | feat: New redesigned alerts
+COMMIT: cc66bf7 | fix: Expand and collapse post captions upon taps
+COMMIT: 0e793e8 | Merge pull request #14 from Dev-Liss/integration-branch
+COMMIT: 3758d31 | fix: Transition glitching between Academic page tabs
+COMMIT: 3fa896f | fix: Group selecting opening animation
+COMMIT: a2d485b | Merge branch 'adacemic-edits-for-injas' into integration-branch
+COMMIT: 4fac734 | Animations and popup for select group list
+COMMIT: ba7751b | fix: Academic page resource upload and kuppi create issue
+COMMIT: 89aeef8 | fix: data fetch error-profile page
+COMMIT: c3bc4b5 | Handle kuppi session error handling and dual-icon toggle highlight
+COMMIT: f40fd31 | Implement dynamic user based timetable with profile integration
+COMMIT: 8ac6ac0 | merge: 'integration-branch' into main - iOS fixes applied
+COMMIT: 4032efb | Merge pull request #13 from Dev-Liss/integration-branch

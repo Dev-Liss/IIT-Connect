@@ -27,7 +27,7 @@ exports.getUserProfile = async (req, res) => {
 // @access  Private
 exports.updateUserProfile = async (req, res) => {
     const {
-        username, bio, batch,
+        username, bio, batch, tutorialGroup,
         profilePicture, coverPicture,
         graduationYear, currentJob, company, location, careerJourney
     } = req.body;
@@ -37,6 +37,7 @@ exports.updateUserProfile = async (req, res) => {
     if (username !== undefined) profileFields.username = username;
     if (bio !== undefined) profileFields.bio = bio;
     if (batch !== undefined) profileFields.batch = batch;
+    if (tutorialGroup !== undefined) profileFields.tutorialGroup = tutorialGroup;
     if (profilePicture !== undefined) profileFields.profilePicture = profilePicture;
     if (coverPicture !== undefined) profileFields.coverPicture = coverPicture;
     if (graduationYear !== undefined) profileFields.graduationYear = graduationYear;
@@ -52,8 +53,13 @@ exports.updateUserProfile = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // TODO: Check if req.user.id matches req.params.id (Authorization)
-        // For now, assuming the middleware handles basic auth or we confim identity here
+        // Role-based guard: strip alumni-only fields for non-alumni users
+        // This prevents student/lecturer documents from ever receiving these
+        // fields via the API, regardless of what the request body contains.
+        const ALUMNI_ONLY_FIELDS = ["graduationYear", "currentJob", "company", "location", "careerJourney"];
+        if (user.role !== "alumni") {
+            ALUMNI_ONLY_FIELDS.forEach((field) => delete profileFields[field]);
+        }
 
         user = await User.findByIdAndUpdate(
             req.params.id,

@@ -21,7 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { API_BASE_URL as API_URL } from "../../config/api";
 
 const DEFAULT_AVATAR = "https://avataaars.io/?avatarStyle=Circle&topType=ShortHairShortFlat&accessoriesType=Prescription02&hairColor=Black&facialHairType=BeardLight&clotheType=BlazerShirt&eyeType=Happy&eyebrowType=Default&mouthType=Default&skinColor=Light";
-const DEFAULT_COVER = "https://img.freepik.com/free-vector/hand-drawn-education-pattern_23-2148107567.jpg";
+const DEFAULT_COVER = "https://placehold.co/800x300/e0e0e0/e0e0e0.png";
 
 export default function EditLecturerProfile({ user }) {
     const router = useRouter();
@@ -253,6 +253,16 @@ export default function EditLecturerProfile({ user }) {
                         </View>
                     </View>
 
+                    <TouchableOpacity
+                        style={[styles.saveButton, saving && { opacity: 0.6 }]}
+                        onPress={handleSave}
+                        disabled={saving}
+                    >
+                        <Text style={styles.saveButtonText}>
+                            {saving ? "Saving Changes..." : "Save Changes"}
+                        </Text>
+                    </TouchableOpacity>
+
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -282,4 +292,17 @@ const styles = StyleSheet.create({
     readOnlyText: { color: '#777' },
     textAreaContainer: { paddingVertical: 15, alignItems: 'flex-start' },
     textArea: { flex: 1, fontSize: 16, color: '#000', minHeight: 100, width: '100%' },
+    saveButton: {
+        backgroundColor: '#D32F2F',
+        marginHorizontal: 20,
+        marginVertical: 20,
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+    },
+    saveButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
 });

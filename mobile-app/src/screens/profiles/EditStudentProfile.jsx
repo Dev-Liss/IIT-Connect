@@ -24,6 +24,7 @@ import * as ImagePicker from "expo-image-picker";
 import { API_BASE_URL as API_URL } from "../../config/api";
 
 const LEVELS = ["L4", "L5", "L6", "L7"];
+const COURSES = ["CS", "SE"];
 const GROUPS = Array.from({ length: 30 }, (_, i) => `G${i + 1}`);
 
 export default function EditStudentProfile({ user }) {
@@ -37,8 +38,9 @@ export default function EditStudentProfile({ user }) {
     const [email, setEmail] = useState("");
     const [role, setRole] = useState("");
 
-    const [level, setLevel] = useState("L4");
-    const [group, setGroup] = useState("G1");
+    const [level, setLevel] = useState("");
+    const [course, setCourse] = useState("");
+    const [group, setGroup] = useState("");
 
     const [profilePicture, setProfilePicture] = useState("");
     const [coverPicture, setCoverPicture] = useState("");
@@ -71,11 +73,23 @@ export default function EditStudentProfile({ user }) {
                     setProfilePicture(data.profilePicture);
                     setCoverPicture(data.coverPicture);
 
-                    if (data.batch) {
+                    if (data.tutorialGroup) {
+                        const match = data.tutorialGroup.match(/(?:(L[4-7])\s+)?(CS|SE)\s*-\s*(G\d+)/);
+                        if (match) {
+                            if (match[1]) setLevel(match[1]);
+                            setCourse(match[2]);
+                            setGroup(match[3]);
+                        } else {
+                            const oldMatch = data.tutorialGroup.match(/(CS|SE)-(G\d+)/);
+                            if (oldMatch) {
+                                setCourse(oldMatch[1]);
+                                setGroup(oldMatch[2]);
+                            }
+                        }
+                    } else if (data.batch) {
                         const parts = data.batch.split(" ");
                         if (parts.length >= 2) {
                             setLevel(parts[0]);
-                            setGroup(parts[1]);
                         }
                     }
                 } else {
@@ -92,17 +106,25 @@ export default function EditStudentProfile({ user }) {
         fetchUserData();
     }, [user, userId]);
 
+    const isFormValid = level !== "" && course !== "" && group !== "";
+
     const handleSave = async () => {
         if (!userId) {
             Alert.alert("Error", "User not identified");
             return;
         }
+        if (!isFormValid) {
+            Alert.alert("Incomplete", "Please select Level, Course, and Group.");
+            return;
+        }
 
         setSaving(true);
         try {
+            const generatedGroupId = `${level} ${course} -${group}`;
             const updatedData = {
                 username: `${firstName} ${lastName}`.trim(),
-                batch: `${level} ${group}`,
+                batch: generatedGroupId,
+                tutorialGroup: generatedGroupId,
             };
 
             const response = await fetch(`${API_URL}/users/profile/${userId}`, {
@@ -180,9 +202,17 @@ export default function EditStudentProfile({ user }) {
 
     const handleSelect = (item) => {
         if (modalType === 'level') setLevel(item);
+        if (modalType === 'course') {
+            setCourse(item);
+            setGroup(""); // Reset group if course changes
+        }
         if (modalType === 'group') setGroup(item);
         setModalVisible(false);
     };
+
+    const activeGroups = course === 'SE' ? Array.from({ length: 10 }, (_, i) => `G${i + 1}`) : 
+                         course === 'CS' ? Array.from({ length: 29 }, (_, i) => `G${i + 1}`) : 
+                         GROUPS;
 
     if (loading) {
         return (
@@ -226,9 +256,12 @@ export default function EditStudentProfile({ user }) {
 
                     <View style={styles.mediaSection}>
                         <View style={styles.coverPlaceholder}>
-                            {coverPicture ? (
-                                <Image source={{ uri: coverPicture }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                            ) : null}
+                            <Image
+                                source={{ uri: coverPicture || "https://placehold.co/800x300/e0e0e0/e0e0e0.png" }}
+                                style={{ width: '100%', height: '100%' }}
+                                resizeMode="cover"
+                                onError={() => {}} // silently handle image load failure
+                            />
                         </View>
 
                         <View style={styles.avatarContainer}>
@@ -286,26 +319,34 @@ export default function EditStudentProfile({ user }) {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Tutorial Group</Text>
+                            <Text style={styles.label}>Timetable Group Options</Text>
                             <View style={styles.rowContainer}>
                                 <TouchableOpacity
-                                    style={styles.dropdownInput}
+                                    style={[styles.dropdownInput, { width: 85 }]}
                                     onPress={() => openModal('level')}
                                 >
-                                    <Text style={styles.inputText}>{level}</Text>
+                                    <Text style={styles.inputText}>{level || "Level"}</Text>
                                     <Ionicons name="chevron-down" size={16} color="#333" />
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    style={styles.dropdownInput}
+                                    style={[styles.dropdownInput, { width: 100 }]}
+                                    onPress={() => openModal('course')}
+                                >
+                                    <Text style={styles.inputText}>{course || "Course"}</Text>
+                                    <Ionicons name="chevron-down" size={16} color="#333" />
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.dropdownInput, { width: 95 }]}
                                     onPress={() => openModal('group')}
                                 >
-                                    <Text style={styles.inputText}>{group}</Text>
+                                    <Text style={styles.inputText}>{group || "Group"}</Text>
                                     <Ionicons name="chevron-down" size={16} color="#333" />
                                 </TouchableOpacity>
 
                                 <View style={styles.checkSpacer}>
-                                    <Ionicons name="checkmark-sharp" size={20} color="#2196F3" />
+                                    <Ionicons name={isFormValid ? "checkmark-sharp" : "ellipse-outline"} size={20} color={isFormValid ? "#2196F3" : "#ccc"} />
                                 </View>
                             </View>
                         </View>
@@ -323,7 +364,11 @@ export default function EditStudentProfile({ user }) {
                         </View>
                     </View>
 
-                    <TouchableOpacity style={styles.redButton} onPress={handleSave}>
+                    <TouchableOpacity 
+                        style={[styles.redButton, !isFormValid && { backgroundColor: '#ccc' }]} 
+                        onPress={handleSave}
+                        disabled={!isFormValid || saving}
+                    >
                         <Text style={styles.redButtonText}>
                             {saving ? "Saving Changes..." : "Save Changes"}
                         </Text>
@@ -343,10 +388,10 @@ export default function EditStudentProfile({ user }) {
                         <TouchableWithoutFeedback onPress={() => { }}>
                             <View style={styles.modalContent}>
                                 <Text style={styles.modalTitle}>
-                                    Select {modalType === 'level' ? 'Level' : 'Group'}
+                                    Select {modalType === 'level' ? 'Level' : modalType === 'course' ? 'Course' : 'Group'}
                                 </Text>
                                 <FlatList
-                                    data={modalType === 'level' ? LEVELS : GROUPS}
+                                    data={modalType === 'level' ? LEVELS : modalType === 'course' ? COURSES : activeGroups}
                                     keyExtractor={(item) => item}
                                     style={{ maxHeight: 300 }}
                                     renderItem={({ item }) => (
@@ -355,7 +400,7 @@ export default function EditStudentProfile({ user }) {
                                             onPress={() => handleSelect(item)}
                                         >
                                             <Text style={styles.modalItemText}>{item}</Text>
-                                            {(modalType === 'level' ? level : group) === item && (
+                                            {((modalType === 'level' && level === item) || (modalType === 'course' && course === item) || (modalType === 'group' && group === item)) && (
                                                 <Ionicons name="checkmark" size={20} color="#D32F2F" />
                                             )}
                                         </TouchableOpacity>
@@ -480,32 +525,28 @@ const styles = StyleSheet.create({
         color: '#777',
     },
     inputText: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#000',
     },
     rowContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        gap: 6,
     },
     dropdownInput: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: '#F9F9F9',
-        paddingHorizontal: 15,
+        paddingHorizontal: 12,
         paddingVertical: 14,
         borderRadius: 12,
-        width: 90,
     },
     checkSpacer: {
         flex: 1,
         alignItems: 'flex-end',
         justifyContent: 'center',
-        backgroundColor: '#F9F9F9',
-        paddingVertical: 14,
-        paddingHorizontal: 15,
-        borderRadius: 12,
+        backgroundColor: 'transparent',
     },
     redButton: {
         backgroundColor: '#D32F2F',

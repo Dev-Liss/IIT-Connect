@@ -6,6 +6,12 @@ node_modules/
 .env.*
 !.env.example
 
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
 # Logs
 logs/
 *.log
@@ -29,3 +35,31 @@ temp/
 
 # Backend Specific
 backend/logs/
+
+# Mobile App Specific
+mobile-app/ios/
+mobile-app/android/
+
+# Native Credentials & Keys
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.keystore
+
+# Metro Setup
+.metro-health-check*
+
+# TypeScript Output
+*.tsbuildinfo
+
+# Build Cache / Patch Files
+.kotlin/
+*.orig.*
+
+# App Template Unused
+mobile-app/app-example/
+
+# Others
+/audits

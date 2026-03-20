@@ -1,0 +1,12 @@
+COMMIT: 9c7bac4 | Resolve chat media selection crashes and "in progress" locks
+COMMIT: 0e81407 | Resolve google login "route not found" and lock-up on android
+COMMIT: 4b8292d | Fix auth middleware crash and token priority
+COMMIT: 86bd6bf | Fix messaging user list and add missing users endpoint
+COMMIT: 0fec025 | Fix the error in the ike and comment section
+COMMIT: 0aab178 | Implement "Keep me signed in" persistent state check
+COMMIT: 13b9cc9 | Resolve 401 Unauthorized errors during Kuppi session generation
+COMMIT: 779abd4 | Add unread response indicator for reports
+COMMIT: 4dfbafe | Add null checks for session organizer/attendees
+COMMIT: 19eba08 | fix: Post & Reel uploads
+COMMIT: 11f70b8 | fix: Redirect users to the "Home Page"
+COMMIT: c0f0a0f | feat: replace JWT auth with Clerk authentication

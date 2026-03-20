@@ -95,29 +95,30 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "", // e.g., "L4 G1"
     },
+    tutorialGroup: {
+      type: String,
+      default: "", // e.g., "SE-G1" or "CS-G19"
+    },
     bio: {
       type: String,
       default: "",
     },
+    // Alumni-only fields — no defaults so these keys are NOT written
+    // to student/lecturer documents at creation time
     graduationYear: {
       type: String,
-      default: "",
     },
     currentJob: {
       type: String,
-      default: "",
     },
     company: {
       type: String,
-      default: "",
     },
     location: {
       type: String,
-      default: "",
     },
     careerJourney: {
       type: String,
-      default: "",
     },
   },
   {
