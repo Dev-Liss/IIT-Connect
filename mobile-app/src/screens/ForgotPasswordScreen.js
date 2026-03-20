@@ -200,7 +200,7 @@ export default function ForgotPasswordScreen({ onBack, onCodeSent }) {
                     {/* Illustration */}
                     <View style={styles.illustrationContainer}>
                         <Image
-                            source={require("../../assets/images/password-reset.png")}
+                            source={require("../../assets/images/password-reset.jpg")}
                             style={styles.illustration}
                             resizeMode="contain"
                         />

@@ -18,7 +18,7 @@ export default function SignupSuccessScreen({ onContinue }) {
             {/* Success Illustration */}
             <View style={styles.illustrationContainer}>
                 <Image
-                    source={require("../../assets/images/success-illustration.png")}
+                    source={require("../../assets/images/success-illustration.jpg")}
                     style={styles.illustration}
                     resizeMode="contain"
                 />

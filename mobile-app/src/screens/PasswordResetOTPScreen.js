@@ -140,7 +140,7 @@ export default function PasswordResetOTPScreen({ email, onVerify, onBack }) {
                     {/* Illustration */}
                     <View style={styles.illustrationContainer}>
                         <Image
-                            source={require("../../assets/images/otp-verification.png")}
+                            source={require("../../assets/images/otp-verification.jpg")}
                             style={styles.illustration}
                             resizeMode="contain"
                         />

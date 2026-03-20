@@ -199,7 +199,7 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
           {/* Illustration */}
           <View style={styles.illustrationContainer}>
             <Image
-              source={require("../../assets/images/otp-verification.png")}
+              source={require("../../assets/images/otp-verification.jpg")}
               style={styles.illustration}
               resizeMode="contain"
             />
