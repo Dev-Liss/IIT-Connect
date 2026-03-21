@@ -217,7 +217,7 @@ export default function LoginScreen({
 
       console.log("🔵 [Google] Starting OAuth flow...");
       const oauthResult = await startOAuthFlow({
-        redirectUrl: Linking.createURL("/", { scheme: "iitconnect" }),
+        redirectUrl: Linking.createURL("oauth-native-callback", { scheme: "iitconnect" }),
       });
       const {
         createdSessionId,

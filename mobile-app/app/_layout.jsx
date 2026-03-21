@@ -26,23 +26,24 @@ Alert.alert = (title, message, buttons, options) => {
 const tokenCache = {
   async getToken(key) {
     try {
-      return await SecureStore.getItemAsync(key);
-    } catch {
+      const item = await SecureStore.getItemAsync(key);
+      if (item) {
+        console.log(`${key} was used 🔐 \n`);
+      } else {
+        console.log("No values stored under key: " + key);
+      }
+      return item;
+    } catch (error) {
+      console.error("SecureStore get item error: ", error);
+      await SecureStore.deleteItemAsync(key);
       return null;
     }
   },
   async saveToken(key, value) {
     try {
-      await SecureStore.setItemAsync(key, value);
-    } catch {
-      // ignore write errors
-    }
-  },
-  async clearToken(key) {
-    try {
-      await SecureStore.deleteItemAsync(key);
-    } catch {
-      // ignore
+      return SecureStore.setItemAsync(key, value);
+    } catch (err) {
+      return;
     }
   },
 };

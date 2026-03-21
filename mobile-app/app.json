@@ -40,10 +40,7 @@
           "photosPermission": "Allow IIT Connect to access your photos to save media.",
           "savePhotosPermission": "Allow IIT Connect to save photos to your gallery.",
           "isAccessMediaLocationEnabled": true,
-          "granularPermissions": [
-            "photo",
-            "video"
-          ]
+          "granularPermissions": ["photo", "video"]
         }
       ],
       [
@@ -59,7 +56,8 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "expo-video"
+      "expo-video",
+      "expo-secure-store"
     ],
     "experiments": {
       "reactCompiler": false
