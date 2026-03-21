@@ -10,7 +10,7 @@
  * Main app screens (tabs, messages, etc.) are from final-merge branch.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
@@ -45,6 +45,7 @@ export default function AuthEntry() {
   const [resetEmail, setResetEmail] = useState("");
   const [userData, setUserData] = useState(null);
   const [hasCheckedKeepSignedIn, setHasCheckedKeepSignedIn] = useState(false);
+  const hasRedirected = useRef(false);
 
   // First check if the user wanted to stay signed in
   useEffect(() => {
@@ -70,8 +71,10 @@ export default function AuthEntry() {
   // Once Clerk confirms sign-in AND MongoDB profile is loaded, go to main app
   useEffect(() => {
     if (currentScreen === "signupSuccess" || !hasCheckedKeepSignedIn) return;
+    if (hasRedirected.current) return;
 
     if (isLoaded && isSignedIn && user && !profileLoading) {
+      hasRedirected.current = true;
       router.replace("/(tabs)");
     }
   }, [isLoaded, isSignedIn, user, profileLoading, currentScreen, hasCheckedKeepSignedIn]);

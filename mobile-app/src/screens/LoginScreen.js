@@ -14,8 +14,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import { useSignIn, useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
+import {
+  useSignIn,
+  useAuth,
+  useOAuth,
+  useUser,
+  useClerk,
+} from "@clerk/clerk-expo";
 import { syncGoogleUser } from "../services/api";
+import { useAuth as useContextAuth } from "../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as WebBrowser from "expo-web-browser";
 import { useWarmUpBrowser } from "../hooks/useWarmUpBrowser";
@@ -39,6 +46,8 @@ export default function LoginScreen({
   const { signIn, setActive } = useSignIn();
   const { isSignedIn, signOut } = useAuth();
   const { user: clerkUser } = useUser();
+  const clerk = useClerk();
+  const { login: setMongoUser } = useContextAuth();
 
   // Always keep a ref to the latest clerkUser so async functions can read current value
   const clerkUserRef = useRef(clerkUser);
@@ -217,7 +226,9 @@ export default function LoginScreen({
 
       console.log("🔵 [Google] Starting OAuth flow...");
       const oauthResult = await startOAuthFlow({
-        redirectUrl: Linking.createURL("oauth-native-callback", { scheme: "iitconnect" }),
+        redirectUrl: Linking.createURL("oauth-native-callback", {
+          scheme: "iitconnect",
+        }),
       });
       const {
         createdSessionId,
@@ -267,20 +278,20 @@ export default function LoginScreen({
         googleUsername = su.firstName || googleUsername;
       }
 
-      // Activate the Clerk session so we can use clerkUserRef as a last-resort fallback
+      // Activate the Clerk session so we can use clerk as a last-resort fallback
       await oauthSetActive({ session: createdSessionId });
       console.log("✅ [Google] Session activated.");
 
-      // Last-resort: wait up to 3 seconds for clerkUser to populate via the hook
+      // Last-resort: wait up to 3 seconds for clerk.user to populate via the hook
       if (!googleEmail || !googleClerkId) {
         console.log(
-          "⏳ [Google] Email/ClerkId not in OAuth result, polling clerkUserRef...",
+          "⏳ [Google] Email/ClerkId not in OAuth result, polling clerk.user...",
         );
         let waited = 0;
         while (waited < 3000) {
           await new Promise((r) => setTimeout(r, 200));
           waited += 200;
-          const u = clerkUserRef.current;
+          const u = clerk.user;
           if (u && u.id) {
             googleEmail =
               u.primaryEmailAddress?.emailAddress ||
@@ -316,14 +327,20 @@ export default function LoginScreen({
 
       // --- Verify against MongoDB — this is the gatekeeper ---
       console.log("📡 [Google] Checking MongoDB for:", googleEmail);
-      await syncGoogleUser(googleEmail, googleClerkId, googleUsername);
+      const syncResult = await syncGoogleUser(
+        googleEmail,
+        googleClerkId,
+        googleUsername,
+      );
+
+      if (syncResult && syncResult.user) {
+        // Manually push to AuthContext to prevent the app from getting stuck if AuthContext missed it
+        await setMongoUser(syncResult.user);
+      }
 
       // Only reach here if account EXISTS in MongoDB
       console.log("✅ [Google] MongoDB account confirmed. Navigating to home.");
-      await AsyncStorage.setItem(
-        "keepMeSignedIn",
-        keepSignedIn ? "true" : "false",
-      );
+      await AsyncStorage.setItem("keepMeSignedIn", "true");
       if (onLoginSuccess) {
         onLoginSuccess();
       }

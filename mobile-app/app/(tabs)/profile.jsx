@@ -33,7 +33,7 @@ export default function ProfileSwitcher() {
     case 'student':
       return <StudentProfile user={user} />;
 
-    case 'lecturer':
+    case 'lecture':
       return <LecturerProfile user={user} />;
 
     case 'alumni':
