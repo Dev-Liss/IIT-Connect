@@ -1,0 +1,89 @@
+# ============================================================
+#  IIT Connect — Preview APK Build
+#  Triggers: Every Pull Request targeting the `main` branch
+#  Purpose : Validate the PR by building a preview APK via EAS
+#            so reviewers can install and test before merging.
+# ============================================================
+
+name: 🔍 Preview APK Build (PR Check)
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      # Only run when mobile-app code actually changes
+      - "mobile-app/**"
+      - ".github/workflows/preview-build.yml"
+
+# Cancel any in-progress build for the same PR when a new
+# commit is pushed — saves Expo build credits.
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  eas-preview-build:
+    name: EAS Preview Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile-app
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Node.js setup ─────────────────────────────────────
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: mobile-app/package-lock.json
+
+      # ── 3. Install dependencies ───────────────────────────────
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      # ── 4. Setup Expo & EAS CLI ───────────────────────────────
+      - name: 🏗️ Setup EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # ── 5. Inject EAS Secrets for the build ──────────────────
+      #  EAS Secrets (set via `eas secret:create` CLI) are the
+      #  source of truth for credentials.  The env vars below
+      #  are only used by EAS internally during the cloud build.
+      #  No credentials are written to any source file here.
+
+      # ── 6. Run EAS Preview Build ─────────────────────────────
+      - name: 🚀 EAS Build — preview profile (APK)
+        run: |
+          eas build \
+            --platform android \
+            --profile preview \
+            --non-interactive \
+            --no-wait
+        env:
+          # EAS will read EXPO_TOKEN (set in step 4 via the action).
+          # All other secrets (Clerk key, etc.) are stored as EAS
+          # Secrets on the Expo dashboard — they are injected by the
+          # EAS build server, not exposed here.
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      # ── 7. Post build URL as a PR comment ────────────────────
+      - name: 💬 Post build link to PR
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ✅ Preview APK Build Triggered\n\n> A preview APK build has been submitted to EAS Cloud.\n\n**Track your build:** [expo.dev/accounts](https://expo.dev/accounts)\n\n_This APK is for internal testing only. Install it to validate this PR before approving the merge._`
+            })
