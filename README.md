@@ -16,7 +16,7 @@
 [![Express](https://img.shields.io/badge/Express.js-REST%20API-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
-[Features](#-features) · [Tech Stack](#-tech-stack) · [Getting Started](#-getting-started) · [Project Structure](#-project-structure) · [API Reference](#-api-reference) · [Contributors](--contributors)
+[Features](#-features) · [Tech Stack](#-tech-stack) · [Getting Started](#-getting-started) · [Project Structure](#-project-structure) · [API Reference](#-api-reference) · [Contributors](#-contributors)
 
 </div>
 
