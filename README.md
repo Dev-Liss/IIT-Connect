@@ -449,7 +449,7 @@ This project follows [Conventional Commits](https://www.conventionalcommits.org/
 
 ---
 
-## 👨‍💻 Contributors
+## 👥 Contributors
 
 <table>
   <tr>
@@ -505,5 +505,4 @@ This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) f
 
 <div align="center">
 Made for the IIT community 🎓
-
 </div>
