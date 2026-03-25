@@ -61,6 +61,7 @@ export default function ReelCard({ reel, isActive, height }) {
 
   // ── Mute toggle ──
   const [isMuted, setIsMuted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   // ── Derived data ──
   const username = reel.user?.username || "Unknown User";
@@ -172,7 +173,7 @@ export default function ReelCard({ reel, isActive, height }) {
       {/* ========== VIDEO PLAYER ========== */}
       <TouchableOpacity
         activeOpacity={1}
-        onPress={() => setIsMuted(!isMuted)}
+        onPress={() => setIsPaused(!isPaused)}
         style={styles.videoWrapper}
       >
         <Video
@@ -181,24 +182,24 @@ export default function ReelCard({ reel, isActive, height }) {
           style={styles.video}
           resizeMode={ResizeMode.CONTAIN}
           isLooping
-          shouldPlay={isActive}
+          shouldPlay={isActive && !isPaused}
           isMuted={isMuted}
           onPlaybackStatusUpdate={onPlaybackStatusUpdate}
         />
 
         {/* Buffering Indicator */}
-        {isBuffering && isActive && (
+        {isBuffering && isActive && !isPaused && (
           <View style={styles.bufferingContainer}>
             <ActivityIndicator size="large" color="rgba(255,255,255,0.8)" />
           </View>
         )}
 
-        {/* Mute Indicator (shows briefly on tap) */}
-        {isMuted && (
-          <View style={styles.muteIndicator}>
+        {/* Play Indicator (shows when paused) */}
+        {isPaused && (
+          <View style={styles.playIndicator}>
             <Ionicons
-              name="volume-mute"
-              size={16}
+              name="play"
+              size={64}
               color="rgba(255,255,255,0.8)"
             />
           </View>
@@ -331,6 +332,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  // ── Play indicator ──
+  playIndicator: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.2)",
   },
 
   // ── Mute indicator ──
