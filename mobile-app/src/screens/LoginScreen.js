@@ -33,6 +33,7 @@ export default function LoginScreen({
   onSignUp,
   onLoginSuccess,
   onForgotPassword,
+  onLoginOTP,
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,6 +59,66 @@ export default function LoginScreen({
   // Guard ref to prevent double-runs
   const isSyncingRef = useRef(false);
 
+  /**
+   * Helper: Start a fresh sign-in with email_code OTP, then navigate to OTP screen.
+   * Called after password has been successfully verified.
+   */
+  const startOTPVerification = async (trimmedEmail) => {
+    console.log("📧 [Login] Starting OTP verification for:", trimmedEmail);
+
+    // Sign out any session created during password verification
+    try {
+      await signOut();
+    } catch (_) {
+      // Ignore — might not have an active session
+    }
+
+    // Small delay to ensure session is cleared
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Start a fresh sign-in using identifier only (no password)
+    const otpSignIn = await signIn.create({
+      identifier: trimmedEmail,
+    });
+
+    if (otpSignIn.status !== "needs_first_factor") {
+      console.log("⚠️ [Login] Unexpected OTP sign-in status:", otpSignIn.status);
+      Alert.alert(
+        "Login Issue",
+        "Unable to send verification code. Please try again.",
+      );
+      return;
+    }
+
+    // Find the email_code strategy from supported first factors
+    const emailCodeFactor = otpSignIn.supportedFirstFactors?.find(
+      (f) => f.strategy === "email_code",
+    );
+
+    if (!emailCodeFactor) {
+      console.log("⚠️ [Login] email_code strategy not available. Supported factors:",
+        otpSignIn.supportedFirstFactors?.map(f => f.strategy));
+      Alert.alert(
+        "Verification Unavailable",
+        "Email verification is not available for this account. Please contact support.",
+      );
+      return;
+    }
+
+    // Send the OTP email
+    await signIn.prepareFirstFactor({
+      strategy: "email_code",
+      emailAddressId: emailCodeFactor.emailAddressId,
+    });
+
+    console.log("✅ [Login] OTP sent! Navigating to verification screen.");
+
+    // Navigate to OTP screen
+    if (onLoginOTP) {
+      onLoginOTP(trimmedEmail, keepSignedIn);
+    }
+  };
+
   const handleLogin = async () => {
     const trimmedEmail = email.trim().toLowerCase();
 
@@ -70,37 +131,61 @@ export default function LoginScreen({
     setIsLoading(true);
 
     try {
-      console.log("🔐 Attempting Clerk sign-in for:", trimmedEmail);
+      console.log("🔐 [Login] Step 1: Verifying password for:", trimmedEmail);
 
-      // Sign in with Clerk
+      // Step 1: Verify password by attempting sign-in with credentials
       const signInAttempt = await signIn.create({
         identifier: trimmedEmail,
         password: password,
       });
 
-      // If sign-in is complete, set the session as active
+      // Password verified! (sign-in succeeded — status is "complete" or handled below)
+      let passwordVerified = false;
+
       if (signInAttempt.status === "complete") {
-        await setActive({ session: signInAttempt.createdSessionId });
-        await AsyncStorage.setItem(
-          "keepMeSignedIn",
-          keepSignedIn ? "true" : "false",
-        );
-
-        console.log("✅ Login successful for:", trimmedEmail);
-        setIsLoading(false);
-
-        // No success alert - just proceed
-        if (onLoginSuccess) {
-          onLoginSuccess();
+        // Password is correct — Clerk completed the sign-in
+        passwordVerified = true;
+        console.log("✅ [Login] Password verified (complete)");
+      } else if (signInAttempt.status === "needs_first_factor") {
+        // Try verifying password as first factor
+        console.log("🔐 [Login] Attempting password as first factor...");
+        try {
+          const firstFactorResult = await signIn.attemptFirstFactor({
+            strategy: "password",
+            password: password,
+          });
+          if (firstFactorResult.status === "complete" || firstFactorResult.status === "needs_second_factor") {
+            passwordVerified = true;
+            console.log("✅ [Login] Password verified (first factor)");
+          }
+        } catch (ffErr) {
+          if (ffErr.errors?.[0]?.code === "form_password_incorrect") {
+            setIsLoading(false);
+            Alert.alert(
+              "Incorrect Password",
+              "The password you entered is incorrect. Please try again.",
+            );
+            return;
+          }
+          throw ffErr;
         }
-      } else {
-        // Handle other statuses if needed
-        setIsLoading(false);
-        Alert.alert(
-          "Error",
-          "Login requires additional steps. Please contact support.",
-        );
+      } else if (signInAttempt.status === "needs_second_factor") {
+        passwordVerified = true;
+        console.log("✅ [Login] Password verified (needs second factor)");
       }
+
+      if (!passwordVerified) {
+        console.log("⚠️ [Login] Unexpected status:", signInAttempt.status);
+        setIsLoading(false);
+        Alert.alert("Login Issue", "Unable to verify credentials. Please try again.");
+        return;
+      }
+
+      // Step 2: Password is correct — now start OTP verification
+      console.log("🔐 [Login] Step 2: Sending OTP...");
+      await startOTPVerification(trimmedEmail);
+      setIsLoading(false);
+
     } catch (error) {
       setIsLoading(false);
 
@@ -109,7 +194,6 @@ export default function LoginScreen({
         const clerkError = error.errors[0];
 
         if (clerkError.code === "form_identifier_not_found") {
-          // Email doesn't exist - this is an expected error, not a bug
           console.log(
             "ℹ️ Login attempt with unregistered email:",
             trimmedEmail,
@@ -119,7 +203,6 @@ export default function LoginScreen({
             "No account exists for this email. Please sign up first.",
           );
         } else if (clerkError.code === "form_password_incorrect") {
-          // Wrong password - this is an expected error, not a bug
           console.log(
             "ℹ️ Login attempt with incorrect password for:",
             trimmedEmail,
@@ -129,59 +212,59 @@ export default function LoginScreen({
             "The password you entered is incorrect. Please try again.",
           );
         } else if (clerkError.code === "session_exists") {
-          // Already logged in - we need to sign out first and retry
-          console.log("⚠️ Session exists, signing out and retrying login...");
+          // Already logged in — sign out and retry the entire flow
+          console.log("⚠️ Session exists, signing out and retrying...");
           try {
             await signOut();
-            console.log("🚪 Signed out, retrying login...");
-
-            // Retry the login
             await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // Retry the entire login flow
+            setIsLoading(true);
             const retrySignIn = await signIn.create({
               identifier: trimmedEmail,
               password: password,
             });
 
+            let retryPasswordVerified = false;
             if (retrySignIn.status === "complete") {
-              await setActive({ session: retrySignIn.createdSessionId });
-              await AsyncStorage.setItem(
-                "keepMeSignedIn",
-                keepSignedIn ? "true" : "false",
-              );
-              console.log("✅ Login successful after retry");
-              if (onLoginSuccess) {
-                onLoginSuccess();
+              retryPasswordVerified = true;
+            } else if (retrySignIn.status === "needs_first_factor") {
+              try {
+                const retryFF = await signIn.attemptFirstFactor({
+                  strategy: "password",
+                  password: password,
+                });
+                if (retryFF.status === "complete" || retryFF.status === "needs_second_factor") {
+                  retryPasswordVerified = true;
+                }
+              } catch (retryFFErr) {
+                if (retryFFErr.errors?.[0]?.code === "form_password_incorrect") {
+                  setIsLoading(false);
+                  Alert.alert("Incorrect Password", "The password you entered is incorrect.");
+                  return;
+                }
+                throw retryFFErr;
               }
             }
+
+            if (retryPasswordVerified) {
+              await startOTPVerification(trimmedEmail);
+            } else {
+              Alert.alert("Login Issue", "Unable to verify credentials. Please try again.");
+            }
+            setIsLoading(false);
           } catch (retryError) {
-            // Now show proper validation errors
+            setIsLoading(false);
             if (retryError.errors && retryError.errors.length > 0) {
               const retryClerkError = retryError.errors[0];
               if (retryClerkError.code === "form_identifier_not_found") {
-                console.log("ℹ️ Retry: Login attempt with unregistered email");
-                Alert.alert(
-                  "No Account Found",
-                  "No account exists for this email. Please sign up first.",
-                );
+                Alert.alert("No Account Found", "No account exists for this email. Please sign up first.");
               } else if (retryClerkError.code === "form_password_incorrect") {
-                console.log("ℹ️ Retry: Login attempt with incorrect password");
-                Alert.alert(
-                  "Incorrect Password",
-                  "The password you entered is incorrect. Please try again.",
-                );
+                Alert.alert("Incorrect Password", "The password you entered is incorrect. Please try again.");
               } else {
-                console.log(
-                  "ℹ️ Retry: Login failed with error:",
-                  retryClerkError.code,
-                );
-                Alert.alert(
-                  "Login Failed",
-                  retryClerkError.message ||
-                    "Invalid credentials. Please try again.",
-                );
+                Alert.alert("Login Failed", retryClerkError.message || "Invalid credentials. Please try again.");
               }
             } else {
-              console.log("ℹ️ Retry: Login failed with unknown error");
               Alert.alert("Login Failed", "Unable to login. Please try again.");
             }
           }

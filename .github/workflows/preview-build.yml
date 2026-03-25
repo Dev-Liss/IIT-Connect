@@ -5,7 +5,7 @@
 #            so reviewers can install and test before merging.
 # ============================================================
 
-name: 🔍 Preview APK Build (PR Check)
+name: Preview APK Build (PR Check)
 
 on:
   pull_request:

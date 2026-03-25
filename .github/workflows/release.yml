@@ -8,12 +8,12 @@
 #    4. Create a GitHub Release and attach the APK
 # ============================================================
 
-name: 🚀 Release — Build & Publish APK
+name: Release, Build & Publish APK
 
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"   # e.g. v1.0.1, v2.3.0
+      - "v[0-9]+.[0-9]+.[0-9]+" # e.g. v1.0.1, v2.3.0
 
 # One release per tag; do NOT cancel in-progress builds.
 concurrency:
@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write   # required to create GitHub Releases
+  contents: write # required to create GitHub Releases
 
 jobs:
   # ────────────────────────────────────────────────────────────

@@ -32,6 +32,7 @@ import SignupSuccessScreen from "../src/screens/SignupSuccessScreen";
 import ForgotPasswordScreen from "../src/screens/ForgotPasswordScreen";
 import PasswordResetOTPScreen from "../src/screens/PasswordResetOTPScreen";
 import NewPasswordScreen from "../src/screens/NewPasswordScreen";
+import LoginVerificationScreen from "../src/screens/LoginVerificationScreen";
 
 export default function AuthEntry() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export default function AuthEntry() {
   const [userEmail, setUserEmail] = useState("");
   const [studentId, setStudentId] = useState("");
   const [resetEmail, setResetEmail] = useState("");
+  const [loginKeepSignedIn, setLoginKeepSignedIn] = useState(false);
   const [userData, setUserData] = useState(null);
   const [hasCheckedKeepSignedIn, setHasCheckedKeepSignedIn] = useState(false);
   const hasRedirected = useRef(false);
@@ -261,6 +263,19 @@ export default function AuthEntry() {
     );
   }
 
+  if (currentScreen === "loginVerification") {
+    return (
+      <LoginVerificationScreen
+        email={userEmail}
+        keepSignedIn={loginKeepSignedIn}
+        onVerified={() => {
+          // AuthContext detects the Clerk sign-in and redirects to (tabs)
+        }}
+        onBack={() => setCurrentScreen("login")}
+      />
+    );
+  }
+
   // Default: Login screen
   return (
     <LoginScreen
@@ -269,6 +284,11 @@ export default function AuthEntry() {
         // AuthContext detects the Clerk sign-in and redirects to (tabs)
       }}
       onForgotPassword={() => setCurrentScreen("forgotPassword")}
+      onLoginOTP={(email, keepSigned) => {
+        setUserEmail(email);
+        setLoginKeepSignedIn(keepSigned);
+        setCurrentScreen("loginVerification");
+      }}
     />
   );
 }
