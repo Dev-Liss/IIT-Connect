@@ -159,6 +159,7 @@ export function AuthProvider({ children }) {
       // #endregion
       await AsyncStorage.removeItem(USER_STORAGE_KEY);
       await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem("keepMeSignedIn");
       setUser(null);
       // Sign out from Clerk — this clears the Clerk session and SecureStore cache
       await signOut();

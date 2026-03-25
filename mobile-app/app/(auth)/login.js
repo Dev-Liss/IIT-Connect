@@ -24,7 +24,6 @@ import {
 } from "@clerk/clerk-expo";
 import { syncGoogleUser } from "../../src/services/api";
 import { useAuth as useContextAuth } from "../../src/context/AuthContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as WebBrowser from "expo-web-browser";
 import { useWarmUpBrowser } from "../../src/hooks/useWarmUpBrowser";
 
@@ -39,14 +38,13 @@ export default function LoginScreen({
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [keepSignedIn, setKeepSignedIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   // Warm up the android browser to improve UX and prevent OAuth lockups
   useWarmUpBrowser();
 
-  const { signIn, setActive } = useSignIn();
+  const { signIn } = useSignIn();
   const { isSignedIn, signOut } = useAuth();
   const { user: clerkUser } = useUser();
   const clerk = useClerk();
@@ -117,7 +115,7 @@ export default function LoginScreen({
 
     // Navigate to OTP screen
     if (onLoginOTP) {
-      onLoginOTP(trimmedEmail, keepSignedIn);
+      onLoginOTP(trimmedEmail);
       return;
     }
 
@@ -125,7 +123,6 @@ export default function LoginScreen({
       pathname: "/(auth)/login-verification",
       params: {
         email: trimmedEmail,
-        keepSignedIn: keepSignedIn ? "true" : "false",
       },
     });
   };
@@ -434,7 +431,6 @@ export default function LoginScreen({
 
       // Only reach here if account EXISTS in MongoDB
       console.log("✅ [Google] MongoDB account confirmed. Navigating to home.");
-      await AsyncStorage.setItem("keepMeSignedIn", "true");
       if (onLoginSuccess) {
         onLoginSuccess();
       }
@@ -559,22 +555,6 @@ export default function LoginScreen({
 
           {/* Keep Signed In & Forgot Password */}
           <View style={styles.optionsRow}>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setKeepSignedIn(!keepSignedIn)}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  keepSignedIn && styles.checkboxChecked,
-                ]}
-              >
-                {keepSignedIn && (
-                  <Ionicons name="checkmark" size={12} color="#E31E24" />
-                )}
-              </View>
-              <Text style={styles.checkboxLabel}>Remember me</Text>
-            </TouchableOpacity>
             <TouchableOpacity onPress={handleForgotPassword}>
               <Text style={styles.forgotPassword}>Forgot password?</Text>
             </TouchableOpacity>
@@ -610,7 +590,7 @@ export default function LoginScreen({
 
           {/* Sign Up Link */}
           <View style={styles.signUpContainer}>
-            <Text style={styles.signUpText}>Don't have an account? </Text>
+            <Text style={styles.signUpText}>Don{"'"}t have an account? </Text>
             <TouchableOpacity onPress={handleSignUp}>
               <Text style={styles.signUpLink}>Sign Up here</Text>
             </TouchableOpacity>
@@ -679,32 +659,9 @@ const styles = StyleSheet.create({
   },
   optionsRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     alignItems: "center",
     marginBottom: 24,
-  },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  checkbox: {
-    width: 16,
-    height: 16,
-    borderWidth: 1,
-    borderColor: "#CCC",
-    borderRadius: 3,
-    marginRight: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-  },
-  checkboxChecked: {
-    borderColor: "#E31E24",
-    backgroundColor: "#FFF",
-  },
-  checkboxLabel: {
-    fontSize: 12,
-    color: "#666",
   },
   forgotPassword: {
     fontSize: 12,

@@ -14,7 +14,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSignIn } from "@clerk/clerk-expo";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 /**
@@ -27,13 +26,11 @@ import { useLocalSearchParams, useRouter } from "expo-router";
  *
  * Props:
  *   email          — the user's email (for display)
- *   keepSignedIn   — whether "remember me" was checked
  *   onVerified     — callback after successful OTP verification + session activation
  *   onBack         — callback to go back to the login screen
  */
 export default function LoginVerificationScreen({
   email,
-  keepSignedIn,
   onVerified,
   onBack,
 }) {
@@ -41,11 +38,6 @@ export default function LoginVerificationScreen({
   const params = useLocalSearchParams();
   const resolvedEmail =
     email ?? (typeof params.email === "string" ? params.email : "");
-  const resolvedKeepSignedIn =
-    keepSignedIn ??
-    (typeof params.keepSignedIn === "string"
-      ? params.keepSignedIn === "true"
-      : false);
 
   const [code, setCode] = useState("");
   const [timer, setTimer] = useState(180); // 3 minutes
@@ -100,10 +92,6 @@ export default function LoginVerificationScreen({
         console.log("✅ [LoginOTP] OTP verified! Activating session...");
 
         await setActive({ session: result.createdSessionId });
-        await AsyncStorage.setItem(
-          "keepMeSignedIn",
-          resolvedKeepSignedIn ? "true" : "false",
-        );
 
         console.log("✅ [LoginOTP] Session activated. Login complete.");
         setIsLoading(false);
@@ -240,7 +228,7 @@ export default function LoginVerificationScreen({
 
           {/* Info Text */}
           <Text style={styles.infoText}>
-            We've sent a 6-digit verification code{"\n"}to{" "}
+            We{"'"}ve sent a 6-digit verification code{"\n"}to{" "}
             <Text style={styles.emailHighlight}>{resolvedEmail}</Text>
           </Text>
 

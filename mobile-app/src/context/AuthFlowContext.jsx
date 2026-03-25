@@ -6,7 +6,7 @@
  * Replaces the prop-drilling pattern from the old index.jsx state machine.
  * 
  * Stores: selectedRole, userEmail, studentId, resetEmail, 
- *         loginKeepSignedIn, userData
+ *         userData
  */
 
 import React, { createContext, useContext, useState } from "react";
@@ -18,7 +18,6 @@ export function AuthFlowProvider({ children }) {
   const [userEmail, setUserEmail] = useState("");
   const [studentId, setStudentId] = useState("");
   const [resetEmail, setResetEmail] = useState("");
-  const [loginKeepSignedIn, setLoginKeepSignedIn] = useState(false);
   const [userData, setUserData] = useState(null);
 
   const value = {
@@ -30,8 +29,6 @@ export function AuthFlowProvider({ children }) {
     setStudentId,
     resetEmail,
     setResetEmail,
-    loginKeepSignedIn,
-    setLoginKeepSignedIn,
     userData,
     setUserData,
   };

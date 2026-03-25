@@ -15,7 +15,6 @@ import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import { useAuth } from "../src/context/AuthContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Auth screens (now in app/(auth)/ for Expo Router)
 import SplashScreen from "./(auth)/splash";
@@ -36,7 +35,7 @@ import LoginVerificationScreen from "./(auth)/login-verification";
 
 export default function AuthEntry() {
   const router = useRouter();
-  const { isSignedIn, isLoaded, signOut } = useClerkAuth();
+  const { isSignedIn, isLoaded } = useClerkAuth();
   const { user, isLoading: profileLoading } = useAuth();
 
   const [currentScreen, setCurrentScreen] = useState("splash");
@@ -44,40 +43,12 @@ export default function AuthEntry() {
   const [userEmail, setUserEmail] = useState("");
   const [studentId, setStudentId] = useState("");
   const [resetEmail, setResetEmail] = useState("");
-  const [loginKeepSignedIn, setLoginKeepSignedIn] = useState(false);
   const [userData, setUserData] = useState(null);
-  const [hasCheckedKeepSignedIn, setHasCheckedKeepSignedIn] = useState(false);
   const hasRedirected = useRef(false);
-
-  // First check if the user wanted to stay signed in
-  useEffect(() => {
-    if (!isLoaded || hasCheckedKeepSignedIn) return;
-
-    const checkKeepSignedIn = async () => {
-      try {
-        const keep = await AsyncStorage.getItem("keepMeSignedIn");
-        // #region agent log
-        fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H3',location:'app/index.jsx:checkKeepSignedIn',message:'keepMeSignedIn checked',data:{keepMeSignedIn:keep,isLoaded,isSignedIn},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
-        if (keep === "false" && isSignedIn) {
-          console.log(
-            "🚪 App launched but keepMeSignedIn is false. Signing out.",
-          );
-          await signOut();
-        }
-      } catch (err) {
-        console.warn("Storage check failed", err);
-      } finally {
-        setHasCheckedKeepSignedIn(true);
-      }
-    };
-
-    checkKeepSignedIn();
-  }, [isLoaded, isSignedIn, hasCheckedKeepSignedIn, signOut]);
 
   // Once Clerk confirms sign-in AND MongoDB profile is loaded, go to main app
   useEffect(() => {
-    if (currentScreen === "signupSuccess" || !hasCheckedKeepSignedIn) return;
+    if (currentScreen === "signupSuccess") return;
     if (hasRedirected.current) return;
 
     if (isLoaded && isSignedIn && user && !profileLoading) {
@@ -93,11 +64,10 @@ export default function AuthEntry() {
     user,
     profileLoading,
     currentScreen,
-    hasCheckedKeepSignedIn,
   ]);
 
   // While Clerk is loading, show a spinner so we don't flash the auth screens
-  if (!isLoaded || profileLoading || !hasCheckedKeepSignedIn) {
+  if (!isLoaded || profileLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E53935" />
@@ -282,7 +252,6 @@ export default function AuthEntry() {
     return (
       <LoginVerificationScreen
         email={userEmail}
-        keepSignedIn={loginKeepSignedIn}
         onVerified={() => {
           // AuthContext detects the Clerk sign-in and redirects to (tabs)
         }}
@@ -299,9 +268,8 @@ export default function AuthEntry() {
         // AuthContext detects the Clerk sign-in and redirects to (tabs)
       }}
       onForgotPassword={() => setCurrentScreen("forgotPassword")}
-      onLoginOTP={(email, keepSigned) => {
+      onLoginOTP={(email) => {
         setUserEmail(email);
-        setLoginKeepSignedIn(keepSigned);
         setCurrentScreen("loginVerification");
       }}
     />
