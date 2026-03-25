@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSignIn } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 /**
  * LoginVerificationScreen
@@ -36,6 +37,16 @@ export default function LoginVerificationScreen({
   onVerified,
   onBack,
 }) {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const resolvedEmail =
+    email ?? (typeof params.email === "string" ? params.email : "");
+  const resolvedKeepSignedIn =
+    keepSignedIn ??
+    (typeof params.keepSignedIn === "string"
+      ? params.keepSignedIn === "true"
+      : false);
+
   const [code, setCode] = useState("");
   const [timer, setTimer] = useState(180); // 3 minutes
   const [canResend, setCanResend] = useState(false);
@@ -91,7 +102,7 @@ export default function LoginVerificationScreen({
         await setActive({ session: result.createdSessionId });
         await AsyncStorage.setItem(
           "keepMeSignedIn",
-          keepSignedIn ? "true" : "false",
+          resolvedKeepSignedIn ? "true" : "false",
         );
 
         console.log("✅ [LoginOTP] Session activated. Login complete.");
@@ -99,6 +110,8 @@ export default function LoginVerificationScreen({
 
         if (onVerified) {
           onVerified();
+        } else {
+          router.replace("/(tabs)");
         }
       } else {
         console.log("⚠️ [LoginOTP] Unexpected status after OTP:", result.status);
@@ -197,11 +210,12 @@ export default function LoginVerificationScreen({
           keyboardShouldPersistTaps="handled"
         >
           {/* Back Button */}
-          {onBack && (
-            <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <Ionicons name="arrow-back" size={24} color="#000" />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={onBack ?? (() => router.replace("/(auth)/login"))}
+          >
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
 
           {/* Logo */}
           <View style={styles.logoContainer}>
@@ -227,7 +241,7 @@ export default function LoginVerificationScreen({
           {/* Info Text */}
           <Text style={styles.infoText}>
             We've sent a 6-digit verification code{"\n"}to{" "}
-            <Text style={styles.emailHighlight}>{email}</Text>
+            <Text style={styles.emailHighlight}>{resolvedEmail}</Text>
           </Text>
 
           {/* Verification Code Input */}

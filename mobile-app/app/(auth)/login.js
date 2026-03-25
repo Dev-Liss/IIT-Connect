@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
+import { useRouter } from "expo-router";
 import {
   useSignIn,
   useAuth,
@@ -35,6 +36,7 @@ export default function LoginScreen({
   onForgotPassword,
   onLoginOTP,
 }) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [keepSignedIn, setKeepSignedIn] = useState(false);
@@ -116,7 +118,16 @@ export default function LoginScreen({
     // Navigate to OTP screen
     if (onLoginOTP) {
       onLoginOTP(trimmedEmail, keepSignedIn);
+      return;
     }
+
+    router.push({
+      pathname: "/(auth)/login-verification",
+      params: {
+        email: trimmedEmail,
+        keepSignedIn: keepSignedIn ? "true" : "false",
+      },
+    });
   };
 
   const handleLogin = async () => {
