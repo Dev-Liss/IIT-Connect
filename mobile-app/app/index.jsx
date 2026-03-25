@@ -56,6 +56,9 @@ export default function AuthEntry() {
     const checkKeepSignedIn = async () => {
       try {
         const keep = await AsyncStorage.getItem("keepMeSignedIn");
+        // #region agent log
+        fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H3',location:'app/index.jsx:checkKeepSignedIn',message:'keepMeSignedIn checked',data:{keepMeSignedIn:keep,isLoaded,isSignedIn},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         if (keep === "false" && isSignedIn) {
           console.log(
             "🚪 App launched but keepMeSignedIn is false. Signing out.",
@@ -78,6 +81,9 @@ export default function AuthEntry() {
     if (hasRedirected.current) return;
 
     if (isLoaded && isSignedIn && user && !profileLoading) {
+      // #region agent log
+      fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H2',location:'app/index.jsx:redirectToTabs',message:'AuthEntry redirecting to /(tabs)',data:{isLoaded,isSignedIn,hasUser:!!user,profileLoading,currentScreen},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       hasRedirected.current = true;
       router.replace("/(tabs)");
     }

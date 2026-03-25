@@ -57,6 +57,9 @@ export function AuthProvider({ children }) {
     if (isSignedIn && clerkUser) {
       loadMongoProfile();
     } else {
+      // #region agent log
+      fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H1',location:'src/context/AuthContext.jsx:useEffect(signedOut)',message:'AuthProvider observed signed-out state; clearing user',data:{isLoaded,isSignedIn,clerkUserId:clerkUser?.id,hadUser:!!user},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       // Signed out — clear everything
       setUser(null);
       setIsLoading(false);
@@ -151,11 +154,17 @@ export function AuthProvider({ children }) {
   // ====================================
   const logout = async () => {
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H2',location:'src/context/AuthContext.jsx:logout(start)',message:'logout() called',data:{isLoaded,isSignedIn,clerkUserId:clerkUser?.id,hadUser:!!user},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       await AsyncStorage.removeItem(USER_STORAGE_KEY);
       await AsyncStorage.removeItem("authToken");
       setUser(null);
       // Sign out from Clerk — this clears the Clerk session and SecureStore cache
       await signOut();
+      // #region agent log
+      fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H2',location:'src/context/AuthContext.jsx:logout(done)',message:'logout() finished (after signOut)',data:{isLoaded,isSignedIn,clerkUserId:clerkUser?.id},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
     } catch (error) {
       console.error("Logout error:", error);
       throw error;
