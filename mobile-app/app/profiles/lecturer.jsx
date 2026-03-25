@@ -88,7 +88,6 @@ export default function LecturerProfile({ user }) {
 
   const handleLogout = async () => {
     await logout();
-    router.replace("/(auth)/login");
   };
 
   const formatDate = (dateString) => {

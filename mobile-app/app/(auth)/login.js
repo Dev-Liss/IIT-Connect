@@ -520,7 +520,10 @@ export default function LoginScreen({
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
+              autoCorrect={false}
               keyboardType="email-address"
+              textContentType="username"
+              autoComplete="email"
             />
           </View>
 
@@ -540,6 +543,9 @@ export default function LoginScreen({
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
+              autoCorrect={false}
+              textContentType="password"
+              autoComplete="password"
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
               <Ionicons
