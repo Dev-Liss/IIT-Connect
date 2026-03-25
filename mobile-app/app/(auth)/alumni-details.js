@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { validateAlumni } from "../services/api";
+import { validateAlumni } from "../../src/services/api";
 
 export default function AlumniDetailsScreen({ email, onContinue }) {
     const [pastIitId, setPastIitId] = useState("");

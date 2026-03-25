@@ -2,28 +2,94 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { checkEmailExists } from "../services/api";
+import { checkEmailExists } from "../../src/services/api";
 
-export default function AlumniAccountScreen({ onContinue, onNavigateToLogin, onBack }) {
+export default function CreateAccountScreen({ role, onContinue, onNavigateToLogin, onBack }) {
     const [email, setEmail] = useState("");
     const [isChecking, setIsChecking] = useState(false);
 
+    // Validate email format based on role
+    const validateEmailForRole = (email, role) => {
+        if (role === "student" || role === "lecture") {
+            // Extract username part (before @)
+            const username = email.split("@")[0];
+            const hasNumbers = /\d/.test(username);
+
+            if (role === "student" && !hasNumbers) {
+                return {
+                    valid: false,
+                    message: "This is a lecturer email, you cannot sign up as a student"
+                };
+            }
+
+            if (role === "lecture" && hasNumbers) {
+                return {
+                    valid: false,
+                    message: "This is a student email, you cannot sign up as a lecturer"
+                };
+            }
+
+            // Additional validation for lecturer emails: must have format like name.letter@iit.ac.lk
+            if (role === "lecture") {
+                // Check if there's a dot followed by at least one letter before @
+                const lecturerPattern = /^[a-z]+\.[a-z]+$/i;
+                if (!lecturerPattern.test(username)) {
+                    return {
+                        valid: false,
+                        message: "This is not a valid email. Lecturer emails should be in format: name.letter@iit.ac.lk"
+                    };
+                }
+            }
+        }
+
+        return { valid: true };
+    };
+
     const handleContinue = async () => {
         const trimmedEmail = email.trim();
+        console.log("=== Email Check Started ===");
+        console.log("Email entered:", trimmedEmail);
+
         if (trimmedEmail) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(trimmedEmail)) {
-                Alert.alert("Invalid Email", "Please enter a proper email address.");
-                return;
+            // Validate IIT email for Student and Lecture roles
+            if (role === "student" || role === "lecture") {
+                if (!trimmedEmail.toLowerCase().endsWith("@iit.ac.lk")) {
+                    Alert.alert("Invalid Email", "Please enter your official IIT email address (@iit.ac.lk) to continue.");
+                    return;
+                }
+
+                // Validate email format matches the role
+                const roleValidation = validateEmailForRole(trimmedEmail.toLowerCase(), role);
+                if (!roleValidation.valid) {
+                    Alert.alert(
+                        "Invalid Email Format",
+                        roleValidation.message,
+                        [
+                            {
+                                text: "Change Role",
+                                onPress: () => {
+                                    if (onBack) {
+                                        onBack();
+                                    }
+                                }
+                            }
+                        ]
+                    );
+                    return;
+                }
             }
 
             // Check if email already exists
             setIsChecking(true);
+            console.log("Checking if email exists...");
+
             try {
                 const result = await checkEmailExists(trimmedEmail);
+                console.log("Email check result:", result);
                 setIsChecking(false);
 
-                if (result.exists) {
+                if (result && result.exists) {
+                    console.log("Email already exists!");
                     Alert.alert(
                         "Account Already Exists",
                         "An account with this email already exists. Please login instead.",
@@ -42,14 +108,19 @@ export default function AlumniAccountScreen({ onContinue, onNavigateToLogin, onB
                 }
 
                 // Email is available, proceed
-                onContinue(trimmedEmail);
+                console.log("Email is available, proceeding to next screen...");
+                if (onContinue) {
+                    onContinue(trimmedEmail);
+                } else {
+                    console.log("ℹ️ onContinue callback is not defined");
+                }
             } catch (error) {
                 setIsChecking(false);
                 console.log("ℹ️ Email check finished:", error.message);
                 Alert.alert("Error", "Could not verify email. Please try again.");
             }
         } else {
-            Alert.alert("Error", "Please enter your email");
+            Alert.alert("Error", "Please enter your email address");
         }
     };
 
@@ -98,7 +169,7 @@ export default function AlumniAccountScreen({ onContinue, onNavigateToLogin, onB
                         <Ionicons name="mail-outline" size={20} color="#E31E24" style={styles.icon} />
                         <TextInput
                             style={styles.input}
-                            placeholder="Enter your email"
+                            placeholder="Enter your IIT email"
                             placeholderTextColor="#999"
                             value={email}
                             onChangeText={setEmail}
@@ -161,10 +232,10 @@ const styles = StyleSheet.create({
     },
     illustrationContainer: {
         alignItems: "center",
-        marginBottom: 24,
+        marginBottom: 32,
     },
     illustration: {
-        width: 250,
+        width: 200,
         height: 200,
     },
     label: {

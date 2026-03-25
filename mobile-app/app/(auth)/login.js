@@ -21,11 +21,11 @@ import {
   useUser,
   useClerk,
 } from "@clerk/clerk-expo";
-import { syncGoogleUser } from "../services/api";
-import { useAuth as useContextAuth } from "../context/AuthContext";
+import { syncGoogleUser } from "../../src/services/api";
+import { useAuth as useContextAuth } from "../../src/context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as WebBrowser from "expo-web-browser";
-import { useWarmUpBrowser } from "../hooks/useWarmUpBrowser";
+import { useWarmUpBrowser } from "../../src/hooks/useWarmUpBrowser";
 
 WebBrowser.maybeCompleteAuthSession();
 

@@ -20,7 +20,13 @@
  *   updateUser(updates) — patch user object in memory + storage
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth as useClerkAuth, useUser } from "@clerk/clerk-expo";
 import { API_BASE_URL } from "../config/api";
@@ -39,14 +45,14 @@ export function AuthProvider({ children }) {
   const { isSignedIn, isLoaded, signOut, getToken } = useClerkAuth();
   const { user: clerkUser } = useUser();
 
-  const [user, setUser] = useState(null);        // MongoDB user profile
+  const [user, setUser] = useState(null); // MongoDB user profile
   const [isLoading, setIsLoading] = useState(true);
 
   // ====================================
   // LOAD PROFILE WHEN CLERK SIGNS IN
   // ====================================
   useEffect(() => {
-    if (!isLoaded) return;  // Wait until Clerk has resolved
+    if (!isLoaded) return; // Wait until Clerk has resolved
 
     if (isSignedIn && clerkUser) {
       loadMongoProfile();
@@ -75,7 +81,7 @@ export function AuthProvider({ children }) {
 
       // Fetch MongoDB profile by Clerk ID
       const response = await fetch(
-        `${API_BASE_URL}/auth/profile/${clerkUser.id}`
+        `${API_BASE_URL}/auth/profile/${clerkUser.id}`,
       );
       const data = await response.json();
 

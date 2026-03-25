@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSignUp } from "@clerk/clerk-expo";
-import { syncUserProfile } from "../services/api";
+import { syncUserProfile } from "../../src/services/api";
 
 export default function EmailVerificationScreen({ email, userData, onVerify }) {
   const [code, setCode] = useState("");

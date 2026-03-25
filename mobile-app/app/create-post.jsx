@@ -142,7 +142,7 @@ export default function CreatePostScreen() {
           </Text>
           <TouchableOpacity
             style={styles.loginButton}
-            onPress={() => router.replace("/")}
+            onPress={() => router.replace("/(auth)/login")}
           >
             <Text style={styles.loginButtonText}>Go to Login</Text>
           </TouchableOpacity>

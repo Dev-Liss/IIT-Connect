@@ -26,31 +26,31 @@ const TILES = [
   {
     label: "Anonymous\nReport",
     illustration: require("../../assets/images/annonymous-report.webm"),
-    borderColor: "#EF7171",
+    borderColor: "#BFC6C4",
     route: "/anonymous-report",
   },
   {
     label: "Empty Hall\nFinder",
     illustration: require("../../assets/images/empty-hall-finder.webm"),
-    borderColor: "#93C5FD",
+    borderColor: "#BFC6C4",
     route: null,
   },
   {
     label: "Clubs &\nCommunities",
     illustration: require("../../assets/images/clubs.webm"),
-    borderColor: "#86EFAC",
+    borderColor: "#BFC6C4",
     route: null,
   },
   {
     label: "Events &\nAnnouncements",
     illustration: require("../../assets/images/events-annoucements.webm"),
-    borderColor: "#FDBA74",
+    borderColor: "#BFC6C4",
     route: "/events",
   },
   {
     label: "Admin\nDashboard",
     illustration: require("../../assets/images/admin-dash.webm"),
-    borderColor: "#C4B5FD",
+    borderColor: "#BFC6C4",
     route: "/admin-dashboard",
   },
 ];
@@ -116,8 +116,6 @@ const styles = StyleSheet.create({
       Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 10 : 10,
     paddingBottom: 12,
     backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#efefef",
   },
   headerTitle: {
     fontSize: 24,

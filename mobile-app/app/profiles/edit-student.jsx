@@ -21,7 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 
-import { API_BASE_URL as API_URL } from "../../config/api";
+import { API_BASE_URL as API_URL } from "../../src/config/api";
 
 const LEVELS = ["L4", "L5", "L6", "L7"];
 const COURSES = ["CS", "SE"];

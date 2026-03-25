@@ -3,10 +3,10 @@ import { View, ActivityIndicator, Text } from 'react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { useRouter } from 'expo-router';
 
-// Import the actual UI screens
-import StudentProfile from '../../src/screens/profiles/StudentProfile';
-import LecturerProfile from '../../src/screens/profiles/LecturerProfile';
-import AlumniProfile from '../../src/screens/profiles/AlumniProfile';
+// Import the actual UI screens (now in app/profiles/)
+import StudentProfile from '../profiles/student';
+import LecturerProfile from '../profiles/lecturer';
+import AlumniProfile from '../profiles/alumni';
 
 export default function ProfileSwitcher() {
   const { user, isLoading } = useAuth(); // useAuth provides a loading state
@@ -15,7 +15,7 @@ export default function ProfileSwitcher() {
   // Redirect to login if a logged-out user ever hits this screen
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace("/");
+      router.replace("/(auth)/login");
     }
   }, [isLoading, user, router]);
 

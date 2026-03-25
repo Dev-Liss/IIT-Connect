@@ -17,22 +17,22 @@ import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import { useAuth } from "../src/context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Auth screens (Clerk-based)
-import SplashScreen from "../src/screens/SplashScreen";
-import WelcomeScreen from "../src/screens/WelcomeScreen";
-import LoginScreen from "../src/screens/LoginScreen";
-import RoleSelectionScreen from "../src/screens/RoleSelectionScreen";
-import CreateAccountScreen from "../src/screens/CreateAccountScreen";
-import StudentIdDetailsScreen from "../src/screens/StudentIdDetailsScreen";
-import AlumniAccountScreen from "../src/screens/AlumniAccountScreen";
-import AlumniDetailsScreen from "../src/screens/AlumniDetailsScreen";
-import UserDetailsScreen from "../src/screens/UserDetailsScreen";
-import EmailVerificationScreen from "../src/screens/EmailVerificationScreen";
-import SignupSuccessScreen from "../src/screens/SignupSuccessScreen";
-import ForgotPasswordScreen from "../src/screens/ForgotPasswordScreen";
-import PasswordResetOTPScreen from "../src/screens/PasswordResetOTPScreen";
-import NewPasswordScreen from "../src/screens/NewPasswordScreen";
-import LoginVerificationScreen from "../src/screens/LoginVerificationScreen";
+// Auth screens (now in app/(auth)/ for Expo Router)
+import SplashScreen from "./(auth)/splash";
+import WelcomeScreen from "./(auth)/welcome";
+import LoginScreen from "./(auth)/login";
+import RoleSelectionScreen from "./(auth)/role-selection";
+import CreateAccountScreen from "./(auth)/create-account";
+import StudentIdDetailsScreen from "./(auth)/student-id-details";
+import AlumniAccountScreen from "./(auth)/alumni-account";
+import AlumniDetailsScreen from "./(auth)/alumni-details";
+import UserDetailsScreen from "./(auth)/user-details";
+import EmailVerificationScreen from "./(auth)/email-verification";
+import SignupSuccessScreen from "./(auth)/signup-success";
+import ForgotPasswordScreen from "./(auth)/forgot-password";
+import PasswordResetOTPScreen from "./(auth)/password-reset-otp";
+import NewPasswordScreen from "./(auth)/new-password";
+import LoginVerificationScreen from "./(auth)/login-verification";
 
 export default function AuthEntry() {
   const router = useRouter();
@@ -57,7 +57,9 @@ export default function AuthEntry() {
       try {
         const keep = await AsyncStorage.getItem("keepMeSignedIn");
         if (keep === "false" && isSignedIn) {
-          console.log("🚪 App launched but keepMeSignedIn is false. Signing out.");
+          console.log(
+            "🚪 App launched but keepMeSignedIn is false. Signing out.",
+          );
           await signOut();
         }
       } catch (err) {
@@ -79,7 +81,14 @@ export default function AuthEntry() {
       hasRedirected.current = true;
       router.replace("/(tabs)");
     }
-  }, [isLoaded, isSignedIn, user, profileLoading, currentScreen, hasCheckedKeepSignedIn]);
+  }, [
+    isLoaded,
+    isSignedIn,
+    user,
+    profileLoading,
+    currentScreen,
+    hasCheckedKeepSignedIn,
+  ]);
 
   // While Clerk is loading, show a spinner so we don't flash the auth screens
   if (!isLoaded || profileLoading || !hasCheckedKeepSignedIn) {
