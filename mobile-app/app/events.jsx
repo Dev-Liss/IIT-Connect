@@ -93,18 +93,11 @@ const EventCard = ({ event }) => {
             <View style={[styles.accentBar, { backgroundColor: cat.color }]} />
 
             <View style={styles.eventCardInner}>
-                {/* Top row: date badge + category tag */}
+                {/* Top row: date badge only */}
                 <View style={styles.eventTopRow}>
                     <View style={[styles.dateBadge, { backgroundColor: cat.bg }]}>
                         <Text style={[styles.dateBadgeDay, { color: cat.color }]}>{day}</Text>
                         <Text style={[styles.dateBadgeMon, { color: cat.color }]}>{month}</Text>
-                    </View>
-
-                    <View style={[styles.categoryTag, { backgroundColor: cat.bg }]}>
-                        <Ionicons name={cat.icon} size={11} color={cat.color} />
-                        <Text style={[styles.categoryTagText, { color: cat.color }]}>
-                            {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
-                        </Text>
                     </View>
                 </View>
 
