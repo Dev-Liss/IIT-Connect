@@ -229,11 +229,6 @@ export default function EventsAnnouncementsScreen() {
                         <Text style={[styles.tabBtnText, activeTab === "events" && styles.tabBtnTextActive]}>
                             Events
                         </Text>
-                        <View style={[styles.countBadge, activeTab === "events" && styles.countBadgeActive]}>
-                            <Text style={[styles.countText, activeTab === "events" && styles.countTextActive]}>
-                                {events.length}
-                            </Text>
-                        </View>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -245,11 +240,6 @@ export default function EventsAnnouncementsScreen() {
                         <Text style={[styles.tabBtnText, activeTab === "announcements" && styles.tabBtnTextActive]}>
                             Announcements
                         </Text>
-                        <View style={[styles.countBadge, activeTab === "announcements" && styles.countBadgeActive]}>
-                            <Text style={[styles.countText, activeTab === "announcements" && styles.countTextActive]}>
-                                {announcements.length}
-                            </Text>
-                        </View>
                     </TouchableOpacity>
                 </View>
             </View>
