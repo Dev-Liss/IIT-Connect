@@ -174,7 +174,7 @@ export default function CreateEventScreen() {
                         <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
                     </TouchableOpacity>
                     <View style={styles.headerTextWrap}>
-                        <Text style={styles.headerTitle}>Create Event</Text>
+                        <Text style={styles.headerTitle}>New Event</Text>
                         <Text style={styles.headerSubtitle}>
                             Add new campus events and activities
                         </Text>
