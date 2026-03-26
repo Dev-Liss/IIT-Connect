@@ -2,8 +2,6 @@
  * ====================================
  * IIT CONNECT - EVENTS & ANNOUNCEMENTS SCREEN
  * ====================================
- * Main screen showing events and announcements with tab navigation.
- * Based on Figma design with category badges and toggle buttons.
  */
 
 import React, { useState, useEffect } from "react";
@@ -15,205 +13,163 @@ import {
     ScrollView,
     ActivityIndicator,
     RefreshControl,
+    StatusBar,
+    Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { EVENTS_ENDPOINTS, ANNOUNCEMENTS_ENDPOINTS } from "../src/config/api";
 
 // ====================================
-// CATEGORY BADGE COLORS
+// CATEGORY CONFIG
 // ====================================
-const categoryColors = {
-    academic: "#e63946",
-    career: "#f4a261",
-    workshop: "#2a9d8f",
-    sports: "#457b9d",
-    other: "#6c757d",
+const CATEGORIES = {
+    academic: { color: "#e63946", bg: "#fef2f2", icon: "school-outline" },
+    career:   { color: "#f4a261", bg: "#fef9f0", icon: "briefcase-outline" },
+    workshop: { color: "#2a9d8f", bg: "#eefbf9", icon: "build-outline" },
+    sports:   { color: "#457b9d", bg: "#eef4f8", icon: "football-outline" },
+    other:    { color: "#6c757d", bg: "#f3f4f5", icon: "ellipsis-horizontal" },
 };
 
 // ====================================
-// HELPER FUNCTIONS
+// HELPERS
 // ====================================
 const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-    });
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
+
+const formatDateParts = (dateString) => {
+    const date = new Date(dateString);
+    return {
+        day: date.getDate(),
+        month: date.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+    };
 };
 
 const getTimeAgo = (dateString) => {
     const now = new Date();
     const date = new Date(dateString);
     const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffHours < 1) return "Just now";
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    if (diffDays === 1) return "1 day ago";
-    return `${diffDays} days ago`;
+    const diffMins  = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays  = Math.floor(diffHours / 24);
+    if (diffMins  < 1)  return "Just now";
+    if (diffMins  < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays  === 1) return "Yesterday";
+    if (diffDays  < 7)  return `${diffDays}d ago`;
+    return formatDate(dateString);
 };
 
 // ====================================
-// SAMPLE DATA (for testing before backend is ready)
+// SAMPLE DATA
 // ====================================
 const sampleEvents = [
-    {
-        _id: "1",
-        title: "Engineering Week 2024 Opening Ceremony",
-        description:
-            "Join us for the grand opening ceremony of Engineering Week with keynote speakers from industry leaders.",
-        category: "academic",
-        eventDate: "2024-12-05",
-        startTime: "9:00 AM",
-        endTime: "11:00 AM",
-        location: "Main Auditorium",
-    },
-    {
-        _id: "2",
-        title: "Career Fair - Tech Companies",
-        description:
-            "Meet with representatives from top tech companies. Bring your resumes and professional attire.",
-        category: "career",
-        eventDate: "2024-12-08",
-        startTime: "10:00 AM",
-        endTime: "4:00 PM",
-        location: "BMICH",
-    },
-    {
-        _id: "3",
-        title: "Programming Workshop: React Advanced",
-        description:
-            "Advanced React concepts including hooks, context API, and performance optimization techniques.",
-        category: "workshop",
-        eventDate: "2024-12-12",
-        startTime: "2:00 PM",
-        endTime: "5:00 PM",
-        location: "SP 3LA",
-    },
-    {
-        _id: "4",
-        title: "Sports Day Finals",
-        description:
-            "Final matches for all sports categories. Cheer for your faculty team!",
-        category: "sports",
-        eventDate: "2024-12-15",
-        startTime: "8:00 AM",
-        endTime: "6:00 PM",
-        location: "St Peters College Grounds",
-    },
+    { _id: "1", title: "Engineering Week 2024 Opening Ceremony", description: "Join us for the grand opening ceremony of Engineering Week with keynote speakers from industry leaders.", category: "academic", eventDate: "2024-12-05", startTime: "9:00 AM", endTime: "11:00 AM", location: "Main Auditorium" },
+    { _id: "2", title: "Career Fair - Tech Companies", description: "Meet with representatives from top tech companies. Bring your resumes and professional attire.", category: "career", eventDate: "2024-12-08", startTime: "10:00 AM", endTime: "4:00 PM", location: "BMICH" },
+    { _id: "3", title: "Programming Workshop: React Advanced", description: "Advanced React concepts including hooks, context API, and performance optimization techniques.", category: "workshop", eventDate: "2024-12-12", startTime: "2:00 PM", endTime: "5:00 PM", location: "SP 3LA" },
+    { _id: "4", title: "Sports Day Finals", description: "Final matches for all sports categories. Cheer for your faculty team!", category: "sports", eventDate: "2024-12-15", startTime: "8:00 AM", endTime: "6:00 PM", location: "St Peters College Grounds" },
 ];
 
 const sampleAnnouncements = [
-    {
-        _id: "1",
-        title: "Exam Schedule Released",
-        content:
-            "The final examination schedule for Semester 1 2024 has been published. Please check the student portal for your personalized exam timetable.",
-        source: "Academic Office",
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-        _id: "2",
-        title: "Library Extended Hours",
-        content:
-            "Starting next week, the library will be open 24/7 during the examination period. Additional study spaces have been arranged.",
-        source: "Library Administration",
-        createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-        _id: "3",
-        title: "New Course Registration Opens",
-        content:
-            "Registration for next semester courses is now open. Log in to the student portal to select your courses. Registration closes on December 20th.",
-        source: "Registrar Office",
-        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-        _id: "4",
-        title: "Campus WiFi Maintenance",
-        content:
-            "There will be scheduled WiFi maintenance on December 10th from 2:00 AM to 6:00 AM. We apologize for any inconvenience.",
-        source: "IT Services",
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-        _id: "5",
-        title: "Student Feedback Survey",
-        content:
-            "Please take 5 minutes to complete the semester feedback survey. Your input helps us improve the university experience.",
-        source: "Student Affairs",
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    },
+    { _id: "1", title: "Exam Schedule Released", content: "The final examination schedule for Semester 1 2024 has been published. Please check the student portal for your personalized exam timetable.", source: "Academic Office", createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+    { _id: "2", title: "Library Extended Hours", content: "Starting next week, the library will be open 24/7 during the examination period. Additional study spaces have been arranged.", source: "Library Administration", createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
+    { _id: "3", title: "New Course Registration Opens", content: "Registration for next semester courses is now open. Log in to the student portal to select your courses. Registration closes on December 20th.", source: "Registrar Office", createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
+    { _id: "4", title: "Campus WiFi Maintenance", content: "There will be scheduled WiFi maintenance on December 10th from 2:00 AM to 6:00 AM. We apologize for any inconvenience.", source: "IT Services", createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+    { _id: "5", title: "Student Feedback Survey", content: "Please take 5 minutes to complete the semester feedback survey. Your input helps us improve the university experience.", source: "Student Affairs", createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
 ];
 
 // ====================================
-// EVENT CARD COMPONENT
+// EVENT CARD
 // ====================================
 const EventCard = ({ event }) => {
+    const cat = CATEGORIES[event.category] || CATEGORIES.other;
+    const { day, month } = formatDateParts(event.eventDate);
+
     return (
         <View style={styles.eventCard}>
-            {/* Header with Icon and Title */}
-            <View style={styles.eventHeader}>
-                <View style={styles.eventIcon}>
-                    <Ionicons name="calendar" size={20} color="#e63946" />
+            {/* Colored left accent bar */}
+            <View style={[styles.accentBar, { backgroundColor: cat.color }]} />
+
+            <View style={styles.eventCardInner}>
+                {/* Top row: date badge + category tag */}
+                <View style={styles.eventTopRow}>
+                    <View style={[styles.dateBadge, { backgroundColor: cat.bg }]}>
+                        <Text style={[styles.dateBadgeDay, { color: cat.color }]}>{day}</Text>
+                        <Text style={[styles.dateBadgeMon, { color: cat.color }]}>{month}</Text>
+                    </View>
+
+                    <View style={[styles.categoryTag, { backgroundColor: cat.bg }]}>
+                        <Ionicons name={cat.icon} size={11} color={cat.color} />
+                        <Text style={[styles.categoryTagText, { color: cat.color }]}>
+                            {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
+                        </Text>
+                    </View>
                 </View>
-                <Text style={styles.eventTitle}>{event.title}</Text>
-            </View>
 
-            {/* Event Details */}
-            <View style={styles.eventDetail}>
-                <Ionicons name="calendar-outline" size={16} color="#666" />
-                <Text style={styles.eventDetailText}>{formatDate(event.eventDate)}</Text>
-            </View>
+                {/* Title */}
+                <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
 
-            <View style={styles.eventDetail}>
-                <Ionicons name="time-outline" size={16} color="#666" />
-                <Text style={styles.eventDetailText}>
-                    {event.startTime} - {event.endTime}
-                </Text>
-            </View>
+                {/* Description */}
+                <Text style={styles.eventDescription} numberOfLines={2}>{event.description}</Text>
 
-            <View style={styles.eventDetail}>
-                <Ionicons name="location-outline" size={16} color="#666" />
-                <Text style={styles.eventDetailText}>{event.location}</Text>
+                {/* Detail chips */}
+                <View style={styles.chipsRow}>
+                    <View style={styles.chip}>
+                        <Ionicons name="time-outline" size={12} color="#888" />
+                        <Text style={styles.chipText}>{event.startTime}{event.endTime ? ` – ${event.endTime}` : ""}</Text>
+                    </View>
+                    <View style={styles.chip}>
+                        <Ionicons name="location-outline" size={12} color="#888" />
+                        <Text style={styles.chipText} numberOfLines={1}>{event.location}</Text>
+                    </View>
+                </View>
             </View>
-
-            {/* Description */}
-            <Text style={styles.eventDescription}>{event.description}</Text>
         </View>
     );
 };
 
 // ====================================
-// ANNOUNCEMENT CARD COMPONENT
+// ANNOUNCEMENT CARD
 // ====================================
 const AnnouncementCard = ({ announcement }) => {
+    const isRecent = new Date() - new Date(announcement.createdAt) < 6 * 60 * 60 * 1000;
+
     return (
         <View style={styles.announcementCard}>
-            <View style={styles.announcementHeader}>
-                {/* Blue Bell Icon */}
-                <View style={styles.announcementIcon}>
-                    <Ionicons name="notifications" size={20} color="#1d3557" />
+            <View style={styles.announcementRow}>
+                {/* Icon */}
+                <View style={[styles.announcementIconWrap, isRecent && styles.announcementIconRecent]}>
+                    <Ionicons name="megaphone-outline" size={18} color={isRecent ? "#e63946" : "#999"} />
+                    {isRecent && <View style={styles.recentDot} />}
                 </View>
 
-                <View style={styles.announcementHeaderText}>
-                    <Text style={styles.announcementTitle}>{announcement.title}</Text>
-                    <Text style={styles.announcementMeta}>
-                        {getTimeAgo(announcement.createdAt)}
-                    </Text>
+                <View style={styles.announcementBody}>
+                    {/* Title + time */}
+                    <View style={styles.announcementTitleRow}>
+                        <Text style={styles.announcementTitle} numberOfLines={1}>{announcement.title}</Text>
+                        <Text style={styles.announcementTime}>{getTimeAgo(announcement.createdAt)}</Text>
+                    </View>
+
+                    {/* Source badge */}
+                    {announcement.source && (
+                        <View style={styles.sourceBadge}>
+                            <Ionicons name="business-outline" size={10} color="#999" />
+                            <Text style={styles.sourceText}>{announcement.source}</Text>
+                        </View>
+                    )}
+
+                    {/* Content */}
+                    <Text style={styles.announcementContent} numberOfLines={3}>{announcement.content}</Text>
                 </View>
             </View>
-
-            <Text style={styles.announcementContent}>{announcement.content}</Text>
         </View>
     );
 };
 
 // ====================================
-// MAIN COMPONENT
+// MAIN SCREEN
 // ====================================
 export default function EventsAnnouncementsScreen() {
     const [activeTab, setActiveTab] = useState("events");
@@ -222,41 +178,27 @@ export default function EventsAnnouncementsScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
-    // Fetch events from API
     const fetchEvents = async () => {
         try {
             const response = await fetch(EVENTS_ENDPOINTS.GET_ALL);
             const data = await response.json();
-            if (data.success && data.events.length > 0) {
-                setEvents(data.events);
-            }
-        } catch (error) {
-            console.log("Using sample events - Backend not available");
-        }
+            if (data.success && data.events.length > 0) setEvents(data.events);
+        } catch { console.log("Using sample events"); }
     };
 
-    // Fetch announcements from API
     const fetchAnnouncements = async () => {
         try {
             const response = await fetch(ANNOUNCEMENTS_ENDPOINTS.GET_ALL);
             const data = await response.json();
-            if (data.success && data.announcements.length > 0) {
-                setAnnouncements(data.announcements);
-            }
-        } catch (error) {
-            console.log("Using sample announcements - Backend not available");
-        }
+            if (data.success && data.announcements.length > 0) setAnnouncements(data.announcements);
+        } catch { console.log("Using sample announcements"); }
     };
 
-    // Initial load
     useEffect(() => {
         setIsLoading(true);
-        Promise.all([fetchEvents(), fetchAnnouncements()]).finally(() => {
-            setIsLoading(false);
-        });
+        Promise.all([fetchEvents(), fetchAnnouncements()]).finally(() => setIsLoading(false));
     }, []);
 
-    // Pull to refresh
     const onRefresh = async () => {
         setRefreshing(true);
         await Promise.all([fetchEvents(), fetchAnnouncements()]);
@@ -265,79 +207,75 @@ export default function EventsAnnouncementsScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Header */}
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+
+            {/* ── Header ── */}
             <View style={styles.header}>
-                <View style={styles.headerTop}>
-                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={24} color="#000" />
-                    </TouchableOpacity>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
+                    <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+                </TouchableOpacity>
+                <View>
                     <Text style={styles.headerTitle}>Events & Announcements</Text>
+                    <Text style={styles.headerSubtitle}>Stay updated with campus activities</Text>
                 </View>
-                <Text style={styles.headerSubtitle}>
-                    Stay updated with campus activities
-                </Text>
             </View>
 
-            {/* Tab Switch */}
-            <View style={styles.tabContainer}>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === "events" && styles.tabActive]}
-                    onPress={() => setActiveTab("events")}
-                >
-                    <Text
-                        style={[
-                            styles.tabText,
-                            activeTab === "events" && styles.tabTextActive,
-                        ]}
+            {/* ── Pill Tab Switcher ── */}
+            <View style={styles.tabWrap}>
+                <View style={styles.tabPill}>
+                    <TouchableOpacity
+                        style={[styles.tabBtn, activeTab === "events" && styles.tabBtnActive]}
+                        onPress={() => setActiveTab("events")}
+                        activeOpacity={0.7}
                     >
-                        Events
-                    </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[
-                        styles.tab,
-                        activeTab === "announcements" && styles.tabActive,
-                    ]}
-                    onPress={() => setActiveTab("announcements")}
-                >
-                    <Text
-                        style={[
-                            styles.tabText,
-                            activeTab === "announcements" && styles.tabTextActive,
-                        ]}
+                        <Ionicons name="calendar-outline" size={15} color={activeTab === "events" ? "#fff" : "#999"} />
+                        <Text style={[styles.tabBtnText, activeTab === "events" && styles.tabBtnTextActive]}>
+                            Events
+                        </Text>
+                        <View style={[styles.countBadge, activeTab === "events" && styles.countBadgeActive]}>
+                            <Text style={[styles.countText, activeTab === "events" && styles.countTextActive]}>
+                                {events.length}
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.tabBtn, activeTab === "announcements" && styles.tabBtnActive]}
+                        onPress={() => setActiveTab("announcements")}
+                        activeOpacity={0.7}
                     >
-                        Announcements
-                    </Text>
-                </TouchableOpacity>
+                        <Ionicons name="megaphone-outline" size={15} color={activeTab === "announcements" ? "#fff" : "#999"} />
+                        <Text style={[styles.tabBtnText, activeTab === "announcements" && styles.tabBtnTextActive]}>
+                            Announcements
+                        </Text>
+                        <View style={[styles.countBadge, activeTab === "announcements" && styles.countBadgeActive]}>
+                            <Text style={[styles.countText, activeTab === "announcements" && styles.countTextActive]}>
+                                {announcements.length}
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
             </View>
 
-            {/* Content */}
+            {/* ── Content ── */}
             {isLoading ? (
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#e63946" />
+                    <Text style={styles.loadingText}>Loading...</Text>
                 </View>
             ) : (
                 <ScrollView
                     style={styles.content}
                     contentContainerStyle={styles.contentContainer}
-                    refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                    }
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#e63946"]} tintColor="#e63946" />}
                 >
-                    {activeTab === "events" ? (
-                        events.map((event) => <EventCard key={event._id} event={event} />)
-                    ) : (
-                        announcements.map((announcement) => (
-                            <AnnouncementCard
-                                key={announcement._id}
-                                announcement={announcement}
-                            />
-                        ))
-                    )}
+                    {activeTab === "events"
+                        ? events.map((event) => <EventCard key={event._id} event={event} />)
+                        : announcements.map((a) => <AnnouncementCard key={a._id} announcement={a} />)
+                    }
                 </ScrollView>
             )}
-
-
         </View>
     );
 }
@@ -348,159 +286,284 @@ export default function EventsAnnouncementsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f5f7fa",
+        backgroundColor: "#F4F5F7",
     },
+
+    // ── Header ──
     header: {
-        backgroundColor: "#fff",
-        paddingTop: 50,
-        paddingHorizontal: 20,
-        paddingBottom: 15,
-    },
-    headerTop: {
         flexDirection: "row",
-        justifyContent: "space-between",
         alignItems: "center",
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "#f0f0f0",
-        justifyContent: "center",
-        alignItems: "center",
-        marginRight: 10,
-    },
-    headerTitle: {
-        flex: 1,
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#000000",
-    },
-    headerSubtitle: {
-        fontSize: 14,
-        color: "#666",
-        marginTop: 4,
-    },
-    tabContainer: {
-        flexDirection: "row",
+        paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 44) + 8 : 52,
+        paddingHorizontal: 18,
+        paddingBottom: 16,
         backgroundColor: "#fff",
         borderBottomWidth: 1,
-        borderBottomColor: "#eee",
+        borderBottomColor: "#F0F0F0",
     },
-    tab: {
+    backButton: {
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        backgroundColor: "#F4F5F7",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 14,
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: "700",
+        color: "#1a1a1a",
+        letterSpacing: 0.2,
+    },
+    headerSubtitle: {
+        fontSize: 13,
+        color: "#999",
+        marginTop: 2,
+    },
+
+    // ── Pill Tab ──
+    tabWrap: {
+        paddingHorizontal: 18,
+        paddingVertical: 14,
+        backgroundColor: "#fff",
+        borderBottomWidth: 1,
+        borderBottomColor: "#F0F0F0",
+    },
+    tabPill: {
+        flexDirection: "row",
+        backgroundColor: "#F4F5F7",
+        borderRadius: 14,
+        padding: 4,
+        gap: 4,
+    },
+    tabBtn: {
         flex: 1,
-        paddingVertical: 15,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 10,
+        borderRadius: 10,
+        gap: 6,
+    },
+    tabBtnActive: {
+        backgroundColor: "#e63946",
+    },
+    tabBtnText: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: "#999",
+    },
+    tabBtnTextActive: {
+        color: "#fff",
+    },
+    countBadge: {
+        backgroundColor: "#E0E0E0",
+        borderRadius: 8,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        minWidth: 20,
         alignItems: "center",
     },
-    tabActive: {
-        borderBottomWidth: 2,
-        borderBottomColor: "#1d3557",
+    countBadgeActive: {
+        backgroundColor: "rgba(255,255,255,0.25)",
     },
-    tabText: {
-        fontSize: 15,
-        color: "#999",
-        fontWeight: "500",
+    countText: {
+        fontSize: 11,
+        fontWeight: "700",
+        color: "#888",
     },
-    tabTextActive: {
-        color: "#000000",
-        fontWeight: "600",
+    countTextActive: {
+        color: "#fff",
     },
+
+    // ── Loading ──
     loadingContainer: {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
+        gap: 10,
     },
-    content: {
-        flex: 1,
-    },
-    contentContainer: {
-        padding: 15,
-        paddingBottom: 100,
-    },
-    // Event Card Styles
-    eventCard: {
-        backgroundColor: "#fff",
-        borderRadius: 16,
-        padding: 18,
-        marginBottom: 15,
-        boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.06)",
-        elevation: 3,
-    },
-    eventHeader: {
-        flexDirection: "row",
-        alignItems: "flex-start",
-        marginBottom: 12,
-    },
-    eventIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "#fef2f2",
-        justifyContent: "center",
-        alignItems: "center",
-        marginRight: 12,
-    },
-    eventTitle: {
-        flex: 1,
-        fontSize: 17,
-        fontWeight: "700",
-        color: "#000000",
-    },
-    eventDetail: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 6,
-        gap: 8,
-    },
-    eventDetailText: {
+    loadingText: {
         fontSize: 14,
-        color: "#666",
-    },
-    eventDescription: {
-        fontSize: 14,
-        color: "#555",
-        lineHeight: 20,
-        marginTop: 10,
-    },
-    // Announcement Card Styles
-    announcementCard: {
-        backgroundColor: "#fff",
-        borderRadius: 16,
-        padding: 18,
-        marginBottom: 15,
-        boxShadow: "0px 2px 8px 0px rgba(0, 0, 0, 0.06)",
-        elevation: 3,
-    },
-    announcementHeader: {
-        flexDirection: "row",
-        marginBottom: 10,
-    },
-    announcementIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "#fef2f2",
-        justifyContent: "center",
-        alignItems: "center",
-        marginRight: 12,
-    },
-    announcementHeaderText: {
-        flex: 1,
-    },
-    announcementTitle: {
-        fontSize: 16,
-        fontWeight: "700",
-        color: "#000000",
-        marginBottom: 3,
-    },
-    announcementMeta: {
-        fontSize: 13,
-        color: "#888",
-    },
-    announcementContent: {
-        fontSize: 14,
-        color: "#555",
-        lineHeight: 20,
+        color: "#999",
     },
 
+    // ── List ──
+    content: { flex: 1 },
+    contentContainer: {
+        padding: 16,
+        paddingBottom: 100,
+    },
+
+    // ── Event Card ──
+    eventCard: {
+        flexDirection: "row",
+        backgroundColor: "#fff",
+        borderRadius: 18,
+        marginBottom: 14,
+        overflow: "hidden",
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+    },
+    accentBar: {
+        width: 5,
+    },
+    eventCardInner: {
+        flex: 1,
+        padding: 14,
+    },
+    eventTopRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        marginBottom: 10,
+    },
+    dateBadge: {
+        width: 46,
+        height: 50,
+        borderRadius: 12,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    dateBadgeDay: {
+        fontSize: 20,
+        fontWeight: "800",
+        lineHeight: 24,
+    },
+    dateBadgeMon: {
+        fontSize: 10,
+        fontWeight: "700",
+        letterSpacing: 0.5,
+    },
+    categoryTag: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 20,
+        gap: 4,
+    },
+    categoryTagText: {
+        fontSize: 11,
+        fontWeight: "700",
+    },
+    eventTitle: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#1a1a1a",
+        lineHeight: 22,
+        marginBottom: 5,
+    },
+    eventDescription: {
+        fontSize: 13,
+        color: "#777",
+        lineHeight: 18,
+        marginBottom: 10,
+    },
+    chipsRow: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 8,
+    },
+    chip: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F4F5F7",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 8,
+        gap: 4,
+    },
+    chipText: {
+        fontSize: 11,
+        color: "#777",
+        fontWeight: "500",
+        maxWidth: 120,
+    },
+
+    // ── Announcement Card ──
+    announcementCard: {
+        backgroundColor: "#fff",
+        borderRadius: 18,
+        padding: 14,
+        marginBottom: 12,
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+    },
+    announcementRow: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+    },
+    announcementIconWrap: {
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        backgroundColor: "#F4F5F7",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
+    },
+    announcementIconRecent: {
+        backgroundColor: "#FFF1F2",
+    },
+    recentDot: {
+        position: "absolute",
+        top: 6,
+        right: 6,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: "#e63946",
+        borderWidth: 1.5,
+        borderColor: "#fff",
+    },
+    announcementBody: {
+        flex: 1,
+    },
+    announcementTitleRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        marginBottom: 4,
+    },
+    announcementTitle: {
+        flex: 1,
+        fontSize: 15,
+        fontWeight: "700",
+        color: "#1a1a1a",
+        marginRight: 8,
+    },
+    announcementTime: {
+        fontSize: 11,
+        color: "#bbb",
+        fontWeight: "500",
+        flexShrink: 0,
+    },
+    sourceBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F4F5F7",
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
+        alignSelf: "flex-start",
+        gap: 4,
+        marginBottom: 8,
+    },
+    sourceText: {
+        fontSize: 11,
+        color: "#888",
+        fontWeight: "600",
+    },
+    announcementContent: {
+        fontSize: 13,
+        color: "#777",
+        lineHeight: 19,
+    },
 });
