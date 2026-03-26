@@ -34,7 +34,6 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
-import * as Haptics from "expo-haptics";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -120,7 +119,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
       stiffness: 90,
       mass: 1,
     });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   const closeCreateModal = () => {
@@ -141,7 +139,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
     if (scaleMap[field]) {
       scaleMap[field].value = withSpring(1.02, { damping: 15, stiffness: 150 });
     }
-    Haptics.selectionAsync();
   };
 
   const handleInputBlur = (field) => {
@@ -253,7 +250,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
         meetingLink: "",
       });
       fetchSessions();
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Success", "Session created successfully!");
     } catch (error) {
       console.error("Error creating session:", error);
@@ -586,7 +582,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   style={styles.premiumDateTimeBtn}
                   onPress={() => {
                     setShowDatePicker(true);
-                    Haptics.selectionAsync();
                   }}
                   activeOpacity={0.7}
                 >
@@ -600,7 +595,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   style={styles.premiumDateTimeBtn}
                   onPress={() => {
                     setShowStartTimePicker(true);
-                    Haptics.selectionAsync();
                   }}
                   activeOpacity={0.7}
                 >
@@ -616,7 +610,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   style={styles.premiumDateTimeBtn}
                   onPress={() => {
                     setShowEndTimePicker(true);
-                    Haptics.selectionAsync();
                   }}
                   activeOpacity={0.7}
                 >

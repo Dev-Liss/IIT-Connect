@@ -22,6 +22,7 @@ import {
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
+import * as Haptics from "expo-haptics";
 
 // Import Auth and API context
 import { useAuth } from "../../src/context/AuthContext";
@@ -176,6 +177,12 @@ export default function StudentProfile({ user }) {
         },
       ],
     );
+  };
+
+  const handleProfileTabPress = (tab) => {
+    if (tab === activeTab) return;
+    Haptics.selectionAsync();
+    setActiveTab(tab);
   };
 
   // --- Comments ---
@@ -362,7 +369,7 @@ export default function StudentProfile({ user }) {
         <View style={styles.tabContainer}>
           <TouchableOpacity
             style={[styles.tab, activeTab === "Posts" && styles.activeTab]}
-            onPress={() => setActiveTab("Posts")}
+            onPress={() => handleProfileTabPress("Posts")}
           >
             <Text
               style={[
@@ -375,7 +382,7 @@ export default function StudentProfile({ user }) {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === "Reels" && styles.activeTab]}
-            onPress={() => setActiveTab("Reels")}
+            onPress={() => handleProfileTabPress("Reels")}
           >
             <Text
               style={[

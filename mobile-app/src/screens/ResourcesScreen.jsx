@@ -32,7 +32,6 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
-import * as Haptics from "expo-haptics";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -193,7 +192,6 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
       stiffness: 90,
       mass: 1,
     });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   const closeUploadModal = () => {
@@ -214,7 +212,6 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
     if (scaleMap[field]) {
       scaleMap[field].value = withSpring(1.02, { damping: 15, stiffness: 150 });
     }
-    Haptics.selectionAsync();
   };
 
   const handleInputBlur = (field) => {
@@ -291,7 +288,6 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setSelectedFile(result.assets[0]);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch (err) {
       console.error("Unknown error picking file:", err);
@@ -333,7 +329,6 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
 
       const json = await response.json();
       if (json.success) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert("Success", "Resource uploaded successfully!");
         closeUploadModal();
         resetUploadForm();

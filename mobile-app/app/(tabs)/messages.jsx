@@ -20,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAuthToken } from "../../src/utils/getAuthToken";
 import socketService from "../../src/services/socketService";
 import { CONVERSATION_ENDPOINTS } from "../../src/config/api";
+import * as Haptics from "expo-haptics";
 
 const TABS = ["All", "Direct", "Groups", "Clubs"];
 
@@ -31,6 +32,12 @@ export default function MessagesScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+
+  const handleMessageTabPress = (tab) => {
+    if (tab === activeTab) return;
+    Haptics.selectionAsync();
+    setActiveTab(tab);
+  };
 
   // Initialize user and socket connection
   useEffect(() => {
@@ -286,7 +293,7 @@ export default function MessagesScreen() {
           <TouchableOpacity
             key={tab}
             style={[styles.tab, activeTab === tab && styles.activeTab]}
-            onPress={() => setActiveTab(tab)}
+            onPress={() => handleMessageTabPress(tab)}
           >
             <Text
               style={[

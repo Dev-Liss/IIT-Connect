@@ -1,9 +1,16 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import * as Haptics from "expo-haptics";
 
 const TABS = ["Timetable", "Kuppi", "Resources"];
 
 export default function AcademicNavBar({ activeTab, onTabPress }) {
+  const handleTabPress = (tab) => {
+    if (tab === activeTab) return;
+    Haptics.selectionAsync();
+    onTabPress(tab);
+  };
+
   return (
     <View style={styles.container}>
       {TABS.map((tab) => {
@@ -11,7 +18,7 @@ export default function AcademicNavBar({ activeTab, onTabPress }) {
         return (
           <TouchableOpacity
             key={tab}
-            onPress={() => onTabPress(tab)}
+            onPress={() => handleTabPress(tab)}
             activeOpacity={0.8}
             style={[
               styles.button,
