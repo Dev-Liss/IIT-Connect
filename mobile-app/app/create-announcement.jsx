@@ -113,6 +113,17 @@ export default function CreateAnnouncementScreen() {
                         </Text>
                     </View>
 
+                    {/* ── Progress Steps ── */}
+                    <View style={styles.progressRow}>
+                        <View style={[styles.progressStep, title && styles.progressStepDone]}>
+                            <Ionicons name={title ? "checkmark" : "megaphone-outline"} size={14} color={title ? "#fff" : "#ccc"} />
+                        </View>
+                        <View style={[styles.progressLine, content && styles.progressLineDone]} />
+                        <View style={[styles.progressStep, content && styles.progressStepDone]}>
+                            <Ionicons name={content ? "checkmark" : "document-text-outline"} size={14} color={content ? "#fff" : "#ccc"} />
+                        </View>
+                    </View>
+
                     {/* ── Section: Announcement Details ── */}
                     <Text style={styles.sectionTitle}>Announcement Details</Text>
                     <View style={styles.card}>
@@ -238,6 +249,35 @@ const styles = StyleSheet.create({
     },
     formContainer: {
         padding: 18,
+    },
+
+    // ── Progress ──
+    progressRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 20,
+        marginTop: 4,
+    },
+    progressStep: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "#F0F0F0",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    progressStepDone: {
+        backgroundColor: "#e63946",
+    },
+    progressLine: {
+        flex: 1,
+        height: 2,
+        backgroundColor: "#F0F0F0",
+        marginHorizontal: 6,
+    },
+    progressLineDone: {
+        backgroundColor: "#e63946",
     },
 
     // ── Info Banner ──
