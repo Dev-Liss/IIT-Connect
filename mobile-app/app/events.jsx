@@ -95,9 +95,13 @@ const EventCard = ({ event }) => {
             <View style={styles.eventCardInner}>
                 {/* Top row: date badge only */}
                 <View style={styles.eventTopRow}>
-                    <View style={[styles.dateBadge, { backgroundColor: cat.bg }]}>
-                        <Text style={[styles.dateBadgeDay, { color: cat.color }]}>{day}</Text>
-                        <Text style={[styles.dateBadgeMon, { color: cat.color }]}>{month}</Text>
+                    <View style={styles.dateBadge}>
+                        <View style={[styles.dateBadgeTop, { backgroundColor: cat.color }]}>
+                            <Text style={styles.dateBadgeMon}>{month}</Text>
+                        </View>
+                        <View style={styles.dateBadgeBottom}>
+                            <Text style={[styles.dateBadgeDay, { color: cat.color }]}>{day}</Text>
+                        </View>
                     </View>
                 </View>
 
@@ -415,21 +419,33 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     dateBadge: {
-        width: 46,
-        height: 50,
+        width: 50,
+        height: 54,
         borderRadius: 12,
-        justifyContent: "center",
+        overflow: "hidden",
+        borderWidth: 1,
+        borderColor: "#F0F0F0",
+    },
+    dateBadgeTop: {
+        paddingVertical: 3,
         alignItems: "center",
+        justifyContent: "center",
+    },
+    dateBadgeBottom: {
+        flex: 1,
+        backgroundColor: "#fff",
+        alignItems: "center",
+        justifyContent: "center",
     },
     dateBadgeDay: {
         fontSize: 20,
         fontWeight: "800",
-        lineHeight: 24,
     },
     dateBadgeMon: {
         fontSize: 10,
         fontWeight: "700",
         letterSpacing: 0.5,
+        color: "#fff",
     },
     categoryTag: {
         flexDirection: "row",
