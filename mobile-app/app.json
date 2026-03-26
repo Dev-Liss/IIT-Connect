@@ -30,9 +30,6 @@
       ],
       "package": "com.iit.connect.app.v1"
     },
-    "web": {
-      "output": "static"
-    },
     "plugins": [
       "expo-router",
       [

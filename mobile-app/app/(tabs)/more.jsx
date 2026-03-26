@@ -4,7 +4,7 @@
  * ====================================
  * A 2-column grid of squircle feature tiles.
  * Each tile has a tinted background, themed border,
- * and a looping .webm illustration.
+ * and a looping .mp4 illustration.
  */
 
 import React from "react";
@@ -26,31 +26,31 @@ import useMainTabSwipe from "../../src/hooks/useMainTabSwipe";
 const TILES = [
   {
     label: "Anonymous\nReport",
-    illustration: require("../../assets/images/annonymous-report.webm"),
+    illustration: require("../../assets/images/annonymous-report.mp4"),
     borderColor: "#BFC6C4",
     route: "/anonymous-report",
   },
   {
     label: "Empty Hall\nFinder",
-    illustration: require("../../assets/images/empty-hall-finder.webm"),
+    illustration: require("../../assets/images/empty-hall-finder.mp4"),
     borderColor: "#BFC6C4",
     route: null,
   },
   {
     label: "Clubs &\nCommunities",
-    illustration: require("../../assets/images/clubs.webm"),
+    illustration: require("../../assets/images/clubs.mp4"),
     borderColor: "#BFC6C4",
     route: null,
   },
   {
     label: "Events &\nAnnouncements",
-    illustration: require("../../assets/images/events-annoucements.webm"),
+    illustration: require("../../assets/images/events-annoucements.mp4"),
     borderColor: "#BFC6C4",
     route: "/events",
   },
   {
     label: "Admin\nDashboard",
-    illustration: require("../../assets/images/admin-dash.webm"),
+    illustration: require("../../assets/images/admin-dash.mp4"),
     borderColor: "#BFC6C4",
     route: "/admin-dashboard",
   },
