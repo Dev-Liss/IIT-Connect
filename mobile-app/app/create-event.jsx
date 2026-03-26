@@ -180,13 +180,27 @@ export default function CreateEventScreen() {
                         </Text>
                     </View>
                 </View>
-
                 <ScrollView
                     style={styles.formScroll}
                     contentContainerStyle={styles.formContainer}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
+                    {/* ── Progress Steps ── */}
+                    <View style={styles.progressRow}>
+                        <View style={[styles.progressStep, title && styles.progressStepDone]}>
+                            <Ionicons name={title ? "checkmark" : "create-outline"} size={14} color={title ? "#fff" : "#ccc"} />
+                        </View>
+                        <View style={[styles.progressLine, (dateSelected && startTimeSelected) && styles.progressLineDone]} />
+                        <View style={[styles.progressStep, (dateSelected && startTimeSelected) && styles.progressStepDone]}>
+                            <Ionicons name={(dateSelected && startTimeSelected) ? "checkmark" : "calendar-outline"} size={14} color={(dateSelected && startTimeSelected) ? "#fff" : "#ccc"} />
+                        </View>
+                        <View style={[styles.progressLine, location && styles.progressLineDone]} />
+                        <View style={[styles.progressStep, location && styles.progressStepDone]}>
+                            <Ionicons name={location ? "checkmark" : "location-outline"} size={14} color={location ? "#fff" : "#ccc"} />
+                        </View>
+                    </View>
+
                     {/* ── Section: Event Details ── */}
                     <Text style={styles.sectionTitle}>Event Details</Text>
                     <View style={styles.card}>
@@ -196,7 +210,10 @@ export default function CreateEventScreen() {
                                 <Ionicons name="create-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Event Title</Text>
+                                <View style={styles.labelRow}>
+                                    <Text style={styles.label}>Event Title <Text style={styles.required}>*</Text></Text>
+                                    <Text style={styles.charCount}>{title.length}/100</Text>
+                                </View>
                                 <TextInput
                                     style={styles.input}
                                     placeholder="e.g. Engineering Week Opening"
@@ -216,7 +233,10 @@ export default function CreateEventScreen() {
                                 <Ionicons name="document-text-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Description</Text>
+                                <View style={styles.labelRow}>
+                                    <Text style={styles.label}>Description <Text style={styles.required}>*</Text></Text>
+                                    <Text style={styles.charCount}>{description.length} chars</Text>
+                                </View>
                                 <TextInput
                                     style={[styles.input, styles.textArea]}
                                     placeholder="What's this event about?"
@@ -240,7 +260,10 @@ export default function CreateEventScreen() {
                                 <Ionicons name="calendar-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Date</Text>
+                                <View style={styles.labelRow}>
+                                    <Text style={styles.label}>Date <Text style={styles.required}>*</Text></Text>
+                                    {dateSelected && <Text style={styles.selectedBadge}>✓ Set</Text>}
+                                </View>
                                 <TouchableOpacity
                                     style={styles.pickerButton}
                                     onPress={() => setShowDatePicker(true)}
@@ -271,7 +294,10 @@ export default function CreateEventScreen() {
                                 <Ionicons name="time-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Start Time</Text>
+                                <View style={styles.labelRow}>
+                                    <Text style={styles.label}>Start Time <Text style={styles.required}>*</Text></Text>
+                                    {startTimeSelected && <Text style={styles.selectedBadge}>✓ Set</Text>}
+                                </View>
                                 <TouchableOpacity
                                     style={styles.pickerButton}
                                     onPress={() => setShowStartTimePicker(true)}
@@ -301,7 +327,10 @@ export default function CreateEventScreen() {
                                 <Ionicons name="time-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>End Time</Text>
+                                <View style={styles.labelRow}>
+                                    <Text style={styles.label}>End Time</Text>
+                                    <Text style={styles.optionalBadge}>Optional</Text>
+                                </View>
                                 <TouchableOpacity
                                     style={styles.pickerButton}
                                     onPress={() => setShowEndTimePicker(true)}
@@ -390,15 +419,16 @@ const styles = StyleSheet.create({
         borderBottomColor: "#F0F0F0",
     },
     backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        backgroundColor: "#F4F5F7",
         justifyContent: "center",
         alignItems: "center",
+        marginRight: 14,
     },
     headerTextWrap: {
         flex: 1,
-        marginLeft: 14,
     },
     headerTitle: {
         fontSize: 21,
@@ -468,15 +498,64 @@ const styles = StyleSheet.create({
         marginLeft: 58,
     },
 
+    // ── Progress ──
+    progressRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 20,
+        marginTop: 4,
+    },
+    progressStep: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: "#F0F0F0",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    progressStepDone: {
+        backgroundColor: "#e63946",
+    },
+    progressLine: {
+        flex: 1,
+        height: 2,
+        backgroundColor: "#F0F0F0",
+        marginHorizontal: 6,
+    },
+    progressLineDone: {
+        backgroundColor: "#e63946",
+    },
+
     // ── Labels ──
+    labelRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 6,
+    },
     label: {
         fontSize: 13,
         fontWeight: "600",
         color: "#555",
-        marginBottom: 6,
     },
     required: {
         color: "#e63946",
+    },
+    charCount: {
+        fontSize: 11,
+        color: "#bbb",
+        fontWeight: "500",
+    },
+    selectedBadge: {
+        fontSize: 11,
+        color: "#e63946",
+        fontWeight: "600",
+    },
+    optionalBadge: {
+        fontSize: 11,
+        color: "#bbb",
+        fontWeight: "500",
     },
 
     // ── Input ──
