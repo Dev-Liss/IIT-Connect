@@ -288,27 +288,44 @@ export default function CreateEventScreen() {
 
                         <View style={styles.fieldDivider} />
 
-                        {/* Start Time */}
-                        <View style={styles.fieldRow}>
-                            <View style={styles.fieldIconWrap}>
-                                <Ionicons name="time-outline" size={18} color="#e63946" />
-                            </View>
-                            <View style={styles.fieldContent}>
-                                <View style={styles.labelRow}>
-                                    <Text style={styles.label}>Start Time <Text style={styles.required}>*</Text></Text>
-                                    {startTimeSelected && <Text style={styles.selectedBadge}>✓ Set</Text>}
+                        {/* Start & End Time — side by side */}
+                        <View style={styles.timeRow}>
+                            {/* Start Time */}
+                            <TouchableOpacity
+                                style={[styles.timePill, startTimeSelected && styles.timePillSelected]}
+                                onPress={() => setShowStartTimePicker(true)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.timePillTop}>
+                                    <Ionicons name="play-circle-outline" size={14} color={startTimeSelected ? "#e63946" : "#bbb"} />
+                                    <Text style={[styles.timePillLabel, startTimeSelected && styles.timePillLabelSelected]}>Start</Text>
                                 </View>
-                                <TouchableOpacity
-                                    style={styles.pickerButton}
-                                    onPress={() => setShowStartTimePicker(true)}
-                                    activeOpacity={0.6}
-                                >
-                                    <Text style={[styles.pickerText, startTimeSelected && styles.pickerTextSelected]}>
-                                        {startTimeSelected ? formatTime(startTime) : "Select start time"}
-                                    </Text>
-                                    <Ionicons name="chevron-forward" size={16} color="#ccc" />
-                                </TouchableOpacity>
+                                <Text style={[styles.timePillValue, startTimeSelected && styles.timePillValueSelected]}>
+                                    {startTimeSelected ? formatTime(startTime) : "-- : --"}
+                                </Text>
+                            </TouchableOpacity>
+
+                            <View style={styles.timeDivider}>
+                                <View style={styles.timeDividerLine} />
+                                <Ionicons name="arrow-forward" size={14} color="#ddd" />
+                                <View style={styles.timeDividerLine} />
                             </View>
+
+                            {/* End Time */}
+                            <TouchableOpacity
+                                style={[styles.timePill, endTimeSelected && styles.timePillSelected]}
+                                onPress={() => setShowEndTimePicker(true)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.timePillTop}>
+                                    <Ionicons name="stop-circle-outline" size={14} color={endTimeSelected ? "#e63946" : "#bbb"} />
+                                    <Text style={[styles.timePillLabel, endTimeSelected && styles.timePillLabelSelected]}>End</Text>
+                                    <Text style={styles.optionalChip}>Optional</Text>
+                                </View>
+                                <Text style={[styles.timePillValue, endTimeSelected && styles.timePillValueSelected]}>
+                                    {endTimeSelected ? formatTime(endTime) : "-- : --"}
+                                </Text>
+                            </TouchableOpacity>
                         </View>
                         {showStartTimePicker && (
                             <DateTimePicker
@@ -318,31 +335,6 @@ export default function CreateEventScreen() {
                                 onChange={onStartTimeChange}
                             />
                         )}
-
-                        <View style={styles.fieldDivider} />
-
-                        {/* End Time */}
-                        <View style={styles.fieldRow}>
-                            <View style={styles.fieldIconWrap}>
-                                <Ionicons name="time-outline" size={18} color="#e63946" />
-                            </View>
-                            <View style={styles.fieldContent}>
-                                <View style={styles.labelRow}>
-                                    <Text style={styles.label}>End Time</Text>
-                                    <Text style={styles.optionalBadge}>Optional</Text>
-                                </View>
-                                <TouchableOpacity
-                                    style={styles.pickerButton}
-                                    onPress={() => setShowEndTimePicker(true)}
-                                    activeOpacity={0.6}
-                                >
-                                    <Text style={[styles.pickerText, endTimeSelected && styles.pickerTextSelected]}>
-                                        {endTimeSelected ? formatTime(endTime) : "Optional"}
-                                    </Text>
-                                    <Ionicons name="chevron-forward" size={16} color="#ccc" />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
                         {showEndTimePicker && (
                             <DateTimePicker
                                 value={endTime}
@@ -556,6 +548,69 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: "#bbb",
         fontWeight: "500",
+    },
+
+    // ── Time Pills ──
+    timeRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        gap: 8,
+    },
+    timePill: {
+        flex: 1,
+        backgroundColor: "#F4F5F7",
+        borderRadius: 14,
+        padding: 12,
+        borderWidth: 1.5,
+        borderColor: "transparent",
+    },
+    timePillSelected: {
+        backgroundColor: "#FFF1F2",
+        borderColor: "#e63946",
+    },
+    timePillTop: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 5,
+        marginBottom: 6,
+    },
+    timePillLabel: {
+        fontSize: 12,
+        fontWeight: "600",
+        color: "#bbb",
+    },
+    timePillLabelSelected: {
+        color: "#e63946",
+    },
+    timePillValue: {
+        fontSize: 18,
+        fontWeight: "800",
+        color: "#ccc",
+        letterSpacing: 1,
+    },
+    timePillValueSelected: {
+        color: "#1a1a1a",
+    },
+    timeDivider: {
+        alignItems: "center",
+        gap: 2,
+    },
+    timeDividerLine: {
+        width: 1,
+        height: 8,
+        backgroundColor: "#E0E0E0",
+    },
+    optionalChip: {
+        fontSize: 9,
+        color: "#ccc",
+        fontWeight: "600",
+        backgroundColor: "#EBEBEB",
+        paddingHorizontal: 5,
+        paddingVertical: 2,
+        borderRadius: 4,
+        marginLeft: 2,
     },
 
     // ── Input ──
