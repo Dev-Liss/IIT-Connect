@@ -196,7 +196,7 @@ export default function CreateEventScreen() {
                                 <Ionicons name="create-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Event Title <Text style={styles.required}>*</Text></Text>
+                                <Text style={styles.label}>Event Title</Text>
                                 <TextInput
                                     style={styles.input}
                                     placeholder="e.g. Engineering Week Opening"
@@ -216,7 +216,7 @@ export default function CreateEventScreen() {
                                 <Ionicons name="document-text-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Description <Text style={styles.required}>*</Text></Text>
+                                <Text style={styles.label}>Description</Text>
                                 <TextInput
                                     style={[styles.input, styles.textArea]}
                                     placeholder="What's this event about?"
@@ -240,7 +240,7 @@ export default function CreateEventScreen() {
                                 <Ionicons name="calendar-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Date <Text style={styles.required}>*</Text></Text>
+                                <Text style={styles.label}>Date</Text>
                                 <TouchableOpacity
                                     style={styles.pickerButton}
                                     onPress={() => setShowDatePicker(true)}
@@ -271,7 +271,7 @@ export default function CreateEventScreen() {
                                 <Ionicons name="time-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Start Time <Text style={styles.required}>*</Text></Text>
+                                <Text style={styles.label}>Start Time</Text>
                                 <TouchableOpacity
                                     style={styles.pickerButton}
                                     onPress={() => setShowStartTimePicker(true)}
@@ -332,7 +332,7 @@ export default function CreateEventScreen() {
                                 <Ionicons name="location-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Venue <Text style={styles.required}>*</Text></Text>
+                                <Text style={styles.label}>Venue</Text>
                                 <TextInput
                                     style={styles.input}
                                     placeholder="e.g. Main Auditorium, BMICH"
@@ -390,16 +390,15 @@ const styles = StyleSheet.create({
         borderBottomColor: "#F0F0F0",
     },
     backButton: {
-        width: 38,
-        height: 38,
-        borderRadius: 12,
-        backgroundColor: "#F4F5F7",
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: "center",
         alignItems: "center",
-        marginRight: 14,
     },
     headerTextWrap: {
         flex: 1,
+        marginLeft: 14,
     },
     headerTitle: {
         fontSize: 21,

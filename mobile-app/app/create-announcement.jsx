@@ -119,7 +119,7 @@ export default function CreateAnnouncementScreen() {
                                 <Ionicons name="megaphone-outline" size={18} color="#FF9500" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Title <Text style={styles.required}>*</Text></Text>
+                                <Text style={styles.label}>Title</Text>
                                 <TextInput
                                     style={styles.input}
                                     placeholder="e.g. Exam Schedule Released"
@@ -139,7 +139,7 @@ export default function CreateAnnouncementScreen() {
                                 <Ionicons name="document-text-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Content <Text style={styles.required}>*</Text></Text>
+                                <Text style={styles.label}>Content</Text>
                                 <TextInput
                                     style={[styles.input, styles.textArea]}
                                     placeholder="Write your announcement here..."
@@ -200,16 +200,15 @@ const styles = StyleSheet.create({
         borderBottomColor: "#F0F0F0",
     },
     backButton: {
-        width: 38,
-        height: 38,
-        borderRadius: 12,
-        backgroundColor: "#F4F5F7",
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: "center",
         alignItems: "center",
-        marginRight: 14,
     },
     headerTextWrap: {
         flex: 1,
+        marginLeft: 14,
     },
     headerTitle: {
         fontSize: 21,
