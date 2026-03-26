@@ -351,10 +351,8 @@ export default function CreateEventScreen() {
                         disabled={isLoading}
                         activeOpacity={0.85}
                     >
-                        {isLoading ? (
-                            <ActivityIndicator size="small" color="#fff" />
-                        ) : (
-                            <Ionicons name="send" size={20} color="#fff" />
+                        {isLoading && (
+                            <ActivityIndicator size="small" color="#fff" style={{ marginRight: 10 }} />
                         )}
                         <Text style={styles.submitButtonText}>
                             {isLoading ? "Creating Event..." : "Create Event"}
@@ -513,26 +511,25 @@ const styles = StyleSheet.create({
     // ── Submit ──
     submitButton: {
         backgroundColor: "#e63946",
-        borderRadius: 14,
-        paddingVertical: 16,
+        borderRadius: 50,
+        paddingVertical: 18,
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
-        gap: 10,
-        marginTop: 6,
-        shadowColor: "#e63946",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
+        marginTop: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.18,
+        shadowRadius: 14,
+        elevation: 8,
     },
     submitButtonDisabled: {
-        opacity: 0.65,
+        opacity: 0.6,
     },
     submitButtonText: {
         color: "#fff",
         fontSize: 16,
         fontWeight: "700",
-        letterSpacing: 0.3,
+        letterSpacing: 0.6,
     },
 });
