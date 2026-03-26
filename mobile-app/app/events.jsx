@@ -151,7 +151,7 @@ const AnnouncementCard = ({ announcement }) => {
 
 
                     {/* Content */}
-                    <Text style={styles.announcementContent} numberOfLines={3}>{announcement.content}</Text>
+                    <Text style={styles.announcementContent} numberOfLines={5}>{announcement.content}</Text>
                 </View>
             </View>
         </View>
@@ -480,8 +480,8 @@ const styles = StyleSheet.create({
     announcementCard: {
         backgroundColor: "#fff",
         borderRadius: 18,
-        padding: 14,
-        marginBottom: 12,
+        padding: 18,
+        marginBottom: 14,
         elevation: 2,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
@@ -493,13 +493,13 @@ const styles = StyleSheet.create({
         alignItems: "flex-start",
     },
     announcementIconWrap: {
-        width: 38,
-        height: 38,
-        borderRadius: 12,
+        width: 44,
+        height: 44,
+        borderRadius: 14,
         backgroundColor: "#F4F5F7",
         justifyContent: "center",
         alignItems: "center",
-        marginRight: 12,
+        marginRight: 14,
     },
     announcementIconRecent: {
         backgroundColor: "#FFF1F2",
@@ -526,10 +526,11 @@ const styles = StyleSheet.create({
     },
     announcementTitle: {
         flex: 1,
-        fontSize: 15,
+        fontSize: 16,
         fontWeight: "700",
         color: "#1a1a1a",
         marginRight: 8,
+        marginBottom: 8,
     },
     announcementTime: {
         fontSize: 11,
@@ -554,8 +555,8 @@ const styles = StyleSheet.create({
         fontWeight: "600",
     },
     announcementContent: {
-        fontSize: 13,
-        color: "#777",
-        lineHeight: 19,
+        fontSize: 14,
+        color: "#666",
+        lineHeight: 21,
     },
 });
