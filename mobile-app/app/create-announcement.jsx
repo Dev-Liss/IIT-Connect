@@ -174,7 +174,7 @@ export default function CreateAnnouncementScreen() {
                             <ActivityIndicator size="small" color="#fff" style={{ marginRight: 10 }} />
                         )}
                         <Text style={styles.submitButtonText}>
-                            {isLoading ? "Sending..." : "Send Announcement"}
+                            {isLoading ? "Creating..." : "Create Announcement"}
                         </Text>
                     </TouchableOpacity>
 
