@@ -22,7 +22,7 @@ import {
   useUser,
   useClerk,
 } from "@clerk/clerk-expo";
-import { syncGoogleUser } from "../../src/services/api";
+import { syncGoogleUser, checkEmailExists } from "../../src/services/api";
 import { useAuth as useContextAuth } from "../../src/context/AuthContext";
 import * as WebBrowser from "expo-web-browser";
 import { useWarmUpBrowser } from "../../src/hooks/useWarmUpBrowser";
@@ -127,6 +127,35 @@ export default function LoginScreen({
     });
   };
 
+  /**
+   * Fallback for cases where Clerk doesn't complete "password verification" in the expected
+   * state (can happen on cross-device flows). If the email exists in MongoDB, we
+   * proceed with OTP email verification instead of showing a generic login error.
+   */
+  const sendOTPForRegisteredEmail = async (trimmedEmail) => {
+    try {
+      const emailCheck = await checkEmailExists(trimmedEmail);
+      if (emailCheck?.exists) {
+        console.log("📧 [Login] Email exists in MongoDB. Sending OTP...");
+        await startOTPVerification(trimmedEmail);
+        return true;
+      }
+
+      Alert.alert(
+        "No Account Found",
+        "No account exists for this email. Please sign up first.",
+      );
+      return false;
+    } catch (emailCheckErr) {
+      console.log(
+        "⚠️ [Login] Email check failed:",
+        emailCheckErr?.message || emailCheckErr,
+      );
+      Alert.alert("Login Issue", "Unable to verify credentials. Please try again.");
+      return false;
+    }
+  };
+
   const handleLogin = async () => {
     const trimmedEmail = email.trim().toLowerCase();
 
@@ -184,8 +213,8 @@ export default function LoginScreen({
 
       if (!passwordVerified) {
         console.log("⚠️ [Login] Unexpected status:", signInAttempt.status);
+        await sendOTPForRegisteredEmail(trimmedEmail);
         setIsLoading(false);
-        Alert.alert("Login Issue", "Unable to verify credentials. Please try again.");
         return;
       }
 
@@ -258,7 +287,7 @@ export default function LoginScreen({
             if (retryPasswordVerified) {
               await startOTPVerification(trimmedEmail);
             } else {
-              Alert.alert("Login Issue", "Unable to verify credentials. Please try again.");
+              await sendOTPForRegisteredEmail(trimmedEmail);
             }
             setIsLoading(false);
           } catch (retryError) {
@@ -282,10 +311,9 @@ export default function LoginScreen({
             "Unable to connect to the server. Please check your internet connection and try again.",
           );
         } else {
-          Alert.alert(
-            "Login Failed",
-            clerkError.message || "Invalid credentials. Please try again.",
-          );
+          // Cross-device fallback: if this email already exists in MongoDB, allow OTP-based login.
+          await sendOTPForRegisteredEmail(trimmedEmail);
+          return;
         }
       } else if (error.message && error.message.includes("network")) {
         Alert.alert(
