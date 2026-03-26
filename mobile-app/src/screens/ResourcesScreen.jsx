@@ -12,6 +12,8 @@ import {
   Platform,
   FlatList,
   useWindowDimensions,
+  KeyboardAvoidingView,
+  Dimensions,
 } from "react-native";
 import {
   Ionicons,
@@ -19,13 +21,20 @@ import {
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import * as MediaLibrary from "expo-media-library";
 import { RESOURCE_ENDPOINTS } from "../config/api";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
+import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
 
-// Removed static width
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 const BRAND_RED = "#f9252b";
 
@@ -34,7 +43,6 @@ const renderFileIcon = (fileName, fileType, size = 32) => {
   if (fileName) {
     ext = fileName.split(".").pop()?.toLowerCase() || "";
   }
-  // Fallback or cleanup if fileType is passed as "image/png" etc
   if (!ext || ext === fileName) {
     if (fileType) {
       if (fileType.includes("/")) {
@@ -45,7 +53,6 @@ const renderFileIcon = (fileName, fileType, size = 32) => {
     }
   }
 
-  // Normalize common image types from mime
   if (ext === "jpeg") ext = "jpg";
   if (ext === "vnd.openxmlformats-officedocument.wordprocessingml.document")
     ext = "docx";
@@ -126,7 +133,7 @@ const getMimeType = (fileName) => {
 
 export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
   const { width } = useWindowDimensions();
-  const numColumns = 2; // Fixed to 2 columns to match design
+  const numColumns = 2;
   const cardWidth = width / numColumns - 20;
 
   const [resources, setResources] = useState([]);
@@ -148,6 +155,19 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const [selectedResource, setSelectedResource] = useState(null);
 
+  // Focus tracking
+  const [focusedField, setFocusedField] = useState(null);
+
+  // Animated values for input focus scale
+  const titleScale = useSharedValue(1);
+  const courseScale = useSharedValue(1);
+  const moduleScale = useSharedValue(1);
+  const descScale = useSharedValue(1);
+
+  // Slide-up animation
+  const slideAnim = useSharedValue(SCREEN_HEIGHT);
+  const backdropOpacity = useSharedValue(0);
+
   useEffect(() => {
     fetchResources();
   }, []);
@@ -155,7 +175,7 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
   // Auto-open the upload modal when triggered from the main Create sheet
   useEffect(() => {
     if (autoOpenUpload) {
-      setUploadModalVisible(true);
+      openUploadModal();
       if (onModalOpened) onModalOpened();
     }
   }, [autoOpenUpload]);
@@ -163,6 +183,70 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
   useEffect(() => {
     filterResources();
   }, [searchQuery, resources]);
+
+  // --- Premium Modal Animation Helpers ---
+  const openUploadModal = () => {
+    setUploadModalVisible(true);
+    backdropOpacity.value = withTiming(1, { duration: 300 });
+    slideAnim.value = withSpring(0, {
+      damping: 20,
+      stiffness: 90,
+      mass: 1,
+    });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const closeUploadModal = () => {
+    backdropOpacity.value = withTiming(0, { duration: 250 });
+    slideAnim.value = withSpring(SCREEN_HEIGHT, {
+      damping: 20,
+      stiffness: 90,
+    });
+    setTimeout(() => {
+      setUploadModalVisible(false);
+    }, 350);
+  };
+
+  // Input focus animations
+  const handleInputFocus = (field) => {
+    setFocusedField(field);
+    const scaleMap = { title: titleScale, course: courseScale, module: moduleScale, desc: descScale };
+    if (scaleMap[field]) {
+      scaleMap[field].value = withSpring(1.02, { damping: 15, stiffness: 150 });
+    }
+    Haptics.selectionAsync();
+  };
+
+  const handleInputBlur = (field) => {
+    setFocusedField(null);
+    const scaleMap = { title: titleScale, course: courseScale, module: moduleScale, desc: descScale };
+    if (scaleMap[field]) {
+      scaleMap[field].value = withSpring(1, { damping: 15, stiffness: 150 });
+    }
+  };
+
+  const titleInputStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: titleScale.value }],
+  }));
+  const courseInputStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: courseScale.value }],
+  }));
+  const moduleInputStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: moduleScale.value }],
+  }));
+  const descInputStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: descScale.value }],
+  }));
+
+  const slideUpStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideAnim.value }],
+  }));
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  // --- End Animation Helpers ---
 
   const fetchResources = async () => {
     setLoading(true);
@@ -185,7 +269,6 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
   const filterResources = () => {
     let filtered = resources;
 
-    // Filter by Search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -208,6 +291,7 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         setSelectedFile(result.assets[0]);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     } catch (err) {
       console.error("Unknown error picking file:", err);
@@ -249,8 +333,9 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
 
       const json = await response.json();
       if (json.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert("Success", "Resource uploaded successfully!");
-        setUploadModalVisible(false);
+        closeUploadModal();
         resetUploadForm();
         fetchResources();
       } else {
@@ -281,15 +366,12 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
     if (!selectedResource?.fileUrl) return;
 
     try {
-      // 1. Determine file name and path
-      // Use originalName if available to ensure correct extension and user familiarity
       const fileName = selectedResource.originalName
         ? selectedResource.originalName
         : `${selectedResource.title.replace(/[^a-zA-Z0-9]/g, "_")}.${selectedResource.fileType}`;
 
       const fileUri = FileSystem.documentDirectory + fileName;
 
-      // 2. Download file to internal cache first
       const downloadRes = await FileSystem.downloadAsync(
         selectedResource.fileUrl,
         fileUri,
@@ -300,8 +382,6 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
         return;
       }
 
-      // 3. Determine resource type (Image/Video vs Document)
-      // We check extension from the file name or fileType
       const isImageOrVideo =
         fileName.match(/\.(jpg|jpeg|png|gif|mp4|mov|avi|heic)$/i) ||
         ["jpg", "jpeg", "png", "gif", "mp4", "mov", "avi"].includes(
@@ -309,15 +389,11 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
         );
 
       if (isImageOrVideo) {
-        // Save to Gallery
         const { status } = await MediaLibrary.requestPermissionsAsync();
 
         if (status === "granted") {
           try {
             const asset = await MediaLibrary.createAssetAsync(downloadRes.uri);
-            // Attempt to save to a specific album, or just create it.
-            // On Android, createAlbumAsync with false (no copy) checks if album exists or creates it.
-            // On iOS, it creates an album.
             const albumName = "Download";
             const album = await MediaLibrary.getAlbumAsync(albumName);
 
@@ -339,9 +415,7 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
           );
         }
       } else {
-        // Document handling
         if (Platform.OS === "android") {
-          // Android: Use Storage Access Framework to save to user-selected folder
           try {
             const permissions =
               await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
@@ -370,7 +444,6 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
             Alert.alert("Error", "Failed to save file to storage.");
           }
         } else {
-          // iOS: Use Share Sheet as "Save to Files"
           if (await Sharing.isAvailableAsync()) {
             await Sharing.shareAsync(downloadRes.uri, { UTI: "public.item" });
           } else {
@@ -383,6 +456,9 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
       Alert.alert("Error", "Failed to download and save file.");
     }
   };
+
+  // Check if upload form is valid
+  const isFormValid = uploadTitle && uploadCourseCode && uploadModule && selectedFile;
 
   const renderResourceItem = ({ item }) => (
     <TouchableOpacity
@@ -461,7 +537,7 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
             </View>
           }
           keyExtractor={(item) => item._id}
-          key={numColumns} // Force re-render on column change
+          key={numColumns}
           numColumns={numColumns}
           columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : null}
           contentContainerStyle={styles.listContent}
@@ -472,106 +548,192 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
         />
       )}
 
-      {/* Upload Modal */}
+      {/* ========== PREMIUM UPLOAD OVERLAY ========== */}
       <Modal
         visible={uploadModalVisible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setUploadModalVisible(false)}
+        animationType="none"
+        transparent={true}
+        onRequestClose={closeUploadModal}
+        statusBarTranslucent
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Add New Resource</Text>
-            <TouchableOpacity onPress={() => setUploadModalVisible(false)}>
-              <Ionicons name="close" size={24} color="#333" />
-            </TouchableOpacity>
-          </View>
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            <Text style={styles.label}>Document Title *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., Week 5 Lecture Notes"
-              value={uploadTitle}
-              onChangeText={setUploadTitle}
-            />
+        {/* Glassmorphism Backdrop */}
+        <Animated.View style={[styles.premiumBackdrop, backdropStyle]}>
+          <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={closeUploadModal}
+          />
+        </Animated.View>
 
-            <Text style={styles.label}>Course Code *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., CS101"
-              value={uploadCourseCode}
-              onChangeText={setUploadCourseCode}
-            />
+        {/* Slide-up Form Container */}
+        <Animated.View style={[styles.premiumOverlay, slideUpStyle]}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+            keyboardVerticalOffset={0}
+          >
+            {/* === Header Bar === */}
+            <View style={styles.premiumHeader}>
+              <TouchableOpacity onPress={closeUploadModal} style={styles.headerActionBtn}>
+                <Text style={styles.headerCancelText}>Cancel</Text>
+              </TouchableOpacity>
 
-            <Text style={styles.label}>Module *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., Module 2: Data Structures"
-              value={uploadModule}
-              onChangeText={setUploadModule}
-            />
+              <Text style={styles.headerTitle}>Share Resource</Text>
 
-            <Text style={styles.label}>Description</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Describe the content of this resource..."
-              value={uploadDescription}
-              onChangeText={setUploadDescription}
-              multiline
-            />
+              <TouchableOpacity
+                onPress={handleUpload}
+                style={[
+                  styles.headerPostBtn,
+                  (!isFormValid || uploading) && styles.headerPostBtnDisabled,
+                ]}
+                disabled={!isFormValid || uploading}
+              >
+                {uploading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={[
+                    styles.headerPostText,
+                    !isFormValid && styles.headerPostTextDisabled,
+                  ]}>Upload</Text>
+                )}
+              </TouchableOpacity>
+            </View>
 
-            <Text style={styles.label}>Upload File *</Text>
-            <TouchableOpacity style={styles.uploadBox} onPress={pickFile}>
-              {selectedFile ? (
-                <View style={{ alignItems: "center" }}>
-                  <FontAwesome5 name="file-alt" size={40} color={BRAND_RED} />
-                  <Text style={styles.selectedFileName}>
-                    {selectedFile.name}
-                  </Text>
-                </View>
-              ) : (
-                <>
-                  <View style={styles.uploadIconCircle}>
-                    <Ionicons
-                      name="cloud-upload-outline"
-                      size={24}
-                      color={BRAND_RED}
-                    />
+            {/* Subtle drag indicator */}
+            <View style={styles.dragIndicator} />
+
+            {/* === Form Body === */}
+            <ScrollView
+              style={styles.premiumFormScroll}
+              contentContainerStyle={styles.premiumFormContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* ====== MEDIA UPLOAD SECTION ====== */}
+              <TouchableOpacity
+                style={[
+                  styles.mediaUploadBox,
+                  selectedFile && styles.mediaUploadBoxSelected,
+                ]}
+                onPress={pickFile}
+                activeOpacity={0.7}
+              >
+                {selectedFile ? (
+                  <View style={styles.mediaPreview}>
+                    <View style={styles.mediaPreviewIconWrap}>
+                      {renderFileIcon(selectedFile.name, selectedFile.mimeType, 40)}
+                    </View>
+                    <Text style={styles.mediaPreviewName} numberOfLines={2}>
+                      {selectedFile.name}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.mediaChangeBtn}
+                      onPress={pickFile}
+                    >
+                      <Ionicons name="swap-horizontal-outline" size={14} color={BRAND_RED} />
+                      <Text style={styles.mediaChangeBtnText}>Change file</Text>
+                    </TouchableOpacity>
                   </View>
-                  <Text style={styles.uploadBoxText}>
-                    Click to upload or drag and drop
-                  </Text>
-                  <Text style={styles.uploadBoxSubText}>
-                    PDF, DOC, DOCX (Max 10MB)
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+                ) : (
+                  <View style={styles.mediaPlaceholder}>
+                    <View style={styles.mediaUploadIconCircle}>
+                      <Ionicons name="cloud-upload-outline" size={28} color={BRAND_RED} />
+                    </View>
+                    <Text style={styles.mediaUploadTitle}>
+                      Tap to select a file
+                    </Text>
+                    <Text style={styles.mediaUploadSubtitle}>
+                      PDF, DOC, DOCX, PPT, Images • Max 10MB
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.submitBtn, uploading && styles.disabledBtn]}
-              onPress={handleUpload}
-              disabled={uploading}
-            >
-              {uploading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.submitBtnText}>Upload Resource</Text>
-              )}
-            </TouchableOpacity>
+              {/* Document Title */}
+              <Animated.View style={[styles.premiumInputRow, titleInputStyle]}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="document-text-outline" size={18} color={focusedField === 'title' ? BRAND_RED : '#bbb'} />
+                </View>
+                <View style={styles.inputFieldContainer}>
+                  <TextInput
+                    style={styles.premiumInput}
+                    placeholder="Document title"
+                    placeholderTextColor="#aaa"
+                    value={uploadTitle}
+                    onChangeText={setUploadTitle}
+                    onFocus={() => handleInputFocus('title')}
+                    onBlur={() => handleInputBlur('title')}
+                  />
+                </View>
+              </Animated.View>
+              <View style={styles.inputDivider} />
 
-            <TouchableOpacity
-              style={styles.cancelBtn}
-              onPress={() => setUploadModalVisible(false)}
-              disabled={uploading}
-            >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+              {/* Course Code */}
+              <Animated.View style={[styles.premiumInputRow, courseInputStyle]}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="code-slash-outline" size={18} color={focusedField === 'course' ? BRAND_RED : '#bbb'} />
+                </View>
+                <View style={styles.inputFieldContainer}>
+                  <TextInput
+                    style={styles.premiumInput}
+                    placeholder="Course code (e.g., CS101)"
+                    placeholderTextColor="#aaa"
+                    value={uploadCourseCode}
+                    onChangeText={setUploadCourseCode}
+                    onFocus={() => handleInputFocus('course')}
+                    onBlur={() => handleInputBlur('course')}
+                  />
+                </View>
+              </Animated.View>
+              <View style={styles.inputDivider} />
+
+              {/* Module */}
+              <Animated.View style={[styles.premiumInputRow, moduleInputStyle]}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="layers-outline" size={18} color={focusedField === 'module' ? BRAND_RED : '#bbb'} />
+                </View>
+                <View style={styles.inputFieldContainer}>
+                  <TextInput
+                    style={styles.premiumInput}
+                    placeholder="Module (e.g., Data Structures)"
+                    placeholderTextColor="#aaa"
+                    value={uploadModule}
+                    onChangeText={setUploadModule}
+                    onFocus={() => handleInputFocus('module')}
+                    onBlur={() => handleInputBlur('module')}
+                  />
+                </View>
+              </Animated.View>
+              <View style={styles.inputDivider} />
+
+              {/* Description (Optional) */}
+              <Animated.View style={[styles.premiumInputRow, { alignItems: 'flex-start', paddingTop: 14 }, descInputStyle]}>
+                <View style={[styles.inputIconContainer, { marginTop: 2 }]}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={18} color={focusedField === 'desc' ? BRAND_RED : '#bbb'} />
+                </View>
+                <View style={styles.inputFieldContainer}>
+                  <TextInput
+                    style={[styles.premiumInput, styles.premiumTextArea]}
+                    placeholder="Describe this resource (optional)"
+                    placeholderTextColor="#aaa"
+                    multiline
+                    value={uploadDescription}
+                    onChangeText={setUploadDescription}
+                    onFocus={() => handleInputFocus('desc')}
+                    onBlur={() => handleInputBlur('desc')}
+                  />
+                </View>
+              </Animated.View>
+
+              {/* Bottom spacer for keyboard avoidance */}
+              <View style={{ height: 80 }} />
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </Animated.View>
       </Modal>
 
-      {/* Details Modal */}
+      {/* Details Modal (unchanged) */}
       <Modal
         visible={detailsModalVisible}
         animationType="slide"
@@ -628,7 +790,7 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
                   <Text style={styles.detailsInfoValue}>
                     {selectedResource.fileSize
                       ? (selectedResource.fileSize / 1024 / 1024).toFixed(2) +
-                        " MB"
+                      " MB"
                       : "N/A"}
                   </Text>
                 </View>
@@ -667,9 +829,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 10, // Adjusted for parent container
+    paddingTop: 10,
   },
-  // Removed Header Styles
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -699,8 +860,6 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#fff",
-    // width set dynamically via inline styles
-    // width: (width / 2) - 24,  <-- REMOVED
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -766,110 +925,206 @@ const styles = StyleSheet.create({
     color: "#999",
     fontSize: 16,
   },
-  // Upload Modal Styles
-  modalContainer: {
-    flex: 1,
+
+  // ==========================================
+  // PREMIUM UPLOAD OVERLAY STYLES
+  // ==========================================
+  premiumBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  premiumOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: SCREEN_HEIGHT * 0.92,
     backgroundColor: "#fff",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 25,
   },
-  modalHeader: {
+  premiumHeader: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === "ios" ? 16 : 14,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(0,0,0,0.08)",
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+  headerActionBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    minWidth: 60,
   },
-  modalContent: {
-    padding: 20,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: "#333",
-  },
-  input: {
-    backgroundColor: "#f9f9f9",
-    borderWidth: 1,
-    borderColor: "#eee",
-    borderRadius: 12,
-    padding: 15,
+  headerCancelText: {
     fontSize: 16,
-    marginBottom: 20,
+    color: "#666",
+    fontWeight: "500",
   },
-  textArea: {
-    height: 100,
-    textAlignVertical: "top",
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    letterSpacing: -0.3,
   },
-  uploadBox: {
-    borderWidth: 2,
-    borderColor: "#eee",
-    borderStyle: "dashed",
-    borderRadius: 12,
-    padding: 30,
+  headerPostBtn: {
+    backgroundColor: BRAND_RED,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    minWidth: 60,
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 30,
-    backgroundColor: "#fafafa",
   },
-  uploadIconCircle: {
-    width: 50,
-    height: 50,
-    backgroundColor: "#FFF0F0",
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
+  headerPostBtnDisabled: {
+    backgroundColor: "#ffb3b5",
   },
-  uploadBoxText: {
+  headerPostText: {
+    color: "#fff",
+    fontWeight: "700",
     fontSize: 14,
-    fontWeight: "600",
-    color: "#000",
+  },
+  headerPostTextDisabled: {
+    color: "rgba(255,255,255,0.7)",
+  },
+  dragIndicator: {
+    alignSelf: "center",
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(0,0,0,0.1)",
+    marginTop: 6,
     marginBottom: 4,
   },
-  uploadBoxSubText: {
+  premiumFormScroll: {
+    flex: 1,
+  },
+  premiumFormContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+
+  // Media Upload Section (Cover-photo style)
+  mediaUploadBox: {
+    borderWidth: 2,
+    borderColor: "rgba(0,0,0,0.08)",
+    borderStyle: "dashed",
+    borderRadius: 20,
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+    backgroundColor: "#fafafa",
+    minHeight: 160,
+  },
+  mediaUploadBoxSelected: {
+    borderColor: BRAND_RED,
+    borderStyle: "solid",
+    backgroundColor: "#fef7f7",
+  },
+  mediaPlaceholder: {
+    alignItems: "center",
+  },
+  mediaUploadIconCircle: {
+    width: 60,
+    height: 60,
+    backgroundColor: "#FFF0F0",
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  mediaUploadTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 6,
+  },
+  mediaUploadSubtitle: {
     fontSize: 12,
     color: "#999",
   },
-  selectedFileName: {
-    marginTop: 10,
+  mediaPreview: {
+    alignItems: "center",
+  },
+  mediaPreviewIconWrap: {
+    width: 70,
+    height: 70,
+    backgroundColor: "#FFF0F0",
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  mediaPreviewName: {
     fontSize: 14,
     fontWeight: "600",
     color: "#333",
     textAlign: "center",
+    marginBottom: 10,
+    maxWidth: 220,
   },
-  submitBtn: {
-    backgroundColor: BRAND_RED,
-    paddingVertical: 18,
-    borderRadius: 12,
+  mediaChangeBtn: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
-  },
-  submitBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  disabledBtn: {
-    opacity: 0.7,
-  },
-  cancelBtn: {
-    paddingVertical: 15,
-    alignItems: "center",
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: "#fef2f2",
     borderWidth: 1,
-    borderColor: "#eee",
-    borderRadius: 12,
+    borderColor: "rgba(249,37,43,0.15)",
   },
-  cancelBtnText: {
-    color: "#999",
-    fontSize: 16,
+  mediaChangeBtnText: {
+    fontSize: 12,
+    color: BRAND_RED,
     fontWeight: "600",
   },
-  // Details Modal Styles
+
+  // Minimalist Input Row
+  premiumInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
+  inputIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#f5f5f5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
+  inputFieldContainer: {
+    flex: 1,
+  },
+  premiumInput: {
+    fontSize: 16,
+    color: "#1a1a1a",
+    paddingVertical: 12,
+    fontWeight: "400",
+  },
+  premiumTextArea: {
+    height: 100,
+    textAlignVertical: "top",
+  },
+  inputDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(0,0,0,0.08)",
+    marginLeft: 50,
+    marginBottom: 4,
+  },
+
+  // Details Modal Styles (unchanged)
   detailsContainer: {
     flex: 1,
     backgroundColor: "#f5f5f5",
@@ -896,7 +1151,10 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: "center",
     marginBottom: 20,
-    boxShadow: "0px 2px 10px 0px rgba(0, 0, 0, 0.05)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     elevation: 2,
   },
   detailsIconContainer: {
@@ -965,7 +1223,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 18,
     borderRadius: 16,
-    boxShadow: "0px 4px 8px 0px rgba(249, 37, 43, 0.3)",
+    shadowColor: BRAND_RED,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 5,
   },
   largeDownloadBtnText: {

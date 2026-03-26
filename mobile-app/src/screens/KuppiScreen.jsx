@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,9 @@ import {
   RefreshControl,
   Linking,
   Platform,
+  KeyboardAvoidingView,
+  StatusBar,
+  Dimensions,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,6 +24,19 @@ import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+  runOnJS,
+  Easing,
+} from "react-native-reanimated";
+import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 // Constants
 const COLORS = {
@@ -32,15 +48,12 @@ const COLORS = {
   TEXT_DARK: "#333",
 };
 
-// Types
-
 export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   const router = useRouter();
-  // Removed snapToHeader logic as header is now fixed
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date()); // For live updates
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   // Date Picker State
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -52,30 +65,40 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
 
+  // Focus tracking for input scale animation
+  const [focusedField, setFocusedField] = useState(null);
+
+  // Animated values for each input field
+  const titleScale = useSharedValue(1);
+  const subjectScale = useSharedValue(1);
+  const linkScale = useSharedValue(1);
+  const aboutScale = useSharedValue(1);
+
+  // Slide-up animation
+  const slideAnim = useSharedValue(SCREEN_HEIGHT);
+  const backdropOpacity = useSharedValue(0);
+
   // Form State
   const [formData, setFormData] = useState({
     title: "",
     subject: "",
-    date: new Date(), // Base Date
-    startTime: new Date(), // Full Date object
-    endTime: new Date(new Date().getTime() + 60 * 60 * 1000), // Default 1 hr later
+    date: new Date(),
+    startTime: new Date(),
+    endTime: new Date(new Date().getTime() + 60 * 60 * 1000),
     about: "",
     meetingLink: "",
   });
 
-  // Mock User ID (Using a valid MongoDB ObjectId to prevent CastErrors)
-  const CURRENT_USER_ID = "69803c6732b6bf165d609ee0"; // TODO: updates this with real user ID from context/storage
-
-  const { user } = useAuth(); // Get user from context
-  const { getToken } = useClerkAuth(); // Get Clerk's native token fetcher
+  const CURRENT_USER_ID = "69803c6732b6bf165d609ee0";
+  const { user } = useAuth();
+  const { getToken } = useClerkAuth();
 
   useFocusEffect(
     React.useCallback(() => {
       fetchSessions();
-      // Update time every minute to trigger re-renders for expiration
       const interval = setInterval(() => {
         setCurrentTime(new Date());
-      }, 60000); // 1 minute
+      }, 60000);
       return () => clearInterval(interval);
     }, []),
   );
@@ -83,10 +106,74 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   // Auto-open the create modal when triggered from the main Create sheet
   React.useEffect(() => {
     if (autoOpenCreate) {
-      setCreateModalVisible(true);
+      openCreateModal();
       if (onModalOpened) onModalOpened();
     }
   }, [autoOpenCreate]);
+
+  // --- Premium Modal Animation Helpers ---
+  const openCreateModal = () => {
+    setCreateModalVisible(true);
+    backdropOpacity.value = withTiming(1, { duration: 300 });
+    slideAnim.value = withSpring(0, {
+      damping: 20,
+      stiffness: 90,
+      mass: 1,
+    });
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  };
+
+  const closeCreateModal = () => {
+    backdropOpacity.value = withTiming(0, { duration: 250 });
+    slideAnim.value = withSpring(SCREEN_HEIGHT, {
+      damping: 20,
+      stiffness: 90,
+    });
+    setTimeout(() => {
+      setCreateModalVisible(false);
+    }, 350);
+  };
+
+  // Input focus scale animation
+  const handleInputFocus = (field) => {
+    setFocusedField(field);
+    const scaleMap = { title: titleScale, subject: subjectScale, link: linkScale, about: aboutScale };
+    if (scaleMap[field]) {
+      scaleMap[field].value = withSpring(1.02, { damping: 15, stiffness: 150 });
+    }
+    Haptics.selectionAsync();
+  };
+
+  const handleInputBlur = (field) => {
+    setFocusedField(null);
+    const scaleMap = { title: titleScale, subject: subjectScale, link: linkScale, about: aboutScale };
+    if (scaleMap[field]) {
+      scaleMap[field].value = withSpring(1, { damping: 15, stiffness: 150 });
+    }
+  };
+
+  const titleInputStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: titleScale.value }],
+  }));
+  const subjectInputStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: subjectScale.value }],
+  }));
+  const linkInputStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: linkScale.value }],
+  }));
+  const aboutInputStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: aboutScale.value }],
+  }));
+
+  const slideUpStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideAnim.value }],
+  }));
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
+
+  // --- End Animation Helpers ---
 
   const fetchSessions = async () => {
     try {
@@ -111,15 +198,11 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
       return;
     }
 
-    // Validate Date is in future (startTime)
-    // Allow a 15-minute buffer for "just starting" sessions created while running late or taking time to fill form
-    // Allow creating sessions that have already started, as long as they haven't ended yet
     if (formData.endTime < new Date()) {
       Alert.alert("Error", "Cannot create a session that has already ended!");
       return;
     }
 
-    // Validate End Time > Start Time
     if (formData.endTime <= formData.startTime) {
       Alert.alert("Error", "End time must be after start time");
       return;
@@ -151,15 +234,14 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
-      
+
       const newSessionWithUser = {
         ...response.data,
         organizer: response.data.organizer || user,
       };
       setSessions((prev) => Array.isArray(prev) ? [newSessionWithUser, ...prev] : [newSessionWithUser]);
 
-      setCreateModalVisible(false);
-      // Reset form
+      closeCreateModal();
       const now = new Date();
       setFormData({
         title: "",
@@ -170,7 +252,8 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
         about: "",
         meetingLink: "",
       });
-      fetchSessions(); // Refresh list
+      fetchSessions();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Success", "Session created successfully!");
     } catch (error) {
       console.error("Error creating session:", error);
@@ -254,7 +337,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
             start = new Date(session.startTime);
             end = new Date(session.endTime);
           } else if (session.dateTime) {
-            // Fallback for old sessions
             start = new Date(session.dateTime);
             end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
           } else {
@@ -295,13 +377,8 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
     );
   };
 
-  // Filter Logic
-  // My Sessions: session.organizer === currentUserId
   const mySessions = Array.isArray(sessions) ? sessions.filter((s) => s && isOrganizer(s)) : [];
 
-  // Upcoming Sessions:
-  // 1. Organizer is NOT currentUserId
-  // 2. Session has not ended yet (endTime > now)
   const upcomingSessions = Array.isArray(sessions) ? sessions.filter((s) => {
     if (!s || isOrganizer(s)) return false;
 
@@ -309,15 +386,13 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
     if (s.endTime) {
       sessionEnd = new Date(s.endTime);
     } else if (s.dateTime) {
-      // Fallback
       const start = new Date(s.dateTime);
       sessionEnd = new Date(start.getTime() + 2 * 60 * 60 * 1000);
     } else {
-      sessionEnd = new Date(s.date); // rough fallback
+      sessionEnd = new Date(s.date);
     }
 
     if (!isNaN(sessionEnd.getTime())) {
-      // "Expired: Automatically move sessions out of 'Upcoming' once the endTime has passed."
       return sessionEnd > currentTime;
     }
     return true;
@@ -327,7 +402,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   const onDateChange = (event, selectedDate) => {
     if (Platform.OS === "android") setShowDatePicker(false);
     if (selectedDate) {
-      // Update all dates to this new day, keeping their time
       const updateDatePart = (base, newDate) => {
         const d = new Date(base);
         d.setFullYear(
@@ -350,12 +424,9 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
   const onStartTimeChange = (event, selectedTime) => {
     if (Platform.OS === "android") setShowStartTimePicker(false);
     if (selectedTime) {
-      // Update time part of startTime
       const newStart = new Date(formData.startTime);
       newStart.setHours(selectedTime.getHours(), selectedTime.getMinutes());
 
-      // Auto-adjust end time if it becomes before start time?
-      // Better to just let user pick or auto-shift end time to start + 1hr
       let newEnd = new Date(formData.endTime);
       if (newEnd <= newStart) {
         newEnd = new Date(newStart.getTime() + 60 * 60 * 1000);
@@ -381,6 +452,9 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
       });
     }
   };
+
+  // Check if form is valid for post button state
+  const isFormValid = formData.title && formData.subject && formData.meetingLink;
 
   return (
     <View style={styles.container}>
@@ -410,84 +484,149 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
         )}
       </ScrollView>
 
-      {/* Create Session Modal */}
+      {/* ========== PREMIUM CREATE SESSION OVERLAY ========== */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={createModalVisible}
-        onRequestClose={() => setCreateModalVisible(false)}
+        onRequestClose={closeCreateModal}
+        statusBarTranslucent
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create Kuppi</Text>
+        {/* Glassmorphism Backdrop */}
+        <Animated.View style={[styles.premiumBackdrop, backdropStyle]}>
+          <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={closeCreateModal}
+          />
+        </Animated.View>
 
-            <ScrollView>
-              <Text style={styles.label}>Title</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., Study for MATH201 Quiz"
-                placeholderTextColor="#888"
-                value={formData.title}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, title: text })
-                }
-              />
+        {/* Slide-up Form Container */}
+        <Animated.View style={[styles.premiumOverlay, slideUpStyle]}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+            keyboardVerticalOffset={0}
+          >
+            {/* === Header Bar === */}
+            <View style={styles.premiumHeader}>
+              <TouchableOpacity onPress={closeCreateModal} style={styles.headerActionBtn}>
+                <Text style={styles.headerCancelText}>Cancel</Text>
+              </TouchableOpacity>
 
-              <Text style={styles.label}>Subject</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., MATH201"
-                placeholderTextColor="#888"
-                value={formData.subject}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, subject: text })
-                }
-              />
+              <Text style={styles.headerTitle}>New Kuppi Session</Text>
 
-              <View style={styles.row}>
-                <View style={{ flex: 1, marginRight: 10 }}>
-                  <Text style={styles.label}>Date</Text>
-                  <TouchableOpacity
-                    style={styles.dateTimeInput}
-                    onPress={() => setShowDatePicker(true)}
-                  >
-                    <Text style={styles.dateTimeText}>
-                      {formData.date.toLocaleDateString()}
-                    </Text>
-                  </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleCreateSession}
+                style={[
+                  styles.headerPostBtn,
+                  !isFormValid && styles.headerPostBtnDisabled,
+                ]}
+                disabled={!isFormValid}
+              >
+                <Text style={[
+                  styles.headerPostText,
+                  !isFormValid && styles.headerPostTextDisabled,
+                ]}>Create</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Subtle drag indicator */}
+            <View style={styles.dragIndicator} />
+
+            {/* === Form Body === */}
+            <ScrollView
+              style={styles.premiumFormScroll}
+              contentContainerStyle={styles.premiumFormContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Title */}
+              <Animated.View style={[styles.premiumInputRow, titleInputStyle]}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="text-outline" size={18} color={focusedField === 'title' ? COLORS.RED : '#bbb'} />
                 </View>
+                <View style={styles.inputFieldContainer}>
+                  <TextInput
+                    style={styles.premiumInput}
+                    placeholder="Session title"
+                    placeholderTextColor="#aaa"
+                    value={formData.title}
+                    onChangeText={(text) => setFormData({ ...formData, title: text })}
+                    onFocus={() => handleInputFocus('title')}
+                    onBlur={() => handleInputBlur('title')}
+                  />
+                </View>
+              </Animated.View>
+              <View style={styles.inputDivider} />
+
+              {/* Subject */}
+              <Animated.View style={[styles.premiumInputRow, subjectInputStyle]}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="book-outline" size={18} color={focusedField === 'subject' ? COLORS.RED : '#bbb'} />
+                </View>
+                <View style={styles.inputFieldContainer}>
+                  <TextInput
+                    style={styles.premiumInput}
+                    placeholder="Subject (e.g., MATH201)"
+                    placeholderTextColor="#aaa"
+                    value={formData.subject}
+                    onChangeText={(text) => setFormData({ ...formData, subject: text })}
+                    onFocus={() => handleInputFocus('subject')}
+                    onBlur={() => handleInputBlur('subject')}
+                  />
+                </View>
+              </Animated.View>
+              <View style={styles.inputDivider} />
+
+              {/* Date & Time Row */}
+              <View style={styles.dateTimeSection}>
+                <TouchableOpacity
+                  style={styles.premiumDateTimeBtn}
+                  onPress={() => {
+                    setShowDatePicker(true);
+                    Haptics.selectionAsync();
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="calendar-outline" size={18} color={COLORS.RED} />
+                  <Text style={styles.premiumDateTimeText}>
+                    {formData.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.premiumDateTimeBtn}
+                  onPress={() => {
+                    setShowStartTimePicker(true);
+                    Haptics.selectionAsync();
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="time-outline" size={18} color={COLORS.RED} />
+                  <Text style={styles.premiumDateTimeText}>
+                    {formData.startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={styles.dateTimeSeparator}>→</Text>
+
+                <TouchableOpacity
+                  style={styles.premiumDateTimeBtn}
+                  onPress={() => {
+                    setShowEndTimePicker(true);
+                    Haptics.selectionAsync();
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="time-outline" size={18} color={COLORS.RED} />
+                  <Text style={styles.premiumDateTimeText}>
+                    {formData.endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </Text>
+                </TouchableOpacity>
               </View>
-
-              <View style={styles.row}>
-                <View style={styles.halfInput}>
-                  <Text style={styles.label}>Start Time</Text>
-                  <TouchableOpacity
-                    style={styles.dateTimeInput}
-                    onPress={() => setShowStartTimePicker(true)}
-                  >
-                    <Text style={styles.dateTimeText}>
-                      {formData.startTime.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.halfInput}>
-                  <Text style={styles.label}>End Time</Text>
-                  <TouchableOpacity
-                    style={styles.dateTimeInput}
-                    onPress={() => setShowEndTimePicker(true)}
-                  >
-                    <Text style={styles.dateTimeText}>
-                      {formData.endTime.toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+              <View style={styles.inputDivider} />
 
               {/* Android Pickers */}
               {Platform.OS === "android" && showDatePicker && (
@@ -498,7 +637,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   display="calendar"
                   onChange={onDateChange}
                   minimumDate={new Date()}
-                  // @ts-ignore
                   accentColor={COLORS.RED}
                 />
               )}
@@ -509,7 +647,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   mode="time"
                   display="clock"
                   onChange={onStartTimeChange}
-                  // @ts-ignore
                   accentColor={COLORS.RED}
                 />
               )}
@@ -520,7 +657,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   mode="time"
                   display="clock"
                   onChange={onEndTimeChange}
-                  // @ts-ignore
                   accentColor={COLORS.RED}
                 />
               )}
@@ -533,41 +669,14 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   visible={showDatePicker}
                   onRequestClose={() => setShowDatePicker(false)}
                 >
-                  <View style={styles.modalOverlay}>
-                    <View
-                      style={{
-                        backgroundColor: "white",
-                        padding: 20,
-                        borderTopLeftRadius: 20,
-                        borderTopRightRadius: 20,
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          marginBottom: 10,
-                        }}
-                      >
-                        <TouchableOpacity
-                          onPress={() => setShowDatePicker(false)}
-                        >
-                          <Text style={{ color: COLORS.RED, fontSize: 16 }}>
-                            Cancel
-                          </Text>
+                  <View style={styles.iosPickerBackdrop}>
+                    <View style={styles.iosPickerContainer}>
+                      <View style={styles.iosPickerHeader}>
+                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                          <Text style={styles.iosPickerCancel}>Cancel</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => setShowDatePicker(false)}
-                        >
-                          <Text
-                            style={{
-                              color: COLORS.RED,
-                              fontWeight: "bold",
-                              fontSize: 16,
-                            }}
-                          >
-                            Done
-                          </Text>
+                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                          <Text style={styles.iosPickerDone}>Done</Text>
                         </TouchableOpacity>
                       </View>
                       <DateTimePicker
@@ -579,7 +688,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                         style={{ height: 320 }}
                         themeVariant="light"
                         textColor="black"
-                        // @ts-ignore
                         accentColor={COLORS.RED}
                       />
                     </View>
@@ -595,41 +703,14 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   visible={showStartTimePicker}
                   onRequestClose={() => setShowStartTimePicker(false)}
                 >
-                  <View style={styles.modalOverlay}>
-                    <View
-                      style={{
-                        backgroundColor: "white",
-                        padding: 20,
-                        borderTopLeftRadius: 20,
-                        borderTopRightRadius: 20,
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          marginBottom: 10,
-                        }}
-                      >
-                        <TouchableOpacity
-                          onPress={() => setShowStartTimePicker(false)}
-                        >
-                          <Text style={{ color: COLORS.RED, fontSize: 16 }}>
-                            Cancel
-                          </Text>
+                  <View style={styles.iosPickerBackdrop}>
+                    <View style={styles.iosPickerContainer}>
+                      <View style={styles.iosPickerHeader}>
+                        <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
+                          <Text style={styles.iosPickerCancel}>Cancel</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => setShowStartTimePicker(false)}
-                        >
-                          <Text
-                            style={{
-                              color: COLORS.RED,
-                              fontWeight: "bold",
-                              fontSize: 16,
-                            }}
-                          >
-                            Done
-                          </Text>
+                        <TouchableOpacity onPress={() => setShowStartTimePicker(false)}>
+                          <Text style={styles.iosPickerDone}>Done</Text>
                         </TouchableOpacity>
                       </View>
                       <DateTimePicker
@@ -640,7 +721,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                         style={{ height: 200 }}
                         themeVariant="light"
                         textColor="black"
-                        // @ts-ignore
                         accentColor={COLORS.RED}
                       />
                     </View>
@@ -656,41 +736,14 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                   visible={showEndTimePicker}
                   onRequestClose={() => setShowEndTimePicker(false)}
                 >
-                  <View style={styles.modalOverlay}>
-                    <View
-                      style={{
-                        backgroundColor: "white",
-                        padding: 20,
-                        borderTopLeftRadius: 20,
-                        borderTopRightRadius: 20,
-                      }}
-                    >
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "space-between",
-                          marginBottom: 10,
-                        }}
-                      >
-                        <TouchableOpacity
-                          onPress={() => setShowEndTimePicker(false)}
-                        >
-                          <Text style={{ color: COLORS.RED, fontSize: 16 }}>
-                            Cancel
-                          </Text>
+                  <View style={styles.iosPickerBackdrop}>
+                    <View style={styles.iosPickerContainer}>
+                      <View style={styles.iosPickerHeader}>
+                        <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
+                          <Text style={styles.iosPickerCancel}>Cancel</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => setShowEndTimePicker(false)}
-                        >
-                          <Text
-                            style={{
-                              color: COLORS.RED,
-                              fontWeight: "bold",
-                              fontSize: 16,
-                            }}
-                          >
-                            Done
-                          </Text>
+                        <TouchableOpacity onPress={() => setShowEndTimePicker(false)}>
+                          <Text style={styles.iosPickerDone}>Done</Text>
                         </TouchableOpacity>
                       </View>
                       <DateTimePicker
@@ -701,7 +754,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                         style={{ height: 200 }}
                         themeVariant="light"
                         textColor="black"
-                        // @ts-ignore
                         accentColor={COLORS.RED}
                       />
                     </View>
@@ -709,51 +761,55 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                 </Modal>
               )}
 
-              <Text style={styles.label}>Meeting Link</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g., https://zoom.us/j/..."
-                placeholderTextColor="#888"
-                value={formData.meetingLink}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, meetingLink: text })
-                }
-                autoCapitalize="none"
-              />
+              {/* Meeting Link */}
+              <Animated.View style={[styles.premiumInputRow, linkInputStyle]}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="link-outline" size={18} color={focusedField === 'link' ? COLORS.RED : '#bbb'} />
+                </View>
+                <View style={styles.inputFieldContainer}>
+                  <TextInput
+                    style={styles.premiumInput}
+                    placeholder="Meeting link (Zoom, Google Meet...)"
+                    placeholderTextColor="#aaa"
+                    value={formData.meetingLink}
+                    onChangeText={(text) => setFormData({ ...formData, meetingLink: text })}
+                    onFocus={() => handleInputFocus('link')}
+                    onBlur={() => handleInputBlur('link')}
+                    autoCapitalize="none"
+                    keyboardType="url"
+                  />
+                </View>
+              </Animated.View>
+              <View style={styles.inputDivider} />
 
-              <Text style={styles.label}>About this session (Optional)</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Description..."
-                placeholderTextColor="#888"
-                multiline
-                numberOfLines={4}
-                value={formData.about}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, about: text })
-                }
-              />
+              {/* About (Optional) */}
+              <Animated.View style={[styles.premiumInputRow, { alignItems: 'flex-start', paddingTop: 14 }, aboutInputStyle]}>
+                <View style={[styles.inputIconContainer, { marginTop: 2 }]}>
+                  <Ionicons name="chatbubble-ellipses-outline" size={18} color={focusedField === 'about' ? COLORS.RED : '#bbb'} />
+                </View>
+                <View style={styles.inputFieldContainer}>
+                  <TextInput
+                    style={[styles.premiumInput, styles.premiumTextArea]}
+                    placeholder="Tell people about this session (optional)"
+                    placeholderTextColor="#aaa"
+                    multiline
+                    numberOfLines={4}
+                    value={formData.about}
+                    onChangeText={(text) => setFormData({ ...formData, about: text })}
+                    onFocus={() => handleInputFocus('about')}
+                    onBlur={() => handleInputBlur('about')}
+                  />
+                </View>
+              </Animated.View>
+
+              {/* Bottom spacer for keyboard avoidance */}
+              <View style={{ height: 80 }} />
             </ScrollView>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setCreateModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.createSubmitButton}
-                onPress={handleCreateSession}
-              >
-                <Text style={styles.createSubmitButtonText}>Create</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+          </KeyboardAvoidingView>
+        </Animated.View>
       </Modal>
 
-      {/* Details Modal */}
+      {/* Details Modal (unchanged) */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -843,8 +899,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
                     </View>
                   </View>
 
-                  {/* Attendees Section Removed */}
-
                   <View style={styles.separator} />
 
                   <Text style={styles.detailSectionTitle}>
@@ -865,38 +919,11 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: "#fff", -- let parent handle bg
-  },
-  headerContainer: {
-    marginBottom: 10,
-  },
-  // headerTitle: { -- removed
-  //     fontSize: 24,
-  //     fontWeight: "bold",
-  //     marginBottom: 10,
-  //     color: COLORS.TEXT_DARK,
-  // },
-  createButton: {
-    backgroundColor: COLORS.RED,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginBottom: 20,
-    marginHorizontal: 20,
-  },
-
-  createButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
-    marginLeft: 5,
   },
   scrollContent: {
     paddingTop: 16,
     paddingBottom: 40,
-    paddingHorizontal: 20, // Align text and cards with page margins
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 18,
@@ -935,7 +962,7 @@ const styles = StyleSheet.create({
     color: COLORS.TEXT_DARK,
   },
   organizerBadge: {
-    backgroundColor: "#FFEBEB", // Light pink
+    backgroundColor: "#FFEBEB",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -962,23 +989,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-  joinedBadge: {
-    borderWidth: 1,
-    borderColor: COLORS.GREEN,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
-    marginLeft: 8,
-  },
-  joinedText: {
-    color: COLORS.GREEN,
-    fontSize: 12,
-    fontWeight: "600",
-  },
   timeText: {
     color: COLORS.GREY,
     fontSize: 14,
-    marginBottom: 8, // reduced margin to fit badge
+    marginBottom: 8,
   },
   liveBadge: {
     backgroundColor: "#FF0000",
@@ -993,34 +1007,216 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "bold",
   },
-
-  actionButton: {
-    backgroundColor: "#e0e0e0",
-    paddingHorizontal: 24,
+  buttonRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 10,
+  },
+  viewButton: {
+    backgroundColor: COLORS.LIGHT_GREY,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
+    flex: 1,
+    alignItems: "center",
   },
-  joinButtonSmall: {
+  viewButtonText: {
+    color: COLORS.TEXT_DARK,
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  joinMeetingButton: {
     backgroundColor: COLORS.RED,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
+    flex: 1,
+    alignItems: "center",
   },
-  joinButtonText: {
+  joinMeetingText: {
     color: "white",
     fontWeight: "bold",
     fontSize: 14,
   },
 
-  disabledButton: {
-    backgroundColor: COLORS.LIGHT_GREY,
+  // ==========================================
+  // PREMIUM CREATE OVERLAY STYLES
+  // ==========================================
+  premiumBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
-  actionButtonText: {
-    color: COLORS.TEXT_DARK,
-    fontWeight: "bold",
+  premiumOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: SCREEN_HEIGHT * 0.92,
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: "hidden",
+    // Shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 25,
+  },
+  premiumHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === "ios" ? 16 : 14,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(0,0,0,0.08)",
+  },
+  headerActionBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    minWidth: 60,
+  },
+  headerCancelText: {
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "500",
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#1a1a1a",
+    letterSpacing: -0.3,
+  },
+  headerPostBtn: {
+    backgroundColor: COLORS.RED,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    minWidth: 60,
+    alignItems: "center",
+  },
+  headerPostBtnDisabled: {
+    backgroundColor: "#ffb3b5",
+  },
+  headerPostText: {
+    color: "#fff",
+    fontWeight: "700",
     fontSize: 14,
   },
-  // Modal Styles
+  headerPostTextDisabled: {
+    color: "rgba(255,255,255,0.7)",
+  },
+  dragIndicator: {
+    alignSelf: "center",
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(0,0,0,0.1)",
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  premiumFormScroll: {
+    flex: 1,
+  },
+  premiumFormContent: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+
+  // Minimalist Input Row
+  premiumInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
+  inputIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#f5f5f5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 14,
+  },
+  inputFieldContainer: {
+    flex: 1,
+  },
+  premiumInput: {
+    fontSize: 16,
+    color: "#1a1a1a",
+    paddingVertical: 12,
+    fontWeight: "400",
+  },
+  premiumTextArea: {
+    height: 100,
+    textAlignVertical: "top",
+  },
+  inputDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(0,0,0,0.08)",
+    marginLeft: 50,
+    marginBottom: 4,
+  },
+
+  // Date/Time Section
+  dateTimeSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    gap: 8,
+  },
+  premiumDateTimeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fef2f2",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "rgba(249,37,43,0.12)",
+  },
+  premiumDateTimeText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#1a1a1a",
+  },
+  dateTimeSeparator: {
+    fontSize: 16,
+    color: "#ccc",
+    fontWeight: "300",
+  },
+
+  // iOS Picker Modals
+  iosPickerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  iosPickerContainer: {
+    backgroundColor: "white",
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  iosPickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  iosPickerCancel: {
+    color: COLORS.RED,
+    fontSize: 16,
+  },
+  iosPickerDone: {
+    color: COLORS.RED,
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+
+  // Details Modal (unchanged)
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -1041,69 +1237,6 @@ const styles = StyleSheet.create({
     textAlign: "left",
     color: COLORS.TEXT_DARK,
   },
-  label: {
-    fontWeight: "600",
-    marginBottom: 8,
-    fontSize: 15,
-    color: "#1a1a1a",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#E5E5E5", // Light grey border
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    backgroundColor: "#FFFFFF",
-    fontSize: 16,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  halfInput: {
-    flex: 1,
-  },
-  textArea: {
-    height: 120,
-    textAlignVertical: "top",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-    marginBottom: 30,
-    gap: 12, // Modern gap property for equal spacing
-  },
-  cancelButton: {
-    backgroundColor: "#F5F5F5",
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    // Removed margins, using gap
-  },
-  cancelButtonText: {
-    fontWeight: "bold",
-    color: "#666",
-    fontSize: 16,
-  },
-  createSubmitButton: {
-    backgroundColor: COLORS.RED,
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    // Removed margins, using gap
-  },
-  createSubmitButtonText: {
-    fontWeight: "bold",
-    color: "white",
-    fontSize: 16,
-  },
-  // Details specific
   detailsHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1148,92 +1281,5 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: "#555",
     marginBottom: 30,
-  },
-  confirmJoinButton: {
-    backgroundColor: COLORS.RED,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 30,
-  },
-  confirmJoinText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  modeButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.WHITE,
-  },
-  modeButtonActive: {
-    backgroundColor: COLORS.RED,
-    borderColor: COLORS.RED,
-  },
-  modeButtonText: {
-    color: COLORS.GREY,
-    fontWeight: "600",
-    fontSize: 15,
-  },
-  modeButtonTextActive: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  dateTimeInput: {
-    backgroundColor: "#2C2C2C", // Darker Gray
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#444",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dateTimeText: {
-    color: "#ffffff", // White for high contrast on dark box
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  dateTimePlaceholder: {
-    color: "#888", // Light enough to read
-    fontWeight: "normal",
-  },
-  joinMeetingButton: {
-    backgroundColor: COLORS.RED,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    flex: 1, // Equal width
-    alignItems: "center",
-  },
-  joinMeetingText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 14,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 10,
-  },
-  viewButton: {
-    backgroundColor: COLORS.LIGHT_GREY,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    flex: 1, // Equal width
-    alignItems: "center",
-  },
-  viewButtonText: {
-    color: COLORS.TEXT_DARK,
-    fontWeight: "bold",
-    fontSize: 14,
   },
 });
