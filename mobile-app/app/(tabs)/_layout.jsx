@@ -25,7 +25,6 @@ import {
   StyleSheet,
   Platform,
   Pressable,
-  PanResponder,
   Modal,
   Animated as RNAnimated,
   TouchableWithoutFeedback,
@@ -367,59 +366,6 @@ function CustomTabBar({ state, descriptors, navigation }) {
   const [sheetVisible, setSheetVisible] = useState(false);
 
   const bottomOffset = Math.max(insets.bottom, 12);
-  const swipeTabs = PILL_TABS.map((t) => t.name); // index | academic | more | profile
-  const currentRouteName = state.routes[state.index]?.name;
-  const isSwipableTab = swipeTabs.includes(currentRouteName);
-
-  const swipingRef = useRef(false);
-  const pendingTargetRef = useRef(null);
-
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (evt, gestureState) => {
-      if (!isSwipableTab || sheetVisible) return false;
-
-      const { dx, dy } = gestureState;
-      // Require a clear horizontal intent.
-      return Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3;
-    },
-    onPanResponderGrant: () => {
-      swipingRef.current = false;
-      pendingTargetRef.current = null;
-    },
-    onPanResponderMove: (evt, gestureState) => {
-      if (!isSwipableTab || sheetVisible) return;
-      if (swipingRef.current) return;
-
-      const { dx } = gestureState;
-      const currentIdx = swipeTabs.indexOf(currentRouteName);
-      if (currentIdx < 0) return;
-
-      const direction = dx < 0 ? 1 : -1; // swipe left => next, swipe right => previous
-      const targetIdx = currentIdx + direction;
-      const targetName = swipeTabs[targetIdx];
-      if (!targetName) return;
-
-      swipingRef.current = true;
-      pendingTargetRef.current = targetName;
-    },
-    onPanResponderRelease: () => {
-      if (!isSwipableTab || sheetVisible) return;
-      if (!swipingRef.current) return;
-
-      const targetName = pendingTargetRef.current;
-      if (!targetName) return;
-
-      handlePress(targetName, false);
-
-      swipingRef.current = false;
-      pendingTargetRef.current = null;
-    },
-    onPanResponderTerminate: () => {
-      swipingRef.current = false;
-      pendingTargetRef.current = null;
-    },
-    onShouldBlockNativeResponder: () => true,
-  });
 
   const handlePress = (routeName, isFocused) => {
     const route = state.routes.find((r) => r.name === routeName);
@@ -448,7 +394,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
         pointerEvents="box-none"
       >
         {/* ──────────────────── WHITE PILL ──────────────────── */}
-        <View style={styles.pill} {...panResponder.panHandlers}>
+        <View style={styles.pill}>
           {PILL_TABS.map((tab) => {
             const focused = isFocused(tab.name);
             return (
@@ -456,10 +402,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
                 key={tab.name}
                 tab={tab}
                 focused={focused}
-                onPress={() => {
-                  if (swipingRef.current) return; // let the swipe win
-                  handlePress(tab.name, focused);
-                }}
+                onPress={() => handlePress(tab.name, focused)}
               />
             );
           })}

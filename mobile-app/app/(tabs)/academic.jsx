@@ -28,10 +28,12 @@ import AcademicNavBar from "../../src/components/AcademicNavBar";
 import TimetableScreen from "../../src/screens/TimetableScreen";
 import KuppiScreen from "../../src/screens/KuppiScreen";
 import ResourcesScreen from "../../src/screens/ResourcesScreen";
+import useMainTabSwipe from "../../src/hooks/useMainTabSwipe";
 
 export default function AcademicScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { panHandlers } = useMainTabSwipe("academic");
   const { openModal } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState("Timetable");
   const [view, setView] = useState("weekly");
@@ -70,7 +72,7 @@ export default function AcademicScreen() {
   }, [openModal]);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} {...panHandlers}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       {/* Fixed Header Block */}

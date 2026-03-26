@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { Video, ResizeMode } from "expo-av";
 import { useRouter } from "expo-router";
+import useMainTabSwipe from "../../src/hooks/useMainTabSwipe";
 
 // ── Tile Data ──────────────────────────────────────
 const TILES = [
@@ -58,6 +59,7 @@ const TILES = [
 // ── Screen Component ───────────────────────────────
 export default function MoreScreen() {
   const router = useRouter();
+  const { panHandlers } = useMainTabSwipe("more");
 
   const handleTilePress = (tile) => {
     if (tile.route) {
@@ -68,7 +70,7 @@ export default function MoreScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} {...panHandlers}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       {/* Header */}
