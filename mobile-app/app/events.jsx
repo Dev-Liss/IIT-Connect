@@ -148,13 +148,7 @@ const AnnouncementCard = ({ announcement }) => {
                         <Text style={styles.announcementTitle} numberOfLines={1}>{announcement.title}</Text>
                     </View>
 
-                    {/* Source badge */}
-                    {announcement.source && (
-                        <View style={styles.sourceBadge}>
-                            <Ionicons name="business-outline" size={10} color="#999" />
-                            <Text style={styles.sourceText}>{announcement.source}</Text>
-                        </View>
-                    )}
+
 
                     {/* Content */}
                     <Text style={styles.announcementContent} numberOfLines={3}>{announcement.content}</Text>
