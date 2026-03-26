@@ -4,10 +4,10 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from '../src/context/AuthContext';
 
-// Import the specific edit screens
-import EditStudentProfile from '../src/screens/profiles/EditStudentProfile';
-import EditLecturerProfile from '../src/screens/profiles/EditLecturerProfile';
-import EditAlumniProfile from '../src/screens/profiles/EditAlumniProfile';
+// Import the specific edit screens (now in app/profiles/)
+import EditStudentProfile from './profiles/edit-student';
+import EditLecturerProfile from './profiles/edit-lecturer';
+import EditAlumniProfile from './profiles/edit-alumni';
 
 export default function EditProfileSwitcher() {
     const { user } = useAuth();

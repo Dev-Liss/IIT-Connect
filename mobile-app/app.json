@@ -2,11 +2,12 @@
   "expo": {
     "name": "IIT Connect",
     "slug": "iit-connect",
-    "version": "1.0.0",
+    "version": "1.0.0-beta.2",
     "orientation": "portrait",
     "scheme": "iitconnect",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "platforms": ["ios", "android"],
     "icon": "./assets/images/app-icon.png",
     "ios": {
       "supportsTablet": true
@@ -28,9 +29,6 @@
         "android.permission.READ_MEDIA_VIDEO"
       ],
       "package": "com.iit.connect.app.v1"
-    },
-    "web": {
-      "output": "static"
     },
     "plugins": [
       "expo-router",

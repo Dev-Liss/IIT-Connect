@@ -30,6 +30,8 @@ import {
   TouchableWithoutFeedback,
   DeviceEventEmitter,
 } from "react-native";
+import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
+import { useAuth } from "../../src/context/AuthContext";
 import Animated, {
   useSharedValue,
   withTiming,
@@ -594,6 +596,21 @@ const styles = StyleSheet.create({
 
 // ─── Tab Layout ───────────────────────────────────────────────────────────────
 export default function TabLayout() {
+  const router = useRouter();
+  const { isSignedIn, isLoaded } = useClerkAuth();
+  const { user, isLoading: profileLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoaded || profileLoading) return;
+
+    if (!isSignedIn || !user) {
+      // #region agent log
+      fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H1',location:'app/(tabs)/_layout.jsx:authGuard',message:'Tabs layout auth-guard redirect (signed out or missing user)',data:{isLoaded,isSignedIn,profileLoading,hasUser:!!user,target:'/(auth)/login'},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      router.replace("/(auth)/login");
+    }
+  }, [isLoaded, isSignedIn, profileLoading, user, router]);
+
   return (
     <Tabs
       screenOptions={{ headerShown: false }}

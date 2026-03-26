@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,117 +9,67 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  Dimensions,
-  ActivityIndicator,
   Alert,
   Modal,
   TextInput,
   KeyboardAvoidingView,
   Platform,
   Share,
+  Dimensions,
+  ActivityIndicator,
 } from "react-native";
-
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
-import { useVideoPlayer, VideoView } from "expo-video";
 
-// Import Auth and API context
-import { useAuth } from "../../context/AuthContext";
-import { API_BASE_URL } from "../../config/api";
+import { useAuth } from "../../src/context/AuthContext";
+import { API_BASE_URL as API_URL } from "../../src/config/api";
 
-const { width, height } = Dimensions.get("window");
-
-// ==========================================
-// HELPER: Derive a thumbnail URL from a Cloudinary video URL.
-// Replaces the extension with .jpg and injects `so_0` (grab frame at 0s).
-// Falls back to the original URL if it doesn't look like a Cloudinary video.
-// ==========================================
-const getVideoThumbnailUrl = (videoUrl) => {
-  if (!videoUrl) return null;
-  try {
-    // Cloudinary video URLs contain "/video/upload/"
-    if (videoUrl.includes("/video/upload/")) {
-      return videoUrl
-        .replace("/video/upload/", "/video/upload/so_0/")
-        .replace(/\.(mp4|mov|avi|webm|mkv)(\?.*)?$/i, ".jpg");
-    }
-  } catch (_) {}
-  return videoUrl;
-};
-
-// Default Images if the user hasn't uploaded any
 const DEFAULT_AVATAR =
   "https://avataaars.io/?avatarStyle=Circle&topType=ShortHairShortFlat&accessoriesType=Prescription02&hairColor=Black&facialHairType=BeardLight&clotheType=BlazerShirt&eyeType=Happy&eyebrowType=Default&mouthType=Default&skinColor=Light";
-const DEFAULT_COVER =
-  "https://placehold.co/800x300/e0e0e0/e0e0e0.png";
+const DEFAULT_COVER = "https://placehold.co/800x300/e0e0e0/e0e0e0.png";
 
-export default function StudentProfile({ user }) {
+const { height } = Dimensions.get("window");
+
+export default function LecturerProfile({ user }) {
   const router = useRouter();
-  const { logout, updateUser } = useAuth();
+  const { logout } = useAuth();
 
-  const [activeTab, setActiveTab] = useState("Posts");
+  const [activeTab, setActiveTab] = useState("About");
   const [profileData, setProfileData] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // --- Comments state ---
+  // Comments state
   const [commentModalPost, setCommentModalPost] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
 
-  // --- Reel / Image viewer state ---
-  const [mediaModalPost, setMediaModalPost] = useState(null);
-
-  // expo-video player (only used when mediaModalPost has a video)
-  const videoPlayer = useVideoPlayer(
-    mediaModalPost?.media?.type === "video" ? mediaModalPost.media.url : null,
-    (player) => {
-      player.loop = true;
-      player.play();
-    }
-  );
-
-  // ==========================================
-  // FETCH REAL DATA (Profile + Posts)
-  // ==========================================
   useFocusEffect(
     useCallback(() => {
-      const fetchAllData = async () => {
+      const fetchAllData = async (silent = false) => {
         if (!user || (!user._id && !user.id)) return;
         const userId = user._id || user.id;
 
-        setLoading(true);
+        if (!silent) setLoading(true);
+
         try {
-          const profileResponse = await fetch(
-            `${API_BASE_URL}/users/profile/${userId}`
-          );
+          const [profileResponse, postsResponse] = await Promise.all([
+            fetch(`${API_URL}/users/profile/${userId}`),
+            fetch(`${API_URL}/posts?userId=${userId}`),
+          ]);
+
           if (profileResponse.ok) {
             const profileJson = await profileResponse.json();
             setProfileData(profileJson);
-            updateUser({ profilePicture: profileJson.profilePicture });
           }
 
-          const postsResponse = await fetch(
-            `${API_BASE_URL}/posts?userId=${userId}`
-          );
           if (postsResponse.ok) {
             const postsJson = await postsResponse.json();
-            const allPosts = postsJson.data || [];
-            const filteredPosts = allPosts.filter((post) => {
-              if (!post.user) return false;
-              const postUserId =
-                typeof post.user === "object"
-                  ? post.user._id?.toString()
-                  : post.user.toString();
-              return postUserId === userId;
-            });
-
-            filteredPosts.sort(
-              (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-            );
-            setUserPosts(filteredPosts);
+            const posts = postsJson.data || [];
+            posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setUserPosts(posts);
           }
         } catch (error) {
           if (error.message && error.message.includes("_id")) {
@@ -132,18 +82,12 @@ export default function StudentProfile({ user }) {
         }
       };
 
-      fetchAllData();
-    }, [user?._id, user?.id])
+      fetchAllData(profileData !== null);
+    }, [user?._id, user?.id]),
   );
 
-  // ==========================================
-  // HANDLERS
-  // ==========================================
-  const handleLogout = () => {
-    router.replace("/");
-    setTimeout(async () => {
-      await logout();
-    }, 100);
+  const handleLogout = async () => {
+    await logout();
   };
 
   const formatDate = (dateString) => {
@@ -163,7 +107,7 @@ export default function StudentProfile({ user }) {
           style: "destructive",
           onPress: async () => {
             try {
-              const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+              const response = await fetch(`${API_URL}/posts/${postId}`, {
                 method: "DELETE",
               });
               const result = await response.json();
@@ -173,22 +117,20 @@ export default function StudentProfile({ user }) {
                 Alert.alert("Error", result.message || "Failed to delete post");
               }
             } catch (error) {
-              console.error("Delete Post Error:", error);
               Alert.alert("Error", "Network error. Could not delete post.");
             }
           },
         },
-      ]
+      ],
     );
   };
 
-  // --- Comments ---
   const openComments = async (post) => {
     setCommentModalPost(post);
     setComments([]);
     setCommentsLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/posts/${post._id}/comments`);
+      const res = await fetch(`${API_URL}/posts/${post._id}/comments`);
       const json = await res.json();
       if (json.success) setComments(json.comments || []);
     } catch (e) {
@@ -204,12 +146,12 @@ export default function StudentProfile({ user }) {
     setSubmittingComment(true);
     try {
       const res = await fetch(
-        `${API_BASE_URL}/posts/${commentModalPost._id}/comment`,
+        `${API_URL}/posts/${commentModalPost._id}/comment`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, text: commentText.trim() }),
-        }
+        },
       );
       const json = await res.json();
       if (json.success && json.comment) {
@@ -232,7 +174,6 @@ export default function StudentProfile({ user }) {
     }
   };
 
-  // --- Share ---
   const handleShare = async (post) => {
     try {
       const message = [post.caption, post.media?.url]
@@ -244,36 +185,67 @@ export default function StudentProfile({ user }) {
     }
   };
 
-  // --- Reel / Image viewer ---
-  const openMediaModal = (post) => {
-    setMediaModalPost(post);
-  };
+  const SkeletonBox = ({ style }) => (
+    <View style={[{ backgroundColor: "#e4e4e4", borderRadius: 6 }, style]} />
+  );
 
-  const closeMediaModal = () => {
-    if (videoPlayer) {
-      try { videoPlayer.pause(); } catch (_) { }
-    }
-    setMediaModalPost(null);
-  };
-
-  // ==========================================
-  // LOADING SCREEN
-  // ==========================================
   if (loading) {
     return (
-      <View
-        style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" }}
-      >
-        <ActivityIndicator size="large" color="#D32F2F" />
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#f9f9f9" />
+        <ScrollView
+          scrollEnabled={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <View
+            style={[styles.coverContainer, { backgroundColor: "#e4e4e4" }]}
+          />
+          <View style={styles.profileHeader}>
+            <View style={styles.avatarContainer}>
+              <SkeletonBox style={styles.avatar} />
+            </View>
+            <View style={styles.actionRow}>
+              <SkeletonBox
+                style={{ width: 38, height: 38, borderRadius: 19 }}
+              />
+              <SkeletonBox
+                style={{ width: 95, height: 36, borderRadius: 20 }}
+              />
+            </View>
+          </View>
+          <View style={[styles.infoContainer, { gap: 8 }]}>
+            <SkeletonBox style={{ width: "55%", height: 26 }} />
+            <SkeletonBox style={{ width: "38%", height: 16 }} />
+            <SkeletonBox style={{ width: "68%", height: 16, marginTop: 4 }} />
+          </View>
+          <View
+            style={[styles.tabContainer, { justifyContent: "space-around" }]}
+          >
+            <SkeletonBox
+              style={{ width: "35%", height: 14, marginVertical: 14 }}
+            />
+            <SkeletonBox
+              style={{ width: "35%", height: 14, marginVertical: 14 }}
+            />
+          </View>
+          <View style={styles.aboutContainer}>
+            <View style={styles.card}>
+              <SkeletonBox
+                style={{ width: "28%", height: 13, marginBottom: 16 }}
+              />
+              <SkeletonBox
+                style={{ width: "100%", height: 14, marginBottom: 8 }}
+              />
+              <SkeletonBox
+                style={{ width: "92%", height: 14, marginBottom: 8 }}
+              />
+              <SkeletonBox style={{ width: "76%", height: 14 }} />
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
-
-  // ==========================================
-  // MAIN RENDER
-  // ==========================================
-  const imagePosts = userPosts.filter(post => !post.media || post.media.type !== "video");
-  const reelPosts = userPosts.filter(post => post.media && post.media.type === "video");
 
   return (
     <SafeAreaView style={styles.container}>
@@ -283,7 +255,6 @@ export default function StudentProfile({ user }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Cover Image */}
         <View style={styles.coverContainer}>
           <Image
             source={{ uri: profileData?.coverPicture || DEFAULT_COVER }}
@@ -291,7 +262,6 @@ export default function StudentProfile({ user }) {
           />
         </View>
 
-        {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.avatarContainer}>
             <Image
@@ -312,71 +282,101 @@ export default function StudentProfile({ user }) {
           </View>
         </View>
 
-        {/* User Details */}
         <View style={styles.infoContainer}>
           <Text style={styles.name}>
-            {profileData?.username || user?.username || "Unknown User"}
+            {profileData?.username || user?.username || "Lecturer Name"}
           </Text>
-          <Text style={styles.studentId}>
-            Student{" "}
-            <Text style={styles.idNumber}>
-              {profileData?.studentId || user?.studentId}
-            </Text>
-          </Text>
-
+          <Text style={styles.roleText}>Senior Lecturer</Text>
           <View style={styles.detailRow}>
             <Feather name="mail" size={16} color="#333" style={styles.icon} />
             <Text style={styles.detailText}>
               {profileData?.email || user?.email}
             </Text>
           </View>
-
-          {profileData?.batch && (
-            <View style={styles.detailRow}>
-              <Feather name="book" size={16} color="#333" style={styles.icon} />
-              <Text style={styles.detailText}>{profileData.batch}</Text>
-            </View>
-          )}
-
-          <View style={styles.detailRow}>
-            <Feather name="briefcase" size={16} color="#333" style={styles.icon} />
-            <Text style={styles.detailText}>
-              {profileData?.bio || "Student"}
-            </Text>
-          </View>
         </View>
 
-        {/* Tabs */}
         <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === "About" && styles.activeTab]}
+            onPress={() => setActiveTab("About")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "About" && styles.activeTabText,
+              ]}
+            >
+              About
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === "Posts" && styles.activeTab]}
             onPress={() => setActiveTab("Posts")}
           >
-            <Text style={[styles.tabText, activeTab === "Posts" && styles.activeTabText]}>
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "Posts" && styles.activeTabText,
+              ]}
+            >
               Posts
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "Reels" && styles.activeTab]}
-            onPress={() => setActiveTab("Reels")}
-          >
-            <Text style={[styles.tabText, activeTab === "Reels" && styles.activeTabText]}>
-              Reels
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Tab Content */}
-        {activeTab === "Posts" ? (
+        {activeTab === "About" ? (
+          <View style={styles.aboutContainer}>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>BIO</Text>
+              <Text style={styles.bioText}>
+                {profileData?.bio ||
+                  "No bio provided. Edit your profile to add a brief description of your background and research interests."}
+              </Text>
+            </View>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Teaching Modules</Text>
+              <View style={styles.moduleRow}>
+                <Feather
+                  name="book-open"
+                  size={18}
+                  color="#555"
+                  style={styles.moduleIcon}
+                />
+                <Text style={styles.moduleText}>
+                  Object Oriented Programming
+                </Text>
+              </View>
+              <View style={styles.moduleRow}>
+                <Feather
+                  name="book-open"
+                  size={18}
+                  color="#555"
+                  style={styles.moduleIcon}
+                />
+                <Text style={styles.moduleText}>Software Development I</Text>
+              </View>
+              <View style={styles.moduleRow}>
+                <Feather
+                  name="book-open"
+                  size={18}
+                  color="#555"
+                  style={styles.moduleIcon}
+                />
+                <Text style={styles.moduleText}>Database Systems</Text>
+              </View>
+            </View>
+          </View>
+        ) : (
           <View style={styles.feedContainer}>
-            {imagePosts.length > 0 ? (
-              imagePosts.map((post) => (
+            {userPosts.length > 0 ? (
+              userPosts.map((post) => (
                 <View key={post._id} style={styles.postCard}>
-                  {/* Post Header */}
                   <View style={styles.postHeader}>
                     <View style={styles.postUserRow}>
                       <Image
-                        source={{ uri: profileData?.profilePicture || DEFAULT_AVATAR }}
+                        source={{
+                          uri: profileData?.profilePicture || DEFAULT_AVATAR,
+                        }}
                         style={styles.smallAvatar}
                       />
                       <View>
@@ -388,37 +388,31 @@ export default function StudentProfile({ user }) {
                         </Text>
                       </View>
                     </View>
-                    <TouchableOpacity onPress={() => handleDeletePost(post._id)}>
+                    <TouchableOpacity
+                      onPress={() => handleDeletePost(post._id)}
+                    >
                       <Feather name="trash-2" size={20} color="#aa1111ff" />
                     </TouchableOpacity>
                   </View>
 
-                  {/* Caption */}
                   {post.caption ? (
                     <Text style={styles.postBodyText}>{post.caption}</Text>
                   ) : null}
 
-                  {/* Media */}
                   {post.media?.url ? (
-                    <TouchableOpacity onPress={() => openMediaModal(post)} activeOpacity={0.9}>
-                      <Image
-                        source={{ uri: post.media.url }}
-                        style={styles.postImage}
-                        resizeMode="cover"
-                      />
-                      {post.media.type === "video" && (
-                        <View style={styles.videoOverlayBadge}>
-                          <Feather name="play-circle" size={36} color="rgba(255,255,255,0.9)" />
-                        </View>
-                      )}
-                    </TouchableOpacity>
+                    <Image
+                      source={{ uri: post.media.url }}
+                      style={styles.postImage}
+                      resizeMode="cover"
+                    />
                   ) : null}
 
-                  {/* Stats Row */}
                   <View style={styles.statsRow}>
                     <View style={styles.statItem}>
                       <Feather name="heart" size={18} color="#D32F2F" />
-                      <Text style={styles.statText}>{post.likes?.length || 0}</Text>
+                      <Text style={styles.statText}>
+                        {post.likes?.length || 0}
+                      </Text>
                     </View>
                     <TouchableOpacity
                       style={styles.statItem}
@@ -426,7 +420,8 @@ export default function StudentProfile({ user }) {
                     >
                       <Feather name="message-circle" size={18} color="#333" />
                       <Text style={styles.statText}>
-                        {post.comments?.length || 0} Comment{post.comments?.length !== 1 ? "s" : ""}
+                        {post.comments?.length || 0} Comment
+                        {post.comments?.length !== 1 ? "s" : ""}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -441,60 +436,22 @@ export default function StudentProfile({ user }) {
               ))
             ) : (
               <View style={styles.emptyState}>
-                <Feather name="file-text" size={40} color="#ccc" style={{ marginBottom: 10 }} />
-                <Text style={{ color: "#999", fontSize: 16 }}>No posts yet.</Text>
-              </View>
-            )}
-          </View>
-        ) : (
-          // Reels Tab — 3-column grid
-          <View style={styles.reelsGrid}>
-            {reelPosts.length > 0 ? (
-              reelPosts.map((post) => (
-                <TouchableOpacity
-                  key={post._id}
-                  style={styles.reelTile}
-                  onPress={() => openMediaModal(post)}
-                  activeOpacity={0.85}
-                >
-                  {post.media?.url ? (
-                    <>
-                      <Image
-                        source={{ uri: getVideoThumbnailUrl(post.media.url) }}
-                        style={styles.reelImage}
-                        resizeMode="cover"
-                      />
-                      <View style={styles.reelOverlay}>
-                        <Feather
-                          name={post.media.type === "video" ? "play" : "maximize"}
-                          size={16}
-                          color="rgba(255,255,255,0.9)"
-                        />
-                      </View>
-                    </>
-                  ) : (
-                    <View style={styles.reelTextTile}>
-                      <Feather name="file-text" size={18} color="#D32F2F" style={{ marginBottom: 4 }} />
-                      <Text style={styles.reelTextSnippet} numberOfLines={3}>
-                        {post.caption || ""}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))
-            ) : (
-              <View style={styles.emptyState}>
-                <Feather name="film" size={40} color="#ccc" style={{ marginBottom: 10 }} />
-                <Text style={{ color: "#999", fontSize: 16 }}>No reels yet.</Text>
+                <Feather
+                  name="file-text"
+                  size={40}
+                  color="#ccc"
+                  style={{ marginBottom: 10 }}
+                />
+                <Text style={{ color: "#999", fontSize: 16 }}>
+                  No posts yet.
+                </Text>
               </View>
             )}
           </View>
         )}
       </ScrollView>
 
-      {/* ====================== */}
-      {/* COMMENTS MODAL         */}
-      {/* ====================== */}
+      {/* Comments Modal */}
       <Modal
         visible={!!commentModalPost}
         animationType="slide"
@@ -506,32 +463,37 @@ export default function StudentProfile({ user }) {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <View style={styles.commentsSheet}>
-            {/* Header */}
             <View style={styles.commentsHeader}>
               <Text style={styles.commentsTitle}>Comments</Text>
               <TouchableOpacity onPress={() => setCommentModalPost(null)}>
                 <Ionicons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-
-            {/* Comment List */}
             {commentsLoading ? (
-              <ActivityIndicator size="small" color="#D32F2F" style={{ marginTop: 30 }} />
+              <ActivityIndicator
+                size="small"
+                color="#D32F2F"
+                style={{ marginTop: 30 }}
+              />
             ) : (
               <FlatList
                 data={comments}
                 keyExtractor={(item, i) => item._id || String(i)}
-                contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 }}
+                contentContainerStyle={{
+                  paddingHorizontal: 16,
+                  paddingTop: 8,
+                  paddingBottom: 16,
+                }}
                 ListEmptyComponent={
-                  <Text style={styles.noCommentsText}>No comments yet. Be the first!</Text>
+                  <Text style={styles.noCommentsText}>
+                    No comments yet. Be the first!
+                  </Text>
                 }
                 renderItem={({ item }) => (
                   <View style={styles.commentRow}>
                     <Image
                       source={{
-                        uri:
-                          item.user?.profilePicture ||
-                          DEFAULT_AVATAR,
+                        uri: item.user?.profilePicture || DEFAULT_AVATAR,
                       }}
                       style={styles.commentAvatar}
                     />
@@ -545,8 +507,6 @@ export default function StudentProfile({ user }) {
                 )}
               />
             )}
-
-            {/* Input */}
             <View style={styles.commentInputRow}>
               <TextInput
                 style={styles.commentInput}
@@ -559,7 +519,9 @@ export default function StudentProfile({ user }) {
               <TouchableOpacity
                 style={[
                   styles.sendButton,
-                  (!commentText.trim() || submittingComment) && { opacity: 0.4 },
+                  (!commentText.trim() || submittingComment) && {
+                    opacity: 0.4,
+                  },
                 ]}
                 onPress={submitComment}
                 disabled={!commentText.trim() || submittingComment}
@@ -574,53 +536,6 @@ export default function StudentProfile({ user }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-
-      {/* ====================== */}
-      {/* MEDIA VIEWER MODAL     */}
-      {/* ====================== */}
-      <Modal
-        visible={!!mediaModalPost}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={closeMediaModal}
-      >
-        <View style={styles.mediaModalContainer}>
-          <TouchableOpacity style={styles.mediaModalClose} onPress={closeMediaModal}>
-            <Ionicons name="close-circle" size={36} color="#fff" />
-          </TouchableOpacity>
-
-          {mediaModalPost?.media?.type === "video" ? (
-            <VideoView
-              player={videoPlayer}
-              style={styles.fullscreenVideo}
-              allowsFullscreen
-              allowsPictureInPicture={false}
-              contentFit="contain"
-            />
-          ) : mediaModalPost?.media?.url ? (
-            <Image
-              source={{ uri: mediaModalPost.media.url }}
-              style={styles.fullscreenImage}
-              resizeMode="contain"
-            />
-          ) : (
-            <View style={styles.fullscreenTextCard}>
-              <Text style={styles.fullscreenCaption}>
-                {mediaModalPost?.caption || ""}
-              </Text>
-            </View>
-          )}
-
-          {/* Caption below */}
-          {mediaModalPost?.caption && mediaModalPost?.media?.url ? (
-            <View style={styles.mediaCaption}>
-              <Text style={styles.mediaCaptionText} numberOfLines={3}>
-                {mediaModalPost.caption}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -628,12 +543,13 @@ export default function StudentProfile({ user }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9f9f9" },
   scrollContent: { paddingBottom: 80 },
-
-  // Cover
   coverContainer: { height: 130, width: "100%", overflow: "hidden" },
-  coverImage: { width: "100%", height: "100%", resizeMode: "cover", opacity: 0.9 },
-
-  // Profile header
+  coverImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+    opacity: 0.9,
+  },
   profileHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -642,22 +558,32 @@ const styles = StyleSheet.create({
     marginTop: -55,
   },
   avatarContainer: { padding: 4, backgroundColor: "#f9f9f9", borderRadius: 65 },
-  avatar: { width: 105, height: 105, borderRadius: 52.5, backgroundColor: "#e0e0e0" },
-  actionRow: { flexDirection: "row", alignItems: "center", marginBottom: 10, gap: 10 },
+  avatar: {
+    width: 105,
+    height: 105,
+    borderRadius: 52.5,
+    backgroundColor: "#e0e0e0",
+  },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    gap: 10,
+  },
   iconButton: { padding: 8, backgroundColor: "#eef2f5", borderRadius: 20 },
-  editButton: { backgroundColor: "#eef2f5", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
+  editButton: {
+    backgroundColor: "#eef2f5",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+  },
   editButtonText: { fontWeight: "700", color: "#333", fontSize: 13 },
-
-  // Info
   infoContainer: { paddingHorizontal: 20, marginTop: 10 },
   name: { fontSize: 26, fontWeight: "bold", color: "#111", marginBottom: 2 },
-  studentId: { fontSize: 14, color: "#555", marginBottom: 10 },
-  idNumber: { color: "#888" },
+  roleText: { fontSize: 14, color: "#555", marginBottom: 10 },
   detailRow: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   icon: { marginRight: 8, width: 20 },
-  detailText: { fontSize: 15, color: "#333", flex: 1 },
-
-  // Tabs
+  detailText: { fontSize: 15, color: "#333" },
   tabContainer: {
     flexDirection: "row",
     marginTop: 20,
@@ -669,9 +595,28 @@ const styles = StyleSheet.create({
   activeTab: { borderBottomWidth: 2, borderBottomColor: "#D32F2F" },
   tabText: { fontSize: 15, color: "#888", fontWeight: "600" },
   activeTabText: { color: "#D32F2F", fontWeight: "bold" },
-
-  // Posts feed
-  emptyState: { padding: 40, alignItems: "center", marginTop: 20 },
+  aboutContainer: { padding: 20 },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  cardTitle: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 15,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  bioText: { fontSize: 15, color: "#555", lineHeight: 24 },
+  moduleRow: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+  moduleIcon: { marginRight: 12 },
+  moduleText: { fontSize: 15, color: "#444" },
   feedContainer: { padding: 15 },
   postCard: {
     backgroundColor: "#fff",
@@ -689,23 +634,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   postUserRow: { flexDirection: "row", alignItems: "center" },
-  smallAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: "#ddd", marginRight: 10 },
+  smallAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#ddd",
+    marginRight: 10,
+  },
   postUsername: { fontWeight: "bold", fontSize: 15, color: "#000" },
   postDate: { fontSize: 12, color: "#888", marginTop: 2 },
-  postBodyText: { fontSize: 15, marginBottom: 12, lineHeight: 22, color: "#333" },
+  postBodyText: {
+    fontSize: 15,
+    marginBottom: 12,
+    lineHeight: 22,
+    color: "#333",
+  },
   postImage: {
     width: "100%",
     height: 250,
     borderRadius: 12,
     marginBottom: 15,
     backgroundColor: "#E0E0E0",
-  },
-  videoOverlayBadge: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    marginTop: -18,
-    marginLeft: -18,
   },
   statsRow: {
     flexDirection: "row",
@@ -717,36 +666,7 @@ const styles = StyleSheet.create({
   },
   statItem: { flexDirection: "row", alignItems: "center" },
   statText: { marginLeft: 6, fontSize: 14, fontWeight: "500", color: "#555" },
-
-  // Reels grid — 3 tiles per row
-  // Each tile has margin:1 on all sides → 2px per tile × 3 tiles = 6px total horizontal space
-  reelsGrid: { flexDirection: "row", flexWrap: "wrap" },
-  reelTile: {
-    width: (width - 6) / 3,
-    height: (width - 6) / 3,
-    margin: 1,
-    backgroundColor: "#e0e0e0",
-    overflow: "hidden",
-    position: "relative",
-  },
-  reelImage: { width: "100%", height: "100%" },
-  reelOverlay: {
-    position: "absolute",
-    bottom: 6,
-    left: 6,
-    backgroundColor: "rgba(0,0,0,0.35)",
-    borderRadius: 12,
-    padding: 4,
-  },
-  reelTextTile: {
-    flex: 1,
-    backgroundColor: "#fff5f5",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 6,
-  },
-  reelTextSnippet: { fontSize: 10, color: "#555", textAlign: "center", lineHeight: 14 },
-
+  emptyState: { padding: 40, alignItems: "center", marginTop: 20 },
   // Comments modal
   modalBackdrop: {
     flex: 1,
@@ -795,7 +715,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 10,
   },
-  commentUsername: { fontWeight: "700", fontSize: 13, color: "#111", marginBottom: 3 },
+  commentUsername: {
+    fontWeight: "700",
+    fontSize: 13,
+    color: "#111",
+    marginBottom: 3,
+  },
   commentText: { fontSize: 14, color: "#333", lineHeight: 20 },
   commentInputRow: {
     flexDirection: "row",
@@ -825,38 +750,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
-  // Media viewer modal
-  mediaModalContainer: {
-    flex: 1,
-    backgroundColor: "#000",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  mediaModalClose: {
-    position: "absolute",
-    top: 50,
-    right: 20,
-    zIndex: 10,
-  },
-  fullscreenVideo: { width, height: height * 0.75 },
-  fullscreenImage: { width, height: height * 0.75 },
-  fullscreenTextCard: {
-    width: width * 0.85,
-    backgroundColor: "#1a1a1a",
-    borderRadius: 16,
-    padding: 30,
-    alignItems: "center",
-  },
-  fullscreenCaption: { color: "#fff", fontSize: 18, lineHeight: 28, textAlign: "center" },
-  mediaCaption: {
-    position: "absolute",
-    bottom: 40,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  mediaCaptionText: { color: "#fff", fontSize: 14, lineHeight: 20 },
 });

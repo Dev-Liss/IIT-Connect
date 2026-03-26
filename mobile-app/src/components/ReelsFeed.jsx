@@ -49,6 +49,7 @@ export default function ReelsFeed({ availableHeight }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [activeVideoId, setActiveVideoId] = useState(null);
+  const [isFocused, setIsFocused] = useState(true);
 
   // ── Calculated item height ──
   // Use measured availableHeight from parent if provided
@@ -99,7 +100,11 @@ export default function ReelsFeed({ availableHeight }) {
   // Fetch when screen comes into focus
   useFocusEffect(
     useCallback(() => {
+      setIsFocused(true);
       fetchReels();
+      return () => {
+        setIsFocused(false);
+      };
     }, [fetchReels]),
   );
 
@@ -140,11 +145,11 @@ export default function ReelsFeed({ availableHeight }) {
     ({ item }) => (
       <ReelCard
         reel={item}
-        isActive={item._id === activeVideoId}
+        isActive={isFocused && item._id === activeVideoId}
         height={ITEM_HEIGHT}
       />
     ),
-    [activeVideoId, ITEM_HEIGHT],
+    [activeVideoId, ITEM_HEIGHT, isFocused],
   );
 
   // ====================================

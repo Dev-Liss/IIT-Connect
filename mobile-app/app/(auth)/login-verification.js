@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,17 +13,40 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useSignUp } from "@clerk/clerk-expo";
-import { syncUserProfile } from "../services/api";
+import { useSignIn } from "@clerk/clerk-expo";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
-export default function EmailVerificationScreen({ email, userData, onVerify }) {
+/**
+ * LoginVerificationScreen
+ *
+ * Shown after a user enters their email + password during login.
+ * The password has already been verified at this point (via Clerk).
+ * Now an email OTP code has been sent and the user must enter it
+ * to complete sign-in.
+ *
+ * Props:
+ *   email          — the user's email (for display)
+ *   onVerified     — callback after successful OTP verification + session activation
+ *   onBack         — callback to go back to the login screen
+ */
+export default function LoginVerificationScreen({
+  email,
+  onVerified,
+  onBack,
+}) {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const resolvedEmail =
+    email ?? (typeof params.email === "string" ? params.email : "");
+
   const [code, setCode] = useState("");
-  const [timer, setTimer] = useState(180); // 3 minutes in seconds
+  const [timer, setTimer] = useState(180); // 3 minutes
   const [canResend, setCanResend] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signUp, setActive } = useSignUp();
+  const { signIn, setActive } = useSignIn();
 
+  // Countdown timer
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => {
@@ -45,6 +68,10 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  /**
+   * Verify the OTP code entered by the user.
+   * Uses Clerk's attemptFirstFactor with the email_code strategy.
+   */
   const handleVerify = async () => {
     if (code.length !== 6) {
       Alert.alert("Invalid Code", "Please enter the 6-digit verification code");
@@ -54,65 +81,37 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
     setIsLoading(true);
 
     try {
-      console.log("🔐 Verifying OTP code...");
+      console.log("🔐 [LoginOTP] Verifying code...");
 
-      // Verify the email with Clerk
-      const completeSignUp = await signUp.attemptEmailAddressVerification({
+      const result = await signIn.attemptFirstFactor({
+        strategy: "email_code",
         code: code,
       });
 
-      if (completeSignUp.status === "complete") {
-        console.log("✅ Email verified successfully!");
+      if (result.status === "complete") {
+        console.log("✅ [LoginOTP] OTP verified! Activating session...");
 
-        // Get the Clerk user ID
-        const clerkId = completeSignUp.createdUserId;
+        await setActive({ session: result.createdSessionId });
 
-        console.log("📤 Syncing profile to MongoDB...");
-
-        // Prepare sync data
-        const syncData = {
-          clerkId: clerkId,
-          email: userData.email,
-          username: `${userData.firstName} ${userData.lastName}`,
-          role: userData.role,
-        };
-
-        // Add role-specific fields
-        if (userData.role === "student" && userData.studentId) {
-          syncData.studentId = userData.studentId;
-        } else if (userData.role === "alumni") {
-          if (userData.nationalId) {
-            syncData.nationalId = userData.nationalId;
-          }
-          if (userData.pastIitId) {
-            syncData.pastIitId = userData.pastIitId;
-          }
-        }
-
-        console.log("📤 Sync data:", syncData);
-
-        // Sync profile to MongoDB backend
-        await syncUserProfile(syncData);
-
-        console.log("✅ Profile synced to MongoDB!");
-
-        // Set the session as active AFTER syncing to DB
-        // This prevents AuthContext from fetching the profile before it's created
-        await setActive({ session: completeSignUp.createdSessionId });
-
+        console.log("✅ [LoginOTP] Session activated. Login complete.");
         setIsLoading(false);
 
-        // Call the onVerify callback
-        if (onVerify) {
-          onVerify(code);
+        if (onVerified) {
+          onVerified();
+        } else {
+          router.replace("/(tabs)");
         }
       } else {
+        console.log("⚠️ [LoginOTP] Unexpected status after OTP:", result.status);
         setIsLoading(false);
-        Alert.alert("Verification Incomplete", "Please try again.");
+        Alert.alert(
+          "Verification Issue",
+          "Unable to complete verification. Please try again.",
+        );
       }
     } catch (error) {
       setIsLoading(false);
-      console.log("ℹ️ Verification attempt finished:", error.message);
+      console.log("❌ [LoginOTP] Verification error:", error.message);
 
       if (error.errors && error.errors.length > 0) {
         const clerkError = error.errors[0];
@@ -142,20 +141,34 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
     }
   };
 
+  /**
+   * Resend the OTP code via Clerk's prepareFirstFactor.
+   */
   const handleResend = async () => {
     if (!canResend) return;
 
     setIsLoading(true);
 
     try {
-      console.log("📧 Resending verification code...");
+      console.log("📧 [LoginOTP] Resending verification code...");
 
-      // Resend verification email
-      await signUp.prepareEmailAddressVerification({
+      // Find the email_code factor to get the emailAddressId
+      const emailCodeFactor = signIn.supportedFirstFactors?.find(
+        (f) => f.strategy === "email_code",
+      );
+
+      if (!emailCodeFactor) {
+        setIsLoading(false);
+        Alert.alert("Error", "Email verification is not available. Please go back and try again.");
+        return;
+      }
+
+      await signIn.prepareFirstFactor({
         strategy: "email_code",
+        emailAddressId: emailCodeFactor.emailAddressId,
       });
 
-      console.log("✅ Verification code resent!");
+      console.log("✅ [LoginOTP] Verification code resent!");
 
       setTimer(180);
       setCanResend(false);
@@ -168,7 +181,7 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
       );
     } catch (error) {
       setIsLoading(false);
-      console.error("❌ Resend error:", error);
+      console.error("❌ [LoginOTP] Resend error:", error);
       Alert.alert("Error", "Failed to resend code. Please try again.");
     }
   };
@@ -184,6 +197,14 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Back Button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={onBack ?? (() => router.replace("/(auth)/login"))}
+          >
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+
           {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
@@ -194,7 +215,7 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
           </View>
 
           {/* Heading */}
-          <Text style={styles.heading}>Confirm Your Email</Text>
+          <Text style={styles.heading}>Verify Your Identity</Text>
 
           {/* Illustration */}
           <View style={styles.illustrationContainer}>
@@ -207,7 +228,8 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
 
           {/* Info Text */}
           <Text style={styles.infoText}>
-            We've sent a 6-digit verification code{"\n"}to your email
+            We{"'"}ve sent a 6-digit verification code{"\n"}to{" "}
+            <Text style={styles.emailHighlight}>{resolvedEmail}</Text>
           </Text>
 
           {/* Verification Code Input */}
@@ -254,7 +276,7 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
             disabled={isLoading}
           >
             <Text style={styles.verifyButtonText}>
-              {isLoading ? "Verifying..." : "Verify and Create Account"}
+              {isLoading ? "Verifying..." : "Verify and Sign In"}
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -273,6 +295,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
+  },
+  backButton: {
+    position: "absolute",
+    top: 16,
+    left: 24,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    zIndex: 10,
   },
   logoContainer: {
     alignItems: "center",
@@ -304,6 +335,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 32,
     lineHeight: 20,
+  },
+  emailHighlight: {
+    fontWeight: "bold",
+    color: "#E31E24",
   },
   label: {
     fontSize: 14,

@@ -18,6 +18,8 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    StatusBar,
+    ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -157,234 +159,376 @@ export default function CreateEventScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={styles.keyboardView}
             >
-                {/* Header */}
+                {/* ── Header ── */}
                 <View style={styles.header}>
                     <TouchableOpacity
                         style={styles.backButton}
                         onPress={() => router.back()}
+                        activeOpacity={0.7}
                     >
-                        <Ionicons name="arrow-back" size={24} color="#000" />
+                        <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Create Event</Text>
+                    <View style={styles.headerTextWrap}>
+                        <Text style={styles.headerTitle}>Create Event</Text>
+                        <Text style={styles.headerSubtitle}>
+                            Add new campus events and activities
+                        </Text>
+                    </View>
                 </View>
-                <Text style={styles.headerSubtitle}>
-                    Add new campus events and activities
-                </Text>
 
-                <ScrollView style={styles.formContainer}>
-                    {/* Event Title */}
-                    <Text style={styles.label}>Event Title *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter event title"
-                        placeholderTextColor="#999"
-                        value={title}
-                        onChangeText={setTitle}
-                        maxLength={100}
-                    />
+                <ScrollView
+                    style={styles.formScroll}
+                    contentContainerStyle={styles.formContainer}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* ── Section: Event Details ── */}
+                    <Text style={styles.sectionTitle}>Event Details</Text>
+                    <View style={styles.card}>
+                        {/* Title */}
+                        <View style={styles.fieldRow}>
+                            <View style={styles.fieldIconWrap}>
+                                <Ionicons name="create-outline" size={18} color="#e63946" />
+                            </View>
+                            <View style={styles.fieldContent}>
+                                <Text style={styles.label}>Event Title</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="e.g. Engineering Week Opening"
+                                    placeholderTextColor="#bbb"
+                                    value={title}
+                                    onChangeText={setTitle}
+                                    maxLength={100}
+                                />
+                            </View>
+                        </View>
 
-                    {/* Date Picker */}
-                    <Text style={styles.label}>Date *</Text>
-                    <TouchableOpacity
-                        style={styles.pickerButton}
-                        onPress={() => setShowDatePicker(true)}
-                    >
-                        <Ionicons name="calendar-outline" size={20} color="#666" />
-                        <Text style={[styles.pickerText, dateSelected && styles.pickerTextSelected]}>
-                            {dateSelected ? formatDate(date) : "Select a date"}
-                        </Text>
-                    </TouchableOpacity>
-                    {showDatePicker && (
-                        <DateTimePicker
-                            value={date}
-                            mode="date"
-                            display="default"
-                            onChange={onDateChange}
-                            minimumDate={new Date()}
-                        />
-                    )}
+                        <View style={styles.fieldDivider} />
 
-                    {/* Start Time Picker */}
-                    <Text style={styles.label}>Start Time *</Text>
-                    <TouchableOpacity
-                        style={styles.pickerButton}
-                        onPress={() => setShowStartTimePicker(true)}
-                    >
-                        <Ionicons name="time-outline" size={20} color="#666" />
-                        <Text style={[styles.pickerText, startTimeSelected && styles.pickerTextSelected]}>
-                            {startTimeSelected ? formatTime(startTime) : "Select start time"}
-                        </Text>
-                    </TouchableOpacity>
-                    {showStartTimePicker && (
-                        <DateTimePicker
-                            value={startTime}
-                            mode="time"
-                            display="default"
-                            onChange={onStartTimeChange}
-                        />
-                    )}
+                        {/* Description */}
+                        <View style={styles.fieldRow}>
+                            <View style={styles.fieldIconWrap}>
+                                <Ionicons name="document-text-outline" size={18} color="#e63946" />
+                            </View>
+                            <View style={styles.fieldContent}>
+                                <Text style={styles.label}>Description</Text>
+                                <TextInput
+                                    style={[styles.input, styles.textArea]}
+                                    placeholder="What's this event about?"
+                                    placeholderTextColor="#bbb"
+                                    value={description}
+                                    onChangeText={setDescription}
+                                    multiline
+                                    numberOfLines={4}
+                                    textAlignVertical="top"
+                                />
+                            </View>
+                        </View>
+                    </View>
 
-                    {/* End Time Picker */}
-                    <Text style={styles.label}>End Time</Text>
-                    <TouchableOpacity
-                        style={styles.pickerButton}
-                        onPress={() => setShowEndTimePicker(true)}
-                    >
-                        <Ionicons name="time-outline" size={20} color="#666" />
-                        <Text style={[styles.pickerText, endTimeSelected && styles.pickerTextSelected]}>
-                            {endTimeSelected ? formatTime(endTime) : "Select end time (optional)"}
-                        </Text>
-                    </TouchableOpacity>
-                    {showEndTimePicker && (
-                        <DateTimePicker
-                            value={endTime}
-                            mode="time"
-                            display="default"
-                            onChange={onEndTimeChange}
-                        />
-                    )}
+                    {/* ── Section: Date & Time ── */}
+                    <Text style={styles.sectionTitle}>Date & Time</Text>
+                    <View style={styles.card}>
+                        {/* Date */}
+                        <View style={styles.fieldRow}>
+                            <View style={styles.fieldIconWrap}>
+                                <Ionicons name="calendar-outline" size={18} color="#e63946" />
+                            </View>
+                            <View style={styles.fieldContent}>
+                                <Text style={styles.label}>Date</Text>
+                                <TouchableOpacity
+                                    style={styles.pickerButton}
+                                    onPress={() => setShowDatePicker(true)}
+                                    activeOpacity={0.6}
+                                >
+                                    <Text style={[styles.pickerText, dateSelected && styles.pickerTextSelected]}>
+                                        {dateSelected ? formatDate(date) : "Select a date"}
+                                    </Text>
+                                    <Ionicons name="chevron-forward" size={16} color="#ccc" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        {showDatePicker && (
+                            <DateTimePicker
+                                value={date}
+                                mode="date"
+                                display="default"
+                                onChange={onDateChange}
+                                minimumDate={new Date()}
+                            />
+                        )}
 
-                    {/* Location */}
-                    <Text style={styles.label}>Location *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter event location"
-                        placeholderTextColor="#999"
-                        value={location}
-                        onChangeText={setLocation}
-                    />
+                        <View style={styles.fieldDivider} />
 
-                    {/* Description */}
-                    <Text style={styles.label}>Description *</Text>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        placeholder="Describe the event..."
-                        placeholderTextColor="#999"
-                        value={description}
-                        onChangeText={setDescription}
-                        multiline
-                        numberOfLines={5}
-                        textAlignVertical="top"
-                    />
+                        {/* Start Time */}
+                        <View style={styles.fieldRow}>
+                            <View style={styles.fieldIconWrap}>
+                                <Ionicons name="time-outline" size={18} color="#e63946" />
+                            </View>
+                            <View style={styles.fieldContent}>
+                                <Text style={styles.label}>Start Time</Text>
+                                <TouchableOpacity
+                                    style={styles.pickerButton}
+                                    onPress={() => setShowStartTimePicker(true)}
+                                    activeOpacity={0.6}
+                                >
+                                    <Text style={[styles.pickerText, startTimeSelected && styles.pickerTextSelected]}>
+                                        {startTimeSelected ? formatTime(startTime) : "Select start time"}
+                                    </Text>
+                                    <Ionicons name="chevron-forward" size={16} color="#ccc" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        {showStartTimePicker && (
+                            <DateTimePicker
+                                value={startTime}
+                                mode="time"
+                                display="default"
+                                onChange={onStartTimeChange}
+                            />
+                        )}
 
-                    {/* Submit Button */}
+                        <View style={styles.fieldDivider} />
+
+                        {/* End Time */}
+                        <View style={styles.fieldRow}>
+                            <View style={styles.fieldIconWrap}>
+                                <Ionicons name="time-outline" size={18} color="#e63946" />
+                            </View>
+                            <View style={styles.fieldContent}>
+                                <Text style={styles.label}>End Time</Text>
+                                <TouchableOpacity
+                                    style={styles.pickerButton}
+                                    onPress={() => setShowEndTimePicker(true)}
+                                    activeOpacity={0.6}
+                                >
+                                    <Text style={[styles.pickerText, endTimeSelected && styles.pickerTextSelected]}>
+                                        {endTimeSelected ? formatTime(endTime) : "Optional"}
+                                    </Text>
+                                    <Ionicons name="chevron-forward" size={16} color="#ccc" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        {showEndTimePicker && (
+                            <DateTimePicker
+                                value={endTime}
+                                mode="time"
+                                display="default"
+                                onChange={onEndTimeChange}
+                            />
+                        )}
+                    </View>
+
+                    {/* ── Section: Location ── */}
+                    <Text style={styles.sectionTitle}>Location</Text>
+                    <View style={styles.card}>
+                        <View style={styles.fieldRow}>
+                            <View style={styles.fieldIconWrap}>
+                                <Ionicons name="location-outline" size={18} color="#e63946" />
+                            </View>
+                            <View style={styles.fieldContent}>
+                                <Text style={styles.label}>Venue</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="e.g. Main Auditorium, BMICH"
+                                    placeholderTextColor="#bbb"
+                                    value={location}
+                                    onChangeText={setLocation}
+                                />
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* ── Submit Button ── */}
                     <TouchableOpacity
                         style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
                         onPress={handleSubmit}
                         disabled={isLoading}
+                        activeOpacity={0.85}
                     >
-                        <Ionicons name="send" size={20} color="#fff" />
+                        {isLoading && (
+                            <ActivityIndicator size="small" color="#fff" style={{ marginRight: 10 }} />
+                        )}
                         <Text style={styles.submitButtonText}>
-                            {isLoading ? "Creating..." : "Create Event"}
+                            {isLoading ? "Creating Event..." : "Create Event"}
                         </Text>
                     </TouchableOpacity>
 
-                    <View style={{ height: 40 }} />
+                    <View style={{ height: 50 }} />
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
 
+// ====================================
+// STYLES
+// ====================================
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "#ffffff",
     },
     keyboardView: {
         flex: 1,
     },
+
+    // ── Header ──
     header: {
         flexDirection: "row",
         alignItems: "center",
-        paddingTop: 50,
-        paddingHorizontal: 20,
-        paddingBottom: 5,
+        paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 44) + 8 : 8,
+        paddingHorizontal: 18,
+        paddingBottom: 18,
         backgroundColor: "#fff",
+        borderBottomWidth: 1,
+        borderBottomColor: "#F0F0F0",
     },
     backButton: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: "#f0f0f0",
         justifyContent: "center",
         alignItems: "center",
-        marginRight: 15,
+    },
+    headerTextWrap: {
+        flex: 1,
+        marginLeft: 14,
     },
     headerTitle: {
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#000",
+        fontSize: 21,
+        fontWeight: "700",
+        color: "#1a1a1a",
+        letterSpacing: 0.2,
     },
     headerSubtitle: {
-        fontSize: 14,
-        color: "#666",
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-        backgroundColor: "#fff",
+        fontSize: 13,
+        color: "#999",
+        marginTop: 2,
+    },
+
+    // ── Form ──
+    formScroll: {
+        flex: 1,
     },
     formContainer: {
-        flex: 1,
-        padding: 20,
+        padding: 18,
     },
-    label: {
-        fontSize: 15,
-        fontWeight: "600",
-        color: "#000",
-        marginBottom: 8,
+
+    // ── Section ──
+    sectionTitle: {
+        fontSize: 13,
+        fontWeight: "700",
+        color: "#999",
+        textTransform: "uppercase",
+        letterSpacing: 0.8,
+        marginBottom: 10,
+        marginTop: 8,
+        marginLeft: 4,
     },
-    input: {
+
+    // ── Card ──
+    card: {
         backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 15,
-        fontSize: 16,
-        color: "#000",
+        borderRadius: 16,
+        padding: 6,
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: "#e0e0e0",
+        borderColor: "#F0F0F0",
+    },
+
+    // ── Field Row ──
+    fieldRow: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+    },
+    fieldIconWrap: {
+        width: 34,
+        height: 34,
+        borderRadius: 10,
+        backgroundColor: "#FFF1F2",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
+        marginTop: 2,
+    },
+    fieldContent: {
+        flex: 1,
+    },
+    fieldDivider: {
+        height: 1,
+        backgroundColor: "#F5F5F5",
+        marginLeft: 58,
+    },
+
+    // ── Labels ──
+    label: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: "#555",
+        marginBottom: 6,
+    },
+    required: {
+        color: "#e63946",
+    },
+
+    // ── Input ──
+    input: {
+        fontSize: 15,
+        color: "#1a1a1a",
+        padding: 0,
+        margin: 0,
+        fontWeight: "400",
     },
     textArea: {
-        height: 150,
-        textAlignVertical: "top",
+        height: 90,
+        lineHeight: 22,
     },
+
+    // ── Picker ──
     pickerButton: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 15,
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: "#e0e0e0",
         flexDirection: "row",
         alignItems: "center",
-        gap: 10,
+        justifyContent: "space-between",
     },
     pickerText: {
-        fontSize: 16,
-        color: "#999",
+        fontSize: 15,
+        color: "#bbb",
+        fontWeight: "400",
     },
     pickerTextSelected: {
-        color: "#000",
+        color: "#1a1a1a",
     },
+
+    // ── Submit ──
     submitButton: {
         backgroundColor: "#e63946",
-        borderRadius: 12,
-        paddingVertical: 16,
+        borderRadius: 50,
+        paddingVertical: 18,
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
-        gap: 10,
         marginTop: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.18,
+        shadowRadius: 14,
+        elevation: 8,
     },
     submitButtonDisabled: {
-        opacity: 0.7,
+        opacity: 0.6,
     },
     submitButtonText: {
         color: "#fff",
         fontSize: 16,
-        fontWeight: "600",
+        fontWeight: "700",
+        letterSpacing: 0.6,
     },
 });

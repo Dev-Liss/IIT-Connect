@@ -15,27 +15,27 @@ import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import { useAuth } from "../src/context/AuthContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Auth screens (Clerk-based)
-import SplashScreen from "../src/screens/SplashScreen";
-import WelcomeScreen from "../src/screens/WelcomeScreen";
-import LoginScreen from "../src/screens/LoginScreen";
-import RoleSelectionScreen from "../src/screens/RoleSelectionScreen";
-import CreateAccountScreen from "../src/screens/CreateAccountScreen";
-import StudentIdDetailsScreen from "../src/screens/StudentIdDetailsScreen";
-import AlumniAccountScreen from "../src/screens/AlumniAccountScreen";
-import AlumniDetailsScreen from "../src/screens/AlumniDetailsScreen";
-import UserDetailsScreen from "../src/screens/UserDetailsScreen";
-import EmailVerificationScreen from "../src/screens/EmailVerificationScreen";
-import SignupSuccessScreen from "../src/screens/SignupSuccessScreen";
-import ForgotPasswordScreen from "../src/screens/ForgotPasswordScreen";
-import PasswordResetOTPScreen from "../src/screens/PasswordResetOTPScreen";
-import NewPasswordScreen from "../src/screens/NewPasswordScreen";
+// Auth screens (now in app/(auth)/ for Expo Router)
+import SplashScreen from "./(auth)/splash";
+import WelcomeScreen from "./(auth)/welcome";
+import LoginScreen from "./(auth)/login";
+import RoleSelectionScreen from "./(auth)/role-selection";
+import CreateAccountScreen from "./(auth)/create-account";
+import StudentIdDetailsScreen from "./(auth)/student-id-details";
+import AlumniAccountScreen from "./(auth)/alumni-account";
+import AlumniDetailsScreen from "./(auth)/alumni-details";
+import UserDetailsScreen from "./(auth)/user-details";
+import EmailVerificationScreen from "./(auth)/email-verification";
+import SignupSuccessScreen from "./(auth)/signup-success";
+import ForgotPasswordScreen from "./(auth)/forgot-password";
+import PasswordResetOTPScreen from "./(auth)/password-reset-otp";
+import NewPasswordScreen from "./(auth)/new-password";
+import LoginVerificationScreen from "./(auth)/login-verification";
 
 export default function AuthEntry() {
   const router = useRouter();
-  const { isSignedIn, isLoaded, signOut } = useClerkAuth();
+  const { isSignedIn, isLoaded } = useClerkAuth();
   const { user, isLoading: profileLoading } = useAuth();
 
   const [currentScreen, setCurrentScreen] = useState("splash");
@@ -44,43 +44,30 @@ export default function AuthEntry() {
   const [studentId, setStudentId] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [userData, setUserData] = useState(null);
-  const [hasCheckedKeepSignedIn, setHasCheckedKeepSignedIn] = useState(false);
   const hasRedirected = useRef(false);
-
-  // First check if the user wanted to stay signed in
-  useEffect(() => {
-    if (!isLoaded || hasCheckedKeepSignedIn) return;
-
-    const checkKeepSignedIn = async () => {
-      try {
-        const keep = await AsyncStorage.getItem("keepMeSignedIn");
-        if (keep === "false" && isSignedIn) {
-          console.log("🚪 App launched but keepMeSignedIn is false. Signing out.");
-          await signOut();
-        }
-      } catch (err) {
-        console.warn("Storage check failed", err);
-      } finally {
-        setHasCheckedKeepSignedIn(true);
-      }
-    };
-
-    checkKeepSignedIn();
-  }, [isLoaded, isSignedIn, hasCheckedKeepSignedIn, signOut]);
 
   // Once Clerk confirms sign-in AND MongoDB profile is loaded, go to main app
   useEffect(() => {
-    if (currentScreen === "signupSuccess" || !hasCheckedKeepSignedIn) return;
+    if (currentScreen === "signupSuccess") return;
     if (hasRedirected.current) return;
 
     if (isLoaded && isSignedIn && user && !profileLoading) {
+      // #region agent log
+      fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H2',location:'app/index.jsx:redirectToTabs',message:'AuthEntry redirecting to /(tabs)',data:{isLoaded,isSignedIn,hasUser:!!user,profileLoading,currentScreen},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       hasRedirected.current = true;
       router.replace("/(tabs)");
     }
-  }, [isLoaded, isSignedIn, user, profileLoading, currentScreen, hasCheckedKeepSignedIn]);
+  }, [
+    isLoaded,
+    isSignedIn,
+    user,
+    profileLoading,
+    currentScreen,
+  ]);
 
   // While Clerk is loading, show a spinner so we don't flash the auth screens
-  if (!isLoaded || profileLoading || !hasCheckedKeepSignedIn) {
+  if (!isLoaded || profileLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E53935" />
@@ -261,6 +248,18 @@ export default function AuthEntry() {
     );
   }
 
+  if (currentScreen === "loginVerification") {
+    return (
+      <LoginVerificationScreen
+        email={userEmail}
+        onVerified={() => {
+          // AuthContext detects the Clerk sign-in and redirects to (tabs)
+        }}
+        onBack={() => setCurrentScreen("login")}
+      />
+    );
+  }
+
   // Default: Login screen
   return (
     <LoginScreen
@@ -269,6 +268,10 @@ export default function AuthEntry() {
         // AuthContext detects the Clerk sign-in and redirects to (tabs)
       }}
       onForgotPassword={() => setCurrentScreen("forgotPassword")}
+      onLoginOTP={(email) => {
+        setUserEmail(email);
+        setCurrentScreen("loginVerification");
+      }}
     />
   );
 }

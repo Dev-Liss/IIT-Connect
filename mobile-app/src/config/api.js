@@ -12,18 +12,16 @@
 export const REQUEST_TIMEOUT = 15000;
 
 // ==========================================
-// PRODUCTION URLS
+// API & SOCKET URLS (Auto-switching)
 // ==========================================
-export const SOCKET_URL = "https://iit-connect.onrender.com";
-export const API_BASE_URL = `${SOCKET_URL}/api`;
+const LAPTOP_IP = process.env.EXPO_PUBLIC_LAPTOP_IP;
+const PORT = "5000";
 
-// ==========================================
-// LOCAL DEVELOPMENT URLS
-// ==========================================
-// const LAPTOP_IP = process.env.EXPO_PUBLIC_LAPTOP_IP;
-// const PORT = "5000";
-// export const API_BASE_URL = `http://${LAPTOP_IP}:${PORT}/api`;
-// export const SOCKET_URL = `http://${LAPTOP_IP}:${PORT}`;
+const LOCAL_SOCKET_URL = `http://${LAPTOP_IP}:${PORT}`;
+const PROD_SOCKET_URL = "https://iit-connect.onrender.com";
+
+export const SOCKET_URL = __DEV__ ? LOCAL_SOCKET_URL : PROD_SOCKET_URL;
+export const API_BASE_URL = `${SOCKET_URL}/api`;
 
 // Auth endpoints
 export const AUTH_ENDPOINTS = {

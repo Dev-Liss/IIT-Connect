@@ -18,7 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 
-import { API_BASE_URL as API_URL } from "../../config/api";
+import { API_BASE_URL as API_URL } from "../../src/config/api";
 
 const DEFAULT_AVATAR = "https://avataaars.io/?avatarStyle=Circle&topType=ShortHairShortFlat&accessoriesType=Prescription02&hairColor=Black&facialHairType=BeardLight&clotheType=BlazerShirt&eyeType=Happy&eyebrowType=Default&mouthType=Default&skinColor=Light";
 const DEFAULT_COVER = "https://placehold.co/800x300/e0e0e0/e0e0e0.png";

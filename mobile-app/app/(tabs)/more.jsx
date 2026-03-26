@@ -4,7 +4,7 @@
  * ====================================
  * A 2-column grid of squircle feature tiles.
  * Each tile has a tinted background, themed border,
- * and a Feather line-style icon.
+ * and a looping .mp4 illustration.
  */
 
 import React from "react";
@@ -18,44 +18,40 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Video, ResizeMode } from "expo-av";
 import { useRouter } from "expo-router";
+import useMainTabSwipe from "../../src/hooks/useMainTabSwipe";
 
 // ── Tile Data ──────────────────────────────────────
 const TILES = [
   {
     label: "Anonymous\nReport",
-    icon: "flag",
-    themeColor: "#f9252b",
-    background: "#fff3f3",
+    illustration: require("../../assets/images/annonymous-report.mp4"),
+    borderColor: "#BFC6C4",
     route: "/anonymous-report",
   },
   {
     label: "Empty Hall\nFinder",
-    icon: "map-pin",
-    themeColor: "#007AFF",
-    background: "#f0f6ff",
+    illustration: require("../../assets/images/empty-hall-finder.mp4"),
+    borderColor: "#BFC6C4",
     route: null,
   },
   {
-    label: "Clubs",
-    icon: "users",
-    themeColor: "#34C759",
-    background: "#f2fbf4",
+    label: "Clubs &\nCommunities",
+    illustration: require("../../assets/images/clubs.mp4"),
+    borderColor: "#BFC6C4",
     route: null,
   },
   {
     label: "Events &\nAnnouncements",
-    icon: "calendar",
-    themeColor: "#FF9500",
-    background: "#fff8f0",
+    illustration: require("../../assets/images/events-annoucements.mp4"),
+    borderColor: "#BFC6C4",
     route: "/events",
   },
   {
     label: "Admin\nDashboard",
-    icon: "shield",
-    themeColor: "#8B5CF6",
-    background: "#f3f0ff",
+    illustration: require("../../assets/images/admin-dash.mp4"),
+    borderColor: "#BFC6C4",
     route: "/admin-dashboard",
   },
 ];
@@ -63,6 +59,7 @@ const TILES = [
 // ── Screen Component ───────────────────────────────
 export default function MoreScreen() {
   const router = useRouter();
+  const { panHandlers } = useMainTabSwipe("more");
 
   const handleTilePress = (tile) => {
     if (tile.route) {
@@ -73,7 +70,7 @@ export default function MoreScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} {...panHandlers}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       {/* Header */}
@@ -88,18 +85,20 @@ export default function MoreScreen() {
             key={tile.label}
             activeOpacity={0.7}
             onPress={() => handleTilePress(tile)}
-            style={[
-              styles.tile,
-              {
-                backgroundColor: tile.background,
-                borderColor: tile.themeColor,
-              },
-            ]}
+            style={styles.tileContainer}
           >
-            <Feather name={tile.icon} size={36} color={tile.themeColor} />
-            <Text style={[styles.tileLabel, { color: tile.themeColor }]}>
-              {tile.label}
-            </Text>
+            <View style={[styles.tile, { borderColor: tile.borderColor }]}>
+              <Video
+                source={tile.illustration}
+                style={styles.illustration}
+                resizeMode={ResizeMode.COVER}
+                shouldPlay
+                isLooping
+                isMuted
+                pointerEvents="none"
+              />
+            </View>
+            <Text style={styles.tileLabel}>{tile.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -119,8 +118,6 @@ const styles = StyleSheet.create({
       Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 10 : 10,
     paddingBottom: 12,
     backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#efefef",
   },
   headerTitle: {
     fontSize: 24,
@@ -137,20 +134,29 @@ const styles = StyleSheet.create({
   },
 
   /* ── Individual Tile ── */
-  tile: {
+  tileContainer: {
     width: "47%",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  tile: {
+    width: "100%",
     aspectRatio: 1,
     borderRadius: 24,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: "#E0E0E0",
+    overflow: "hidden",
+  },
+  illustration: {
+    width: "100%",
+    height: "100%",
   },
   tileLabel: {
-    marginTop: 12,
-    fontSize: 15,
-    fontWeight: "700",
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: "600",
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 18,
+    color: "#444",
   },
 });

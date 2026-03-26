@@ -64,3 +64,5 @@ mobile-app/app-example/
 # Others
 /1. audits
 /2. issues
+/.cursor
+*.apk

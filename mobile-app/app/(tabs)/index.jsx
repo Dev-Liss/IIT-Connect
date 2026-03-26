@@ -36,10 +36,12 @@ import StoriesRail from "../../src/components/StoriesRail";
 import ContentSwitcher from "../../src/components/ContentSwitcher";
 import ReelsFeed from "../../src/components/ReelsFeed";
 import { POST_ENDPOINTS } from "../../src/config/api";
+import useMainTabSwipe from "../../src/hooks/useMainTabSwipe";
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { panHandlers } = useMainTabSwipe("index");
 
   // State
   const [activeTab, setActiveTab] = useState("feed");
@@ -164,7 +166,7 @@ export default function HomeScreen() {
   // ====================================
   if (isLoading && activeTab === "feed") {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer} {...panHandlers}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         {renderHeader()}
         <View style={styles.loadingContent}>
@@ -193,7 +195,7 @@ export default function HomeScreen() {
   // ====================================
   if (error && posts.length === 0 && activeTab === "feed") {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} {...panHandlers}>
         <StatusBar barStyle="dark-content" backgroundColor="#fff" />
         {renderHeader()}
         {renderErrorState()}
@@ -218,7 +220,7 @@ export default function HomeScreen() {
   // MAIN RENDER — FEED + REELS
   // ====================================
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} {...panHandlers}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       {renderHeader()}
 
