@@ -17,6 +17,8 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    StatusBar,
+    ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -80,146 +82,249 @@ export default function CreateAnnouncementScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#fff" />
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={styles.keyboardView}
             >
-                {/* Header */}
+                {/* ── Header ── */}
                 <View style={styles.header}>
                     <TouchableOpacity
                         style={styles.backButton}
                         onPress={() => router.back()}
+                        activeOpacity={0.7}
                     >
-                        <Ionicons name="arrow-back" size={24} color="#000" />
+                        <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Create Announcement</Text>
+                    <View style={styles.headerTextWrap}>
+                        <Text style={styles.headerTitle}>Create Announcement</Text>
+                        <Text style={styles.headerSubtitle}>
+                            Share important updates with students
+                        </Text>
+                    </View>
                 </View>
-                <Text style={styles.headerSubtitle}>
-                    Share important updates with students
-                </Text>
 
-                <ScrollView style={styles.formContainer}>
-                    {/* Title Field */}
-                    <Text style={styles.label}>Title *</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter announcement title"
-                        placeholderTextColor="#999"
-                        value={title}
-                        onChangeText={setTitle}
-                        maxLength={100}
-                    />
+                <ScrollView
+                    style={styles.formScroll}
+                    contentContainerStyle={styles.formContainer}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* ── Section: Announcement Details ── */}
+                    <Text style={styles.sectionTitle}>Announcement Details</Text>
+                    <View style={styles.card}>
+                        {/* Title */}
+                        <View style={styles.fieldRow}>
+                            <View style={styles.fieldIconWrap}>
+                                <Ionicons name="megaphone-outline" size={18} color="#FF9500" />
+                            </View>
+                            <View style={styles.fieldContent}>
+                                <Text style={styles.label}>Title <Text style={styles.required}>*</Text></Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="e.g. Exam Schedule Released"
+                                    placeholderTextColor="#bbb"
+                                    value={title}
+                                    onChangeText={setTitle}
+                                    maxLength={100}
+                                />
+                            </View>
+                        </View>
 
-                    {/* Content Field */}
-                    <Text style={styles.label}>Content *</Text>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        placeholder="Write your announcement here..."
-                        placeholderTextColor="#999"
-                        value={content}
-                        onChangeText={setContent}
-                        multiline
-                        numberOfLines={6}
-                        textAlignVertical="top"
-                    />
+                        <View style={styles.fieldDivider} />
 
-                    {/* Submit Button */}
+                        {/* Content */}
+                        <View style={styles.fieldRow}>
+                            <View style={styles.fieldIconWrap}>
+                                <Ionicons name="document-text-outline" size={18} color="#e63946" />
+                            </View>
+                            <View style={styles.fieldContent}>
+                                <Text style={styles.label}>Content <Text style={styles.required}>*</Text></Text>
+                                <TextInput
+                                    style={[styles.input, styles.textArea]}
+                                    placeholder="Write your announcement here..."
+                                    placeholderTextColor="#bbb"
+                                    value={content}
+                                    onChangeText={setContent}
+                                    multiline
+                                    numberOfLines={6}
+                                    textAlignVertical="top"
+                                />
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* ── Submit Button ── */}
                     <TouchableOpacity
                         style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
                         onPress={handleSubmit}
                         disabled={isLoading}
+                        activeOpacity={0.85}
                     >
-                        <Ionicons name="send" size={20} color="#fff" />
+                        {isLoading && (
+                            <ActivityIndicator size="small" color="#fff" style={{ marginRight: 10 }} />
+                        )}
                         <Text style={styles.submitButtonText}>
                             {isLoading ? "Sending..." : "Send Announcement"}
                         </Text>
                     </TouchableOpacity>
+
+                    <View style={{ height: 50 }} />
                 </ScrollView>
-
-
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
 
+// ====================================
+// STYLES
+// ====================================
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "#ffffff",
     },
     keyboardView: {
         flex: 1,
     },
+
+    // ── Header ──
     header: {
         flexDirection: "row",
         alignItems: "center",
-        paddingTop: 50,
-        paddingHorizontal: 20,
-        paddingBottom: 5,
+        paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight || 44) + 8 : 8,
+        paddingHorizontal: 18,
+        paddingBottom: 18,
         backgroundColor: "#fff",
+        borderBottomWidth: 1,
+        borderBottomColor: "#F0F0F0",
     },
     backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "#f0f0f0",
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        backgroundColor: "#F4F5F7",
         justifyContent: "center",
         alignItems: "center",
-        marginRight: 15,
+        marginRight: 14,
+    },
+    headerTextWrap: {
+        flex: 1,
     },
     headerTitle: {
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#000",
+        fontSize: 21,
+        fontWeight: "700",
+        color: "#1a1a1a",
+        letterSpacing: 0.2,
     },
     headerSubtitle: {
-        fontSize: 14,
-        color: "#666",
-        paddingHorizontal: 20,
-        paddingBottom: 20,
-        backgroundColor: "#fff",
+        fontSize: 13,
+        color: "#999",
+        marginTop: 2,
+    },
+
+    // ── Form ──
+    formScroll: {
+        flex: 1,
     },
     formContainer: {
-        flex: 1,
-        padding: 20,
+        padding: 18,
     },
-    label: {
-        fontSize: 15,
-        fontWeight: "600",
-        color: "#000",
-        marginBottom: 8,
+
+    // ── Section ──
+    sectionTitle: {
+        fontSize: 13,
+        fontWeight: "700",
+        color: "#999",
+        textTransform: "uppercase",
+        letterSpacing: 0.8,
+        marginBottom: 10,
+        marginTop: 8,
+        marginLeft: 4,
     },
-    input: {
+
+    // ── Card ──
+    card: {
         backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 15,
-        fontSize: 16,
-        color: "#000",
+        borderRadius: 16,
+        padding: 6,
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: "#e0e0e0",
+        borderColor: "#F0F0F0",
+    },
+
+    // ── Field Row ──
+    fieldRow: {
+        flexDirection: "row",
+        alignItems: "flex-start",
+        paddingVertical: 12,
+        paddingHorizontal: 12,
+    },
+    fieldIconWrap: {
+        width: 34,
+        height: 34,
+        borderRadius: 10,
+        backgroundColor: "#FFF1F2",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 12,
+        marginTop: 2,
+    },
+    fieldContent: {
+        flex: 1,
+    },
+    fieldDivider: {
+        height: 1,
+        backgroundColor: "#F5F5F5",
+        marginLeft: 58,
+    },
+
+    // ── Labels ──
+    label: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: "#555",
+        marginBottom: 6,
+    },
+    required: {
+        color: "#e63946",
+    },
+
+    // ── Input ──
+    input: {
+        fontSize: 15,
+        color: "#1a1a1a",
+        padding: 0,
+        margin: 0,
+        fontWeight: "400",
     },
     textArea: {
-        height: 150,
-        textAlignVertical: "top",
+        height: 120,
+        lineHeight: 22,
     },
+
+    // ── Submit ──
     submitButton: {
         backgroundColor: "#e63946",
-        borderRadius: 12,
-        paddingVertical: 16,
+        borderRadius: 50,
+        paddingVertical: 18,
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
-        gap: 10,
         marginTop: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.18,
+        shadowRadius: 14,
+        elevation: 8,
     },
     submitButtonDisabled: {
-        opacity: 0.7,
+        opacity: 0.6,
     },
     submitButtonText: {
         color: "#fff",
         fontSize: 16,
-        fontWeight: "600",
+        fontWeight: "700",
+        letterSpacing: 0.6,
     },
-
 });
