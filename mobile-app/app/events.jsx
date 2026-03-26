@@ -146,7 +146,6 @@ const AnnouncementCard = ({ announcement }) => {
                     {/* Title + time */}
                     <View style={styles.announcementTitleRow}>
                         <Text style={styles.announcementTitle} numberOfLines={1}>{announcement.title}</Text>
-                        <Text style={styles.announcementTime}>{getTimeAgo(announcement.createdAt)}</Text>
                     </View>
 
                     {/* Source badge */}
