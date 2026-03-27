@@ -15,7 +15,9 @@ import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import * as SecureStore from "expo-secure-store";
 import { AuthProvider } from "../src/context/AuthContext";
 import { Alert } from "react-native";
-import CustomAlertContainer, { CustomAlertManager } from "../src/components/CustomAlert";
+import CustomAlertContainer, {
+  CustomAlertManager,
+} from "../src/components/CustomAlert";
 
 // Override React Native's global Alert.alert to use our custom toast/snackbar UI
 Alert.alert = (title, message, buttons, options) => {
@@ -69,11 +71,26 @@ export default function RootLayout() {
               <Stack.Screen name="messages" options={{ headerShown: false }} />
               <Stack.Screen name="timetable" options={{ headerShown: false }} />
               <Stack.Screen name="events" options={{ headerShown: false }} />
-              <Stack.Screen name="create-event" options={{ headerShown: false }} />
-              <Stack.Screen name="create-announcement" options={{ headerShown: false }} />
-              <Stack.Screen name="anonymous-report" options={{ headerShown: false }} />
-              <Stack.Screen name="admin-dashboard" options={{ headerShown: false }} />
-              <Stack.Screen name="report-detail" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="create-event"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="create-announcement"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="anonymous-report"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="admin-dashboard"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="report-detail"
+                options={{ headerShown: false }}
+              />
             </Stack>
             <CustomAlertContainer />
           </AuthProvider>
@@ -82,4 +99,3 @@ export default function RootLayout() {
     </ClerkProvider>
   );
 }
-
