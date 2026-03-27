@@ -2,9 +2,14 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { checkEmailExists } from "../../src/services/api";
+import AuthBackButton from "../../src/components/AuthBackButton";
 
 export default function CreateAccountScreen({ role, onContinue, onNavigateToLogin, onBack }) {
+    const router = useRouter();
+    const params = useLocalSearchParams();
+    const resolvedRole = role ?? (typeof params.role === "string" ? params.role : null);
     const [email, setEmail] = useState("");
     const [isChecking, setIsChecking] = useState(false);
 
@@ -52,14 +57,14 @@ export default function CreateAccountScreen({ role, onContinue, onNavigateToLogi
 
         if (trimmedEmail) {
             // Validate IIT email for Student and Lecture roles
-            if (role === "student" || role === "lecture") {
+            if (resolvedRole === "student" || resolvedRole === "lecture") {
                 if (!trimmedEmail.toLowerCase().endsWith("@iit.ac.lk")) {
                     Alert.alert("Invalid Email", "Please enter your official IIT email address (@iit.ac.lk) to continue.");
                     return;
                 }
 
                 // Validate email format matches the role
-                const roleValidation = validateEmailForRole(trimmedEmail.toLowerCase(), role);
+                const roleValidation = validateEmailForRole(trimmedEmail.toLowerCase(), resolvedRole);
                 if (!roleValidation.valid) {
                     Alert.alert(
                         "Invalid Email Format",
@@ -70,6 +75,8 @@ export default function CreateAccountScreen({ role, onContinue, onNavigateToLogi
                                 onPress: () => {
                                     if (onBack) {
                                         onBack();
+                                    } else {
+                                        router.replace("/(auth)/role-selection");
                                     }
                                 }
                             }
@@ -99,6 +106,8 @@ export default function CreateAccountScreen({ role, onContinue, onNavigateToLogi
                                 onPress: () => {
                                     if (onNavigateToLogin) {
                                         onNavigateToLogin();
+                                    } else {
+                                        router.replace("/(auth)/login");
                                     }
                                 }
                             }
@@ -112,7 +121,10 @@ export default function CreateAccountScreen({ role, onContinue, onNavigateToLogi
                 if (onContinue) {
                     onContinue(trimmedEmail);
                 } else {
-                    console.log("ℹ️ onContinue callback is not defined");
+                    router.push({
+                        pathname: resolvedRole === "student" ? "/(auth)/student-id-details" : "/(auth)/user-details",
+                        params: { email: trimmedEmail, role: resolvedRole ?? "" },
+                    });
                 }
             } catch (error) {
                 setIsChecking(false);
@@ -136,11 +148,7 @@ export default function CreateAccountScreen({ role, onContinue, onNavigateToLogi
                     keyboardShouldPersistTaps="handled"
                 >
                     {/* Back Button */}
-                    {onBack && (
-                        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-                            <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
-                        </TouchableOpacity>
-                    )}
+                    <AuthBackButton onPress={onBack ?? (() => router.replace("/(auth)/role-selection"))} />
 
                     {/* Logo */}
                     <View style={styles.logoContainer}>
@@ -205,7 +213,6 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 24,
     },
-    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     logoContainer: {
         alignItems: "center",
         marginBottom: 32,

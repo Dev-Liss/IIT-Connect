@@ -2,8 +2,14 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import AuthBackButton from "../../src/components/AuthBackButton";
 
-export default function StudentIdDetailsScreen({ email, role, onContinue }) {
+export default function StudentIdDetailsScreen({ email, role, onContinue, onBack }) {
+    const router = useRouter();
+    const params = useLocalSearchParams();
+    const resolvedEmail = email ?? (typeof params.email === "string" ? params.email : "");
+    const resolvedRole = role ?? (typeof params.role === "string" ? params.role : "student");
     const [studentId, setStudentId] = useState("");
 
     const handleContinue = () => {
@@ -23,7 +29,7 @@ export default function StudentIdDetailsScreen({ email, role, onContinue }) {
 
         // Cross-validation with email numeric part
         // Example: std.20232409@iit.ac.lk -> 20232409
-        const emailIdMatch = email.split("@")[0].match(/\d+/);
+        const emailIdMatch = resolvedEmail.split("@")[0].match(/\d+/);
         const emailId = emailIdMatch ? emailIdMatch[0] : null;
 
         if (emailId && trimmedStudentId !== emailId) {
@@ -37,7 +43,17 @@ export default function StudentIdDetailsScreen({ email, role, onContinue }) {
         // All validations passed, proceed
         if (onContinue) {
             onContinue(trimmedStudentId);
+            return;
         }
+
+        router.push({
+            pathname: "/(auth)/user-details",
+            params: {
+                email: resolvedEmail,
+                role: resolvedRole,
+                studentId: trimmedStudentId,
+            },
+        });
     };
 
     return (
@@ -51,6 +67,7 @@ export default function StudentIdDetailsScreen({ email, role, onContinue }) {
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
+                    <AuthBackButton onPress={onBack ?? (() => router.back())} />
                     {/* Logo */}
                     <View style={styles.logoContainer}>
                         <Image

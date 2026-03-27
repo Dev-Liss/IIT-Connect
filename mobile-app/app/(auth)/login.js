@@ -496,13 +496,19 @@ export default function LoginScreen({
   const handleForgotPassword = () => {
     if (onForgotPassword) {
       onForgotPassword();
+      return;
     }
+
+    router.push("/(auth)/forgot-password");
   };
 
   const handleSignUp = () => {
     if (onSignUp) {
       onSignUp();
+      return;
     }
+
+    router.push("/(auth)/role-selection");
   };
 
   return (

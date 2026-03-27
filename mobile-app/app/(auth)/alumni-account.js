@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { checkEmailExists } from "../../src/services/api";
+import AuthBackButton from "../../src/components/AuthBackButton";
 
 export default function AlumniAccountScreen({ onContinue, onNavigateToLogin, onBack }) {
+    const router = useRouter();
     const [email, setEmail] = useState("");
     const [isChecking, setIsChecking] = useState(false);
 
@@ -33,6 +36,8 @@ export default function AlumniAccountScreen({ onContinue, onNavigateToLogin, onB
                                 onPress: () => {
                                     if (onNavigateToLogin) {
                                         onNavigateToLogin();
+                                    } else {
+                                        router.replace("/(auth)/login");
                                     }
                                 }
                             }
@@ -42,7 +47,14 @@ export default function AlumniAccountScreen({ onContinue, onNavigateToLogin, onB
                 }
 
                 // Email is available, proceed
-                onContinue(trimmedEmail);
+                if (onContinue) {
+                    onContinue(trimmedEmail);
+                } else {
+                    router.push({
+                        pathname: "/(auth)/alumni-details",
+                        params: { email: trimmedEmail },
+                    });
+                }
             } catch (error) {
                 setIsChecking(false);
                 console.log("ℹ️ Email check finished:", error.message);
@@ -65,11 +77,7 @@ export default function AlumniAccountScreen({ onContinue, onNavigateToLogin, onB
                     keyboardShouldPersistTaps="handled"
                 >
                     {/* Back Button */}
-                    {onBack && (
-                        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-                            <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
-                        </TouchableOpacity>
-                    )}
+                    <AuthBackButton onPress={onBack ?? (() => router.replace("/(auth)/role-selection"))} />
 
                     {/* Logo */}
                     <View style={styles.logoContainer}>
@@ -134,7 +142,6 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 24,
     },
-    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     logoContainer: {
         alignItems: "center",
         marginBottom: 32,

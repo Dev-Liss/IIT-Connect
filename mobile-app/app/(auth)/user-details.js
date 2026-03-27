@@ -3,8 +3,17 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView,
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSignUp, useAuth } from "@clerk/clerk-expo";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import AuthBackButton from "../../src/components/AuthBackButton";
 
-export default function UserDetailsScreen({ email, role, studentId, onContinue }) {
+export default function UserDetailsScreen({ email, role, studentId, onContinue, onBack }) {
+    const router = useRouter();
+    const params = useLocalSearchParams();
+    const resolvedEmail = email ?? (typeof params.email === "string" ? params.email : "");
+    const resolvedRole = role ?? (typeof params.role === "string" ? params.role : "");
+    const resolvedStudentId = studentId ?? (typeof params.studentId === "string" ? params.studentId : "");
+    const resolvedPastIitId = typeof params.pastIitId === "string" ? params.pastIitId : undefined;
+    const resolvedNationalId = typeof params.nationalId === "string" ? params.nationalId : undefined;
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [password, setPassword] = useState("");
@@ -69,7 +78,7 @@ export default function UserDetailsScreen({ email, role, studentId, onContinue }
         setIsLoading(true);
 
         try {
-            console.log("🔐 Creating Clerk account for:", email);
+            console.log("🔐 Creating Clerk account for:", resolvedEmail);
 
             // Sign out first if there's an active session
             try {
@@ -85,7 +94,7 @@ export default function UserDetailsScreen({ email, role, studentId, onContinue }
 
             // Create Clerk account
             await signUp.create({
-                emailAddress: email,
+                emailAddress: resolvedEmail,
                 password: password,
             });
 
@@ -94,19 +103,36 @@ export default function UserDetailsScreen({ email, role, studentId, onContinue }
                 strategy: "email_code"
             });
 
-            console.log("✅ Clerk account created! OTP email sent to:", email);
+            console.log("✅ Clerk account created! OTP email sent to:", resolvedEmail);
 
             setIsLoading(false);
 
             // Pass data to next screen (OTP verification)
-            onContinue({
-                firstName,
-                lastName,
-                password,
-                email,
-                role,
-                studentId
-            });
+            if (onContinue) {
+                onContinue({
+                    firstName,
+                    lastName,
+                    password,
+                    email: resolvedEmail,
+                    role: resolvedRole,
+                    studentId: resolvedStudentId,
+                    pastIitId: resolvedPastIitId,
+                    nationalId: resolvedNationalId,
+                });
+            } else {
+                router.push({
+                    pathname: "/(auth)/email-verification",
+                    params: {
+                        email: resolvedEmail,
+                        firstName,
+                        lastName,
+                        role: resolvedRole,
+                        studentId: resolvedStudentId,
+                        pastIitId: resolvedPastIitId ?? "",
+                        nationalId: resolvedNationalId ?? "",
+                    },
+                });
+            }
 
         } catch (error) {
             setIsLoading(false);
@@ -163,6 +189,7 @@ export default function UserDetailsScreen({ email, role, studentId, onContinue }
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
+                    <AuthBackButton onPress={onBack ?? (() => router.back())} />
                     {/* Logo */}
                     <View style={styles.logoContainer}>
                         <Image

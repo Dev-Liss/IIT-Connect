@@ -2,8 +2,11 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import AuthBackButton from "../../src/components/AuthBackButton";
 
 export default function RoleSelectionScreen({ onRoleSelect, onBack }) {
+    const router = useRouter();
     const roles = [
         { id: "student", label: "Student" },
         { id: "lecture", label: "Lecture" },
@@ -14,7 +17,18 @@ export default function RoleSelectionScreen({ onRoleSelect, onBack }) {
         console.log("Selected role:", roleId);
         if (onRoleSelect) {
             onRoleSelect(roleId);
+            return;
         }
+
+        if (roleId === "alumni") {
+            router.push("/(auth)/alumni-account");
+            return;
+        }
+
+        router.push({
+            pathname: "/(auth)/create-account",
+            params: { role: roleId },
+        });
     };
 
     return (
@@ -24,11 +38,7 @@ export default function RoleSelectionScreen({ onRoleSelect, onBack }) {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Back Button */}
-                {onBack && (
-                    <TouchableOpacity style={styles.backButton} onPress={onBack}>
-                        <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
-                    </TouchableOpacity>
-                )}
+                <AuthBackButton onPress={onBack ?? (() => router.replace("/(auth)/login"))} />
 
                 {/* Logo and Title Combined */}
                 <View style={styles.logoContainer}>
@@ -68,7 +78,6 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 24,
     },
-    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     logoContainer: {
         marginTop: 40,
         marginBottom: 40,

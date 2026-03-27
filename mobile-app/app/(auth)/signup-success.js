@@ -1,10 +1,14 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import AuthBackButton from "../../src/components/AuthBackButton";
 
-export default function SignupSuccessScreen({ onContinue }) {
+export default function SignupSuccessScreen({ onContinue, onBack }) {
+    const router = useRouter();
     return (
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+            <AuthBackButton onPress={onBack ?? (() => router.back())} />
             {/* Logo */}
             <View style={styles.logoContainer}>
                 <Image

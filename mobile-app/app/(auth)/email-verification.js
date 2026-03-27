@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,8 +15,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useSignUp } from "@clerk/clerk-expo";
 import { syncUserProfile } from "../../src/services/api";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import AuthBackButton from "../../src/components/AuthBackButton";
 
-export default function EmailVerificationScreen({ email, userData, onVerify }) {
+export default function EmailVerificationScreen({ email, userData, onVerify, onBack }) {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const resolvedEmail = email ?? (typeof params.email === "string" ? params.email : "");
+  const resolvedUserData = userData ?? {
+    email: resolvedEmail,
+    firstName: typeof params.firstName === "string" ? params.firstName : "",
+    lastName: typeof params.lastName === "string" ? params.lastName : "",
+    role: typeof params.role === "string" ? params.role : "",
+    studentId: typeof params.studentId === "string" ? params.studentId : "",
+    pastIitId: typeof params.pastIitId === "string" ? params.pastIitId : "",
+    nationalId: typeof params.nationalId === "string" ? params.nationalId : "",
+  };
   const [code, setCode] = useState("");
   const [timer, setTimer] = useState(180); // 3 minutes in seconds
   const [canResend, setCanResend] = useState(false);
@@ -72,20 +86,20 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
         // Prepare sync data
         const syncData = {
           clerkId: clerkId,
-          email: userData.email,
-          username: `${userData.firstName} ${userData.lastName}`,
-          role: userData.role,
+          email: resolvedUserData.email,
+          username: `${resolvedUserData.firstName} ${resolvedUserData.lastName}`,
+          role: resolvedUserData.role,
         };
 
         // Add role-specific fields
-        if (userData.role === "student" && userData.studentId) {
-          syncData.studentId = userData.studentId;
-        } else if (userData.role === "alumni") {
-          if (userData.nationalId) {
-            syncData.nationalId = userData.nationalId;
+        if (resolvedUserData.role === "student" && resolvedUserData.studentId) {
+          syncData.studentId = resolvedUserData.studentId;
+        } else if (resolvedUserData.role === "alumni") {
+          if (resolvedUserData.nationalId) {
+            syncData.nationalId = resolvedUserData.nationalId;
           }
-          if (userData.pastIitId) {
-            syncData.pastIitId = userData.pastIitId;
+          if (resolvedUserData.pastIitId) {
+            syncData.pastIitId = resolvedUserData.pastIitId;
           }
         }
 
@@ -184,6 +198,7 @@ export default function EmailVerificationScreen({ email, userData, onVerify }) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          <AuthBackButton onPress={onBack ?? (() => router.back())} />
           {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
