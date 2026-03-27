@@ -241,11 +241,7 @@ export default function EditStudentProfile({ user }) {
                     <Ionicons name="chevron-back" size={24} color="#333" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Edit Profile</Text>
-                <TouchableOpacity onPress={handleSave} disabled={saving}>
-                    <Text style={[styles.doneButton, saving && { opacity: 0.5 }]}>
-                        {saving ? "Saving..." : "Done"}
-                    </Text>
-                </TouchableOpacity>
+                <View style={{ width: 40 }} />
             </View>
 
             <KeyboardAvoidingView
@@ -426,13 +422,12 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        height: 60,
         justifyContent: 'space-between',
         paddingHorizontal: 20,
-        paddingVertical: 10,
+        paddingBottom: 10,
+        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 44) + 10 : 44,
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
-        marginTop: 20,
     },
     headerTitle: {
         fontSize: 18,
@@ -462,14 +457,14 @@ const styles = StyleSheet.create({
     avatarContainer: {
         padding: 4,
         backgroundColor: '#fff',
-        borderRadius: 65,
+        borderRadius: 50,
         marginTop: 20,
         zIndex: 1,
     },
     avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: 80,
+        height: 80,
+        borderRadius: 40,
         backgroundColor: '#f0f0f0',
     },
     editButtonsRow: {
@@ -495,7 +490,7 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     inputGroup: {
-        marginBottom: 20,
+        marginBottom: 12,
     },
     label: {
         fontSize: 14,
@@ -509,7 +504,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         backgroundColor: '#F9F9F9',
         paddingHorizontal: 15,
-        paddingVertical: 14,
+        paddingVertical: 10,
         borderRadius: 12,
     },
     input: {
@@ -539,7 +534,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         backgroundColor: '#F9F9F9',
         paddingHorizontal: 12,
-        paddingVertical: 14,
+        paddingVertical: 10,
         borderRadius: 12,
     },
     checkSpacer: {
