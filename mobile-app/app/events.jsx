@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import * as Haptics from "expo-haptics";
 import { EVENTS_ENDPOINTS, ANNOUNCEMENTS_ENDPOINTS } from "../src/config/api";
 
 // ====================================
@@ -215,7 +216,12 @@ export default function EventsAnnouncementsScreen() {
                 <View style={styles.tabPill}>
                     <TouchableOpacity
                         style={[styles.tabBtn, activeTab === "events" && styles.tabBtnActive]}
-                        onPress={() => setActiveTab("events")}
+                        onPress={() => {
+                            if (activeTab !== "events") {
+                                Haptics.selectionAsync();
+                                setActiveTab("events");
+                            }
+                        }}
                         activeOpacity={0.7}
                     >
                         <Ionicons name="calendar-outline" size={15} color={activeTab === "events" ? "#fff" : "#999"} />
@@ -226,7 +232,12 @@ export default function EventsAnnouncementsScreen() {
 
                     <TouchableOpacity
                         style={[styles.tabBtn, activeTab === "announcements" && styles.tabBtnActive]}
-                        onPress={() => setActiveTab("announcements")}
+                        onPress={() => {
+                            if (activeTab !== "announcements") {
+                                Haptics.selectionAsync();
+                                setActiveTab("announcements");
+                            }
+                        }}
                         activeOpacity={0.7}
                     >
                         <Ionicons name="megaphone-outline" size={15} color={activeTab === "announcements" ? "#fff" : "#999"} />

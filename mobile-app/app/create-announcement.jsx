@@ -134,7 +134,7 @@ export default function CreateAnnouncementScreen() {
                             </View>
                             <View style={styles.fieldContent}>
                                 <View style={styles.labelRow}>
-                                    <Text style={styles.label}>Title <Text style={styles.required}>*</Text></Text>
+                                    <Text style={styles.label}>Title</Text>
                                     <Text style={styles.charCount}>{title.length}/100</Text>
                                 </View>
                                 <TextInput
@@ -157,7 +157,7 @@ export default function CreateAnnouncementScreen() {
                             </View>
                             <View style={styles.fieldContent}>
                                 <View style={styles.labelRow}>
-                                    <Text style={styles.label}>Content <Text style={styles.required}>*</Text></Text>
+                                    <Text style={styles.label}>Content</Text>
                                     <Text style={styles.charCount}>{content.length} chars</Text>
                                 </View>
                                 <TextInput

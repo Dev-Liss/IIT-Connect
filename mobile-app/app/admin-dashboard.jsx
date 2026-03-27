@@ -30,7 +30,7 @@ export default function AdminDashboardScreen() {
     const router = useRouter();
 
     // State
-    const [activeTab, setActiveTab] = useState("reports");
+    const [activeTab, setActiveTab] = useState("moderation");
     const [reports, setReports] = useState([]);
     const [contentReports, setContentReports] = useState([]);
     const [filterStatus, setFilterStatus] = useState("all");

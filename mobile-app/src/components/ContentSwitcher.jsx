@@ -6,6 +6,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
 
 // Spring tuning for the sliding indicator and active label emphasis.
 const SPRING_CONFIG = { stiffness: 200, damping: 20, mass: 0.8 };
@@ -66,7 +67,12 @@ const ContentSwitcher = ({ activeTab, onTabChange }) => {
           <Pressable
             key={tab.key}
             style={styles.tabButton}
-            onPress={() => onTabChange(tab.key)}
+            onPress={() => {
+              if (activeTab !== tab.key) {
+                Haptics.selectionAsync();
+                onTabChange(tab.key);
+              }
+            }}
           >
             <Animated.Text
               style={[

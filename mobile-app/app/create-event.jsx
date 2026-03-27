@@ -159,7 +159,7 @@ export default function CreateEventScreen() {
                             </View>
                             <View style={styles.fieldContent}>
                                 <View style={styles.labelRow}>
-                                    <Text style={styles.label}>Event Title <Text style={styles.required}>*</Text></Text>
+                                    <Text style={styles.label}>Event Title</Text>
                                     <Text style={styles.charCount}>{title.length}/100</Text>
                                 </View>
                                 <TextInput
@@ -182,7 +182,7 @@ export default function CreateEventScreen() {
                             </View>
                             <View style={styles.fieldContent}>
                                 <View style={styles.labelRow}>
-                                    <Text style={styles.label}>Description <Text style={styles.required}>*</Text></Text>
+                                    <Text style={styles.label}>Description</Text>
                                     <Text style={styles.charCount}>{description.length} chars</Text>
                                 </View>
                                 <TextInput
@@ -209,7 +209,7 @@ export default function CreateEventScreen() {
                             </View>
                             <View style={styles.fieldContent}>
                                 <View style={styles.labelRow}>
-                                    <Text style={styles.label}>Date <Text style={styles.required}>*</Text></Text>
+                                    <Text style={styles.label}>Date</Text>
                                     {dateSelected && <Text style={styles.selectedBadge}>✓ Set</Text>}
                                 </View>
                                 <TouchableOpacity style={styles.pickerButton} onPress={() => setShowDatePicker(true)} activeOpacity={0.6}>
@@ -233,7 +233,7 @@ export default function CreateEventScreen() {
                             </View>
                             <View style={styles.fieldContent}>
                                 <View style={styles.labelRow}>
-                                    <Text style={styles.label}>Start Time <Text style={styles.required}>*</Text></Text>
+                                    <Text style={styles.label}>Start Time</Text>
                                     {startTimeSelected && <Text style={styles.selectedBadge}>✓ Set</Text>}
                                 </View>
                                 <TouchableOpacity style={styles.pickerButton} onPress={() => setShowStartTimePicker(true)} activeOpacity={0.6}>
@@ -281,7 +281,7 @@ export default function CreateEventScreen() {
                                 <Ionicons name="location-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Venue <Text style={styles.required}>*</Text></Text>
+                                <Text style={styles.label}>Venue</Text>
                                 <TextInput
                                     style={styles.input}
                                     placeholder="e.g. Main Auditorium, BMICH"
