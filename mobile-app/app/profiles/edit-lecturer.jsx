@@ -174,7 +174,7 @@ export default function EditLecturerProfile({ user }) {
 
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <Ionicons name="chevron-back" size={24} color="#333" />
+                    <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Edit Profile</Text>
                 <View style={{ width: 40 }} />
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     scrollContent: { paddingBottom: 40 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 10, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 44) + 10 : 44, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
     headerTitle: { fontSize: 18, fontWeight: '600' },
-    backButton: { padding: 8, backgroundColor: '#F5F5F5', borderRadius: 20 },
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     doneButton: { color: '#D32F2F', fontWeight: 'bold', fontSize: 16 },
     mediaSection: { alignItems: 'center', marginBottom: 20 },
     coverPlaceholder: { width: '100%', height: 120, backgroundColor: '#E0E0E0', marginBottom: -50, overflow: 'hidden' },

@@ -134,7 +134,7 @@ export default function ReportDetailScreen() {
     const headerBlock = (
         <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Ionicons name="arrow-back" size={24} color="#262626" />
+                <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Report Detail</Text>
             <View style={{ width: 24 }} />
@@ -328,11 +328,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: "#efefef",
     },
-    backButton: {
-        padding: 8,
-        backgroundColor: "#f5f5f5",
-        borderRadius: 8,
-    },
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     headerTitle: { fontSize: 22, fontWeight: "bold", color: "#262626" },
     scrollContent: { padding: 16, paddingBottom: 40 },
 

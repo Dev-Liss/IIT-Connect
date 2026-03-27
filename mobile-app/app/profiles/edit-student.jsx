@@ -238,7 +238,7 @@ export default function EditStudentProfile({ user }) {
 
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <Ionicons name="chevron-back" size={24} color="#333" />
+                    <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Edit Profile</Text>
                 <View style={{ width: 40 }} />
@@ -433,11 +433,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
     },
-    backButton: {
-        padding: 8,
-        backgroundColor: '#F5F5F5',
-        borderRadius: 20,
-    },
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     doneButton: {
         color: '#D32F2F',
         fontWeight: 'bold',

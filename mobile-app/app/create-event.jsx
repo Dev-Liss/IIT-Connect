@@ -120,12 +120,13 @@ export default function CreateEventScreen() {
                 {/* ── Header ── */}
                 <View style={styles.header}>
                     <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-                        <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+                        <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                     </TouchableOpacity>
                     <View style={styles.headerTextWrap}>
                         <Text style={styles.headerTitle}>New Event</Text>
                         <Text style={styles.headerSubtitle}>Add new campus events and activities</Text>
                     </View>
+                    <View style={{ width: 40 }} />
                 </View>
 
                 <ScrollView
@@ -331,12 +332,8 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: "#F0F0F0",
     },
-    backButton: {
-        width: 38, height: 38, borderRadius: 12,
-        backgroundColor: "#F4F5F7",
-        justifyContent: "center", alignItems: "center", marginRight: 14,
-    },
-    headerTextWrap: { flex: 1 },
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+    headerTextWrap: { flex: 1, alignItems: "center" },
     headerTitle: { fontSize: 21, fontWeight: "700", color: "#1a1a1a", letterSpacing: 0.2 },
     headerSubtitle: { fontSize: 13, color: "#999", marginTop: 2 },
 

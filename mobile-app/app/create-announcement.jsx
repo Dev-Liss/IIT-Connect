@@ -89,7 +89,7 @@ export default function CreateAnnouncementScreen() {
                         onPress={() => router.back()}
                         activeOpacity={0.7}
                     >
-                        <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+                        <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                     </TouchableOpacity>
                     <View style={styles.headerTextWrap}>
                         <Text style={styles.headerTitle}>New Announcement</Text>
@@ -97,6 +97,7 @@ export default function CreateAnnouncementScreen() {
                             Share important updates with students
                         </Text>
                     </View>
+                    <View style={{ width: 40 }} />
                 </View>
 
                 <ScrollView
@@ -219,17 +220,10 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: "#F0F0F0",
     },
-    backButton: {
-        width: 38,
-        height: 38,
-        borderRadius: 12,
-        backgroundColor: "#F4F5F7",
-        justifyContent: "center",
-        alignItems: "center",
-        marginRight: 14,
-    },
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     headerTextWrap: {
         flex: 1,
+        alignItems: "center",
     },
     headerTitle: {
         fontSize: 21,

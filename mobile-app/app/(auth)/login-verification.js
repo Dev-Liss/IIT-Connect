@@ -202,7 +202,7 @@ export default function LoginVerificationScreen({
             style={styles.backButton}
             onPress={onBack ?? (() => router.replace("/(auth)/login"))}
           >
-            <Ionicons name="arrow-back" size={24} color="#000" />
+            <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
           </TouchableOpacity>
 
           {/* Logo */}
@@ -296,15 +296,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 24,
   },
-  backButton: {
-    position: "absolute",
-    top: 16,
-    left: 24,
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    zIndex: 10,
-  },
+  backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   logoContainer: {
     alignItems: "center",
     marginBottom: 32,

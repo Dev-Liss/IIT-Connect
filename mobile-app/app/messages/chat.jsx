@@ -470,7 +470,7 @@ export default function ChatScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#000" />
+            <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
             <Text style={styles.headerName}>{name}</Text>
@@ -603,10 +603,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  backButton: {
-    padding: 5,
-    marginRight: 10,
-  },
+  backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   headerInfo: {
     flex: 1,
   },

@@ -173,7 +173,7 @@ export default function MyReportsScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <Ionicons name="arrow-back" size={24} color="#000" />
+                    <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                 </TouchableOpacity>
                 <View style={styles.headerCenter}>
                     <View style={styles.headerIconCircle}>
@@ -230,14 +230,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: "#efefef",
     },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "#f0f0f0",
-        justifyContent: "center",
-        alignItems: "center",
-    },
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     headerCenter: {
         flexDirection: "row",
         alignItems: "center",
