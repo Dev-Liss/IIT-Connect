@@ -2,9 +2,14 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { validateAlumni } from "../../src/services/api";
+import AuthBackButton from "../../src/components/AuthBackButton";
 
-export default function AlumniDetailsScreen({ email, onContinue }) {
+export default function AlumniDetailsScreen({ email, onContinue, onBack }) {
+    const router = useRouter();
+    const params = useLocalSearchParams();
+    const resolvedEmail = email ?? (typeof params.email === "string" ? params.email : "");
     const [pastIitId, setPastIitId] = useState("");
     const [nationalId, setNationalId] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -28,7 +33,7 @@ export default function AlumniDetailsScreen({ email, onContinue }) {
                 console.log(`✅ Alumni validated: ${result.alumniName}`);
 
                 const alumniData = {
-                    email,
+                    email: resolvedEmail,
                     pastIitId: trimmedPastId,
                     nationalId: trimmedNationalId,
                     role: "alumni",
@@ -37,6 +42,16 @@ export default function AlumniDetailsScreen({ email, onContinue }) {
 
                 if (onContinue) {
                     onContinue(alumniData);
+                } else {
+                    router.push({
+                        pathname: "/(auth)/user-details",
+                        params: {
+                            email: resolvedEmail,
+                            role: "alumni",
+                            pastIitId: trimmedPastId,
+                            nationalId: trimmedNationalId,
+                        },
+                    });
                 }
             }
         } catch (error) {
@@ -60,6 +75,7 @@ export default function AlumniDetailsScreen({ email, onContinue }) {
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
+                    <AuthBackButton onPress={onBack ?? (() => router.back())} />
                     {/* Logo */}
                     <View style={styles.logoContainer}>
                         <Image

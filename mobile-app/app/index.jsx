@@ -46,6 +46,13 @@ export default function AuthEntry() {
   const [userData, setUserData] = useState(null);
   const hasRedirected = useRef(false);
 
+  const resetSignUpFlowState = () => {
+    setSelectedRole(null);
+    setUserEmail("");
+    setStudentId("");
+    setUserData(null);
+  };
+
   // Once Clerk confirms sign-in AND MongoDB profile is loaded, go to main app
   useEffect(() => {
     if (currentScreen === "signupSuccess") return;
@@ -118,7 +125,10 @@ export default function AuthEntry() {
             setCurrentScreen("alumniAccount");
           }
         }}
-        onBack={() => setCurrentScreen("login")}
+        onBack={() => {
+          resetSignUpFlowState();
+          setCurrentScreen("login");
+        }}
       />
     );
   }
@@ -150,6 +160,7 @@ export default function AuthEntry() {
           setStudentId(id);
           setCurrentScreen("userDetails");
         }}
+        onBack={() => setCurrentScreen("createAccount")}
       />
     );
   }
@@ -175,6 +186,7 @@ export default function AuthEntry() {
           setUserData(data);
           setCurrentScreen("userDetails");
         }}
+        onBack={() => setCurrentScreen("alumniAccount")}
       />
     );
   }
@@ -189,6 +201,17 @@ export default function AuthEntry() {
           setUserData((prev) => ({ ...prev, ...data, studentId }));
           setCurrentScreen("emailVerification");
         }}
+        onBack={() => {
+          if (selectedRole === "alumni") {
+            setCurrentScreen("alumniDetails");
+            return;
+          }
+          if (selectedRole === "student") {
+            setCurrentScreen("studentIdDetails");
+            return;
+          }
+          setCurrentScreen("createAccount");
+        }}
       />
     );
   }
@@ -202,6 +225,7 @@ export default function AuthEntry() {
           // Clerk verification and MongoDB sync already done inside the screen
           setCurrentScreen("signupSuccess");
         }}
+        onBack={() => setCurrentScreen("userDetails")}
       />
     );
   }
@@ -212,6 +236,7 @@ export default function AuthEntry() {
         onContinue={() => {
           router.replace("/(tabs)");
         }}
+        onBack={() => setCurrentScreen("emailVerification")}
       />
     );
   }
@@ -263,7 +288,10 @@ export default function AuthEntry() {
   // Default: Login screen
   return (
     <LoginScreen
-      onSignUp={() => setCurrentScreen("roleSelection")}
+      onSignUp={() => {
+        resetSignUpFlowState();
+        setCurrentScreen("roleSelection");
+      }}
       onLoginSuccess={() => {
         // AuthContext detects the Clerk sign-in and redirects to (tabs)
       }}

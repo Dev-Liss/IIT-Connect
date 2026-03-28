@@ -37,7 +37,7 @@ export default function EditProfileSwitcher() {
             return (
                 <SafeAreaView style={styles.fallbackContainer}>
                     <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                        <Ionicons name="chevron-back" size={24} color="#333" />
+                        <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                     </TouchableOpacity>
                     <Text>Admin edit profile coming soon...</Text>
                 </SafeAreaView>
@@ -47,7 +47,7 @@ export default function EditProfileSwitcher() {
             return (
                 <SafeAreaView style={styles.fallbackContainer}>
                     <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                        <Ionicons name="chevron-back" size={24} color="#333" />
+                        <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                     </TouchableOpacity>
                     <Text>Error: Unknown user role.</Text>
                 </SafeAreaView>
@@ -72,12 +72,5 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#fff',
     },
-    backButton: {
-        position: 'absolute',
-        top: 50,
-        left: 20,
-        padding: 8,
-        backgroundColor: '#F5F5F5',
-        borderRadius: 20,
-    }
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" }
 });

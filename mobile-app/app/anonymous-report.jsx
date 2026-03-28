@@ -198,7 +198,7 @@ export default function AnonymousReportScreen() {
             <View style={[styles.headerBlock, { paddingTop: insets.top + 10 }]}>
                 <View style={styles.titleRow}>
                     <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                        <Ionicons name="arrow-back" size={22} color={COLORS.TEXT_DARK} />
+                        <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Anonymous Report</Text>
                     <View style={{ width: 38 }} />
@@ -380,11 +380,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingBottom: 8,
     },
-    backButton: {
-        padding: 8,
-        backgroundColor: "#f5f5f5",
-        borderRadius: 8,
-    },
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     headerTitle: {
         fontSize: 22,
         fontWeight: "bold",

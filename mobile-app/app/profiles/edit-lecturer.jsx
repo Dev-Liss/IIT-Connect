@@ -174,14 +174,10 @@ export default function EditLecturerProfile({ user }) {
 
             <View style={styles.header}>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                    <Ionicons name="chevron-back" size={24} color="#333" />
+                    <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Edit Profile</Text>
-                <TouchableOpacity onPress={handleSave} disabled={saving}>
-                    <Text style={[styles.doneButton, saving && { opacity: 0.5 }]}>
-                        {saving ? "Saving..." : "Done"}
-                    </Text>
-                </TouchableOpacity>
+                <View style={{ width: 40 }} />
             </View>
 
             <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
@@ -272,21 +268,21 @@ export default function EditLecturerProfile({ user }) {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: "#fff" },
     scrollContent: { paddingBottom: 40 },
-    header: { flexDirection: 'row', alignItems: 'center', height: 60, justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f0f0f0', marginTop: 20 },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 10, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 44) + 10 : 44, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
     headerTitle: { fontSize: 18, fontWeight: '600' },
-    backButton: { padding: 8, backgroundColor: '#F5F5F5', borderRadius: 20 },
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     doneButton: { color: '#D32F2F', fontWeight: 'bold', fontSize: 16 },
     mediaSection: { alignItems: 'center', marginBottom: 20 },
     coverPlaceholder: { width: '100%', height: 120, backgroundColor: '#E0E0E0', marginBottom: -50, overflow: 'hidden' },
-    avatarContainer: { padding: 4, backgroundColor: '#fff', borderRadius: 65, marginTop: 20, zIndex: 1 },
-    avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#f0f0f0' },
+    avatarContainer: { padding: 4, backgroundColor: '#fff', borderRadius: 50, marginTop: 20, zIndex: 1 },
+    avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#f0f0f0' },
     editButtonsRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 20, marginTop: 15 },
     editMediaBtn: { backgroundColor: '#F5F5F5', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 8 },
     editMediaText: { fontSize: 12, fontWeight: '600', color: '#333' },
     formSection: { paddingHorizontal: 20, marginTop: 20 },
-    inputGroup: { marginBottom: 20 },
+    inputGroup: { marginBottom: 12 },
     label: { fontSize: 14, color: '#333', fontWeight: '500', marginBottom: 8 },
-    inputContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F9F9F9', paddingHorizontal: 15, paddingVertical: 14, borderRadius: 12 },
+    inputContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F9F9F9', paddingHorizontal: 15, paddingVertical: 10, borderRadius: 12 },
     input: { flex: 1, fontSize: 16, color: '#000' },
     readOnlyContainer: { backgroundColor: '#F0F0F0', opacity: 0.8 },
     readOnlyText: { color: '#777' },

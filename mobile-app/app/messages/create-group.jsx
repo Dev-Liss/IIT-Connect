@@ -96,7 +96,7 @@ export default function CreateGroupScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#000" />
+            <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Create {isGroup ? 'Group' : 'Community'}</Text>
           <View style={styles.placeholder} />
@@ -194,9 +194,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  backButton: {
-    padding: 5,
-  },
+  backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',

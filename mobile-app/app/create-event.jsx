@@ -30,93 +30,52 @@ export default function CreateEventScreen() {
     const [title, setTitle] = useState("");
     const [date, setDate] = useState(new Date());
     const [startTime, setStartTime] = useState(new Date());
-    const [endTime, setEndTime] = useState(new Date(Date.now() + 2 * 60 * 60 * 1000)); // +2 hours
+    const [endTime, setEndTime] = useState(new Date(Date.now() + 2 * 60 * 60 * 1000));
     const [location, setLocation] = useState("");
     const [description, setDescription] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    // Picker visibility states
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [showStartTimePicker, setShowStartTimePicker] = useState(false);
     const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
-    // Track if user has selected values
     const [dateSelected, setDateSelected] = useState(false);
     const [startTimeSelected, setStartTimeSelected] = useState(false);
     const [endTimeSelected, setEndTimeSelected] = useState(false);
 
-    // Format date for display
-    const formatDate = (d) => {
-        return d.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    };
+    const formatDate = (d) =>
+        d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
-    // Format time for display
-    const formatTime = (d) => {
-        return d.toLocaleTimeString("en-US", {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-        });
-    };
+    const formatTime = (d) =>
+        d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
 
-    // Handlers
     const onDateChange = (event, selectedDate) => {
         setShowDatePicker(Platform.OS === "ios");
-        if (selectedDate) {
-            setDate(selectedDate);
-            setDateSelected(true);
-        }
+        if (selectedDate) { setDate(selectedDate); setDateSelected(true); }
     };
 
     const onStartTimeChange = (event, selectedTime) => {
         setShowStartTimePicker(Platform.OS === "ios");
-        if (selectedTime) {
-            setStartTime(selectedTime);
-            setStartTimeSelected(true);
-        }
+        if (selectedTime) { setStartTime(selectedTime); setStartTimeSelected(true); }
     };
 
     const onEndTimeChange = (event, selectedTime) => {
         setShowEndTimePicker(Platform.OS === "ios");
-        if (selectedTime) {
-            setEndTime(selectedTime);
-            setEndTimeSelected(true);
-        }
+        if (selectedTime) { setEndTime(selectedTime); setEndTimeSelected(true); }
     };
 
     const handleSubmit = async () => {
-        if (!title.trim()) {
-            Alert.alert("Error", "Please enter an event title");
-            return;
-        }
-        if (!dateSelected) {
-            Alert.alert("Error", "Please select a date");
-            return;
-        }
-        if (!startTimeSelected) {
-            Alert.alert("Error", "Please select a start time");
-            return;
-        }
-        if (!location.trim()) {
-            Alert.alert("Error", "Please enter a location");
-            return;
-        }
-        if (!description.trim()) {
-            Alert.alert("Error", "Please enter a description");
-            return;
-        }
+        if (!title.trim()) { Alert.alert("Error", "Please enter an event title"); return; }
+        if (!dateSelected) { Alert.alert("Error", "Please select a date"); return; }
+        if (!startTimeSelected) { Alert.alert("Error", "Please select a start time"); return; }
+        if (!location.trim()) { Alert.alert("Error", "Please enter a location"); return; }
+        if (!description.trim()) { Alert.alert("Error", "Please enter a description"); return; }
 
         setIsLoading(true);
         try {
             const response = await fetch(EVENTS_ENDPOINTS.CREATE, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     title: title.trim(),
                     description: description.trim(),
@@ -132,20 +91,14 @@ export default function CreateEventScreen() {
             const data = await response.json();
 
             if (data.success) {
-                Alert.alert("Success", "Event created successfully!", [
-                    {
-                        text: "OK",
-                        onPress: () => {
-                            setTitle("");
-                            setLocation("");
-                            setDescription("");
-                            setDateSelected(false);
-                            setStartTimeSelected(false);
-                            setEndTimeSelected(false);
-                            router.replace("/events");
-                        },
+                Alert.alert("Success", "Event created successfully!", [{
+                    text: "OK",
+                    onPress: () => {
+                        setTitle(""); setLocation(""); setDescription("");
+                        setDateSelected(false); setStartTimeSelected(false); setEndTimeSelected(false);
+                        router.replace("/events");
                     },
-                ]);
+                }]);
             } else {
                 Alert.alert("Error", data.message || "Failed to create event");
             }
@@ -166,19 +119,14 @@ export default function CreateEventScreen() {
             >
                 {/* ── Header ── */}
                 <View style={styles.header}>
-                    <TouchableOpacity
-                        style={styles.backButton}
-                        onPress={() => router.back()}
-                        activeOpacity={0.7}
-                    >
-                        <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
+                        <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                     </TouchableOpacity>
                     <View style={styles.headerTextWrap}>
-                        <Text style={styles.headerTitle}>Create Event</Text>
-                        <Text style={styles.headerSubtitle}>
-                            Add new campus events and activities
-                        </Text>
+                        <Text style={styles.headerTitle}>New Event</Text>
+                        <Text style={styles.headerSubtitle}>Add new campus events and activities</Text>
                     </View>
+                    <View style={{ width: 40 }} />
                 </View>
 
                 <ScrollView
@@ -187,6 +135,21 @@ export default function CreateEventScreen() {
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
                 >
+                    {/* ── Progress Steps ── */}
+                    <View style={styles.progressRow}>
+                        <View style={[styles.progressStep, title && styles.progressStepDone]}>
+                            <Ionicons name={title ? "checkmark" : "create-outline"} size={14} color={title ? "#fff" : "#ccc"} />
+                        </View>
+                        <View style={[styles.progressLine, (dateSelected && startTimeSelected) && styles.progressLineDone]} />
+                        <View style={[styles.progressStep, (dateSelected && startTimeSelected) && styles.progressStepDone]}>
+                            <Ionicons name={(dateSelected && startTimeSelected) ? "checkmark" : "calendar-outline"} size={14} color={(dateSelected && startTimeSelected) ? "#fff" : "#ccc"} />
+                        </View>
+                        <View style={[styles.progressLine, location && styles.progressLineDone]} />
+                        <View style={[styles.progressStep, location && styles.progressStepDone]}>
+                            <Ionicons name={location ? "checkmark" : "location-outline"} size={14} color={location ? "#fff" : "#ccc"} />
+                        </View>
+                    </View>
+
                     {/* ── Section: Event Details ── */}
                     <Text style={styles.sectionTitle}>Event Details</Text>
                     <View style={styles.card}>
@@ -196,7 +159,10 @@ export default function CreateEventScreen() {
                                 <Ionicons name="create-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Event Title</Text>
+                                <View style={styles.labelRow}>
+                                    <Text style={styles.label}>Event Title</Text>
+                                    <Text style={styles.charCount}>{title.length}/100</Text>
+                                </View>
                                 <TextInput
                                     style={styles.input}
                                     placeholder="e.g. Engineering Week Opening"
@@ -216,7 +182,10 @@ export default function CreateEventScreen() {
                                 <Ionicons name="document-text-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Description</Text>
+                                <View style={styles.labelRow}>
+                                    <Text style={styles.label}>Description</Text>
+                                    <Text style={styles.charCount}>{description.length} chars</Text>
+                                </View>
                                 <TextInput
                                     style={[styles.input, styles.textArea]}
                                     placeholder="What's this event about?"
@@ -240,12 +209,11 @@ export default function CreateEventScreen() {
                                 <Ionicons name="calendar-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Date</Text>
-                                <TouchableOpacity
-                                    style={styles.pickerButton}
-                                    onPress={() => setShowDatePicker(true)}
-                                    activeOpacity={0.6}
-                                >
+                                <View style={styles.labelRow}>
+                                    <Text style={styles.label}>Date</Text>
+                                    {dateSelected && <Text style={styles.selectedBadge}>✓ Set</Text>}
+                                </View>
+                                <TouchableOpacity style={styles.pickerButton} onPress={() => setShowDatePicker(true)} activeOpacity={0.6}>
                                     <Text style={[styles.pickerText, dateSelected && styles.pickerTextSelected]}>
                                         {dateSelected ? formatDate(date) : "Select a date"}
                                     </Text>
@@ -254,13 +222,7 @@ export default function CreateEventScreen() {
                             </View>
                         </View>
                         {showDatePicker && (
-                            <DateTimePicker
-                                value={date}
-                                mode="date"
-                                display="default"
-                                onChange={onDateChange}
-                                minimumDate={new Date()}
-                            />
+                            <DateTimePicker value={date} mode="date" display="default" onChange={onDateChange} minimumDate={new Date()} />
                         )}
 
                         <View style={styles.fieldDivider} />
@@ -271,12 +233,11 @@ export default function CreateEventScreen() {
                                 <Ionicons name="time-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>Start Time</Text>
-                                <TouchableOpacity
-                                    style={styles.pickerButton}
-                                    onPress={() => setShowStartTimePicker(true)}
-                                    activeOpacity={0.6}
-                                >
+                                <View style={styles.labelRow}>
+                                    <Text style={styles.label}>Start Time</Text>
+                                    {startTimeSelected && <Text style={styles.selectedBadge}>✓ Set</Text>}
+                                </View>
+                                <TouchableOpacity style={styles.pickerButton} onPress={() => setShowStartTimePicker(true)} activeOpacity={0.6}>
                                     <Text style={[styles.pickerText, startTimeSelected && styles.pickerTextSelected]}>
                                         {startTimeSelected ? formatTime(startTime) : "Select start time"}
                                     </Text>
@@ -285,12 +246,7 @@ export default function CreateEventScreen() {
                             </View>
                         </View>
                         {showStartTimePicker && (
-                            <DateTimePicker
-                                value={startTime}
-                                mode="time"
-                                display="default"
-                                onChange={onStartTimeChange}
-                            />
+                            <DateTimePicker value={startTime} mode="time" display="default" onChange={onStartTimeChange} />
                         )}
 
                         <View style={styles.fieldDivider} />
@@ -301,12 +257,11 @@ export default function CreateEventScreen() {
                                 <Ionicons name="time-outline" size={18} color="#e63946" />
                             </View>
                             <View style={styles.fieldContent}>
-                                <Text style={styles.label}>End Time</Text>
-                                <TouchableOpacity
-                                    style={styles.pickerButton}
-                                    onPress={() => setShowEndTimePicker(true)}
-                                    activeOpacity={0.6}
-                                >
+                                <View style={styles.labelRow}>
+                                    <Text style={styles.label}>End Time</Text>
+                                    <Text style={styles.optionalBadge}>Optional</Text>
+                                </View>
+                                <TouchableOpacity style={styles.pickerButton} onPress={() => setShowEndTimePicker(true)} activeOpacity={0.6}>
                                     <Text style={[styles.pickerText, endTimeSelected && styles.pickerTextSelected]}>
                                         {endTimeSelected ? formatTime(endTime) : "Optional"}
                                     </Text>
@@ -315,12 +270,7 @@ export default function CreateEventScreen() {
                             </View>
                         </View>
                         {showEndTimePicker && (
-                            <DateTimePicker
-                                value={endTime}
-                                mode="time"
-                                display="default"
-                                onChange={onEndTimeChange}
-                            />
+                            <DateTimePicker value={endTime} mode="time" display="default" onChange={onEndTimeChange} />
                         )}
                     </View>
 
@@ -351,9 +301,7 @@ export default function CreateEventScreen() {
                         disabled={isLoading}
                         activeOpacity={0.85}
                     >
-                        {isLoading && (
-                            <ActivityIndicator size="small" color="#fff" style={{ marginRight: 10 }} />
-                        )}
+                        {isLoading && <ActivityIndicator size="small" color="#fff" style={{ marginRight: 10 }} />}
                         <Text style={styles.submitButtonText}>
                             {isLoading ? "Creating Event..." : "Create Event"}
                         </Text>
@@ -370,13 +318,8 @@ export default function CreateEventScreen() {
 // STYLES
 // ====================================
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#ffffff",
-    },
-    keyboardView: {
-        flex: 1,
-    },
+    container: { flex: 1, backgroundColor: "#ffffff" },
+    keyboardView: { flex: 1 },
 
     // ── Header ──
     header: {
@@ -389,146 +332,88 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: "#F0F0F0",
     },
-    backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    headerTextWrap: {
-        flex: 1,
-        marginLeft: 14,
-    },
-    headerTitle: {
-        fontSize: 21,
-        fontWeight: "700",
-        color: "#1a1a1a",
-        letterSpacing: 0.2,
-    },
-    headerSubtitle: {
-        fontSize: 13,
-        color: "#999",
-        marginTop: 2,
-    },
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+    headerTextWrap: { flex: 1, alignItems: "center" },
+    headerTitle: { fontSize: 21, fontWeight: "700", color: "#1a1a1a", letterSpacing: 0.2 },
+    headerSubtitle: { fontSize: 13, color: "#999", marginTop: 2 },
 
     // ── Form ──
-    formScroll: {
-        flex: 1,
+    formScroll: { flex: 1 },
+    formContainer: { padding: 18 },
+
+    // ── Progress ──
+    progressRow: {
+        flexDirection: "row", alignItems: "center",
+        justifyContent: "center", marginBottom: 20, marginTop: 4,
     },
-    formContainer: {
-        padding: 18,
+    progressStep: {
+        width: 28, height: 28, borderRadius: 14,
+        backgroundColor: "#F0F0F0",
+        justifyContent: "center", alignItems: "center",
     },
+    progressStepDone: { backgroundColor: "#e63946" },
+    progressLine: {
+        flex: 1, height: 2, backgroundColor: "#F0F0F0", marginHorizontal: 6,
+    },
+    progressLineDone: { backgroundColor: "#e63946" },
 
     // ── Section ──
     sectionTitle: {
-        fontSize: 13,
-        fontWeight: "700",
-        color: "#999",
-        textTransform: "uppercase",
-        letterSpacing: 0.8,
-        marginBottom: 10,
-        marginTop: 8,
-        marginLeft: 4,
+        fontSize: 13, fontWeight: "700", color: "#999",
+        textTransform: "uppercase", letterSpacing: 0.8,
+        marginBottom: 10, marginTop: 4, marginLeft: 4,
     },
 
     // ── Card ──
     card: {
-        backgroundColor: "#fff",
-        borderRadius: 16,
-        padding: 6,
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: "#F0F0F0",
+        backgroundColor: "#fff", borderRadius: 16, padding: 6,
+        marginBottom: 20, borderWidth: 1, borderColor: "#F0F0F0",
     },
 
     // ── Field Row ──
     fieldRow: {
-        flexDirection: "row",
-        alignItems: "flex-start",
-        paddingVertical: 12,
-        paddingHorizontal: 12,
+        flexDirection: "row", alignItems: "flex-start",
+        paddingVertical: 12, paddingHorizontal: 12,
     },
     fieldIconWrap: {
-        width: 34,
-        height: 34,
-        borderRadius: 10,
+        width: 34, height: 34, borderRadius: 10,
         backgroundColor: "#FFF1F2",
-        justifyContent: "center",
-        alignItems: "center",
-        marginRight: 12,
-        marginTop: 2,
+        justifyContent: "center", alignItems: "center",
+        marginRight: 12, marginTop: 2,
     },
-    fieldContent: {
-        flex: 1,
-    },
-    fieldDivider: {
-        height: 1,
-        backgroundColor: "#F5F5F5",
-        marginLeft: 58,
-    },
+    fieldContent: { flex: 1 },
+    fieldDivider: { height: 1, backgroundColor: "#F5F5F5", marginLeft: 58 },
 
     // ── Labels ──
-    label: {
-        fontSize: 13,
-        fontWeight: "600",
-        color: "#555",
-        marginBottom: 6,
+    labelRow: {
+        flexDirection: "row", justifyContent: "space-between",
+        alignItems: "center", marginBottom: 6,
     },
-    required: {
-        color: "#e63946",
-    },
+    label: { fontSize: 13, fontWeight: "600", color: "#555" },
+    required: { color: "#e63946" },
+    charCount: { fontSize: 11, color: "#bbb", fontWeight: "500" },
+    selectedBadge: { fontSize: 11, color: "#e63946", fontWeight: "600" },
+    optionalBadge: { fontSize: 11, color: "#bbb", fontWeight: "500" },
 
     // ── Input ──
-    input: {
-        fontSize: 15,
-        color: "#1a1a1a",
-        padding: 0,
-        margin: 0,
-        fontWeight: "400",
-    },
-    textArea: {
-        height: 90,
-        lineHeight: 22,
-    },
+    input: { fontSize: 15, color: "#1a1a1a", padding: 0, margin: 0, fontWeight: "400" },
+    textArea: { height: 90, lineHeight: 22 },
 
     // ── Picker ──
-    pickerButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-    },
-    pickerText: {
-        fontSize: 15,
-        color: "#bbb",
-        fontWeight: "400",
-    },
-    pickerTextSelected: {
-        color: "#1a1a1a",
-    },
+    pickerButton: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    pickerText: { fontSize: 15, color: "#bbb", fontWeight: "400" },
+    pickerTextSelected: { color: "#1a1a1a" },
 
     // ── Submit ──
     submitButton: {
-        backgroundColor: "#e63946",
-        borderRadius: 50,
-        paddingVertical: 18,
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
+        backgroundColor: "#e63946", borderRadius: 50,
+        paddingVertical: 18, flexDirection: "row",
+        justifyContent: "center", alignItems: "center",
         marginTop: 10,
-        shadowColor: "#000",
+        shadowColor: "#e63946",
         shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.18,
-        shadowRadius: 14,
-        elevation: 8,
+        shadowOpacity: 0.3, shadowRadius: 14, elevation: 8,
     },
-    submitButtonDisabled: {
-        opacity: 0.6,
-    },
-    submitButtonText: {
-        color: "#fff",
-        fontSize: 16,
-        fontWeight: "700",
-        letterSpacing: 0.6,
-    },
+    submitButtonDisabled: { opacity: 0.6 },
+    submitButtonText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.6 },
 });

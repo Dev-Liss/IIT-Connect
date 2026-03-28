@@ -241,14 +241,10 @@ export default function EditAlumniProfile({ user }) {
                     style={styles.backButton}
                     onPress={() => router.back()}
                 >
-                    <Ionicons name="chevron-back" size={24} color="#333" />
+                    <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Edit Profile</Text>
-                <TouchableOpacity onPress={handleSave} disabled={saving}>
-                    <Text style={[styles.doneButton, saving && { opacity: 0.5 }]}>
-                        {saving ? "Saving..." : "Done"}
-                    </Text>
-                </TouchableOpacity>
+                <View style={{ width: 40 }} />
             </View>
 
             <KeyboardAvoidingView
@@ -594,20 +590,15 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: "row",
         alignItems: "center",
-        height: 60,
         justifyContent: "space-between",
         paddingHorizontal: 20,
-        paddingVertical: 10,
+        paddingBottom: 10,
+        paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 44) + 10 : 44,
         borderBottomWidth: 1,
         borderBottomColor: "#f0f0f0",
-        marginTop: 20,
     },
     headerTitle: { fontSize: 18, fontWeight: "600" },
-    backButton: {
-        padding: 8,
-        backgroundColor: "#F5F5F5",
-        borderRadius: 20,
-    },
+    backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     doneButton: { color: "#D32F2F", fontWeight: "bold", fontSize: 16 },
 
     // Media
@@ -622,14 +613,14 @@ const styles = StyleSheet.create({
     avatarContainer: {
         padding: 4,
         backgroundColor: "#fff",
-        borderRadius: 65,
+        borderRadius: 50,
         marginTop: 20,
         zIndex: 1,
     },
     avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: 80,
+        height: 80,
+        borderRadius: 40,
         backgroundColor: "#f0f0f0",
     },
     editButtonsRow: {
@@ -649,7 +640,7 @@ const styles = StyleSheet.create({
 
     // Form
     formSection: { paddingHorizontal: 20, marginTop: 20 },
-    inputGroup: { marginBottom: 20 },
+    inputGroup: { marginBottom: 12 },
     sectionHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -663,7 +654,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         backgroundColor: "#F9F9F9",
         paddingHorizontal: 15,
-        paddingVertical: 14,
+        paddingVertical: 10,
         borderRadius: 12,
     },
     input: { flex: 1, fontSize: 16, color: "#000" },

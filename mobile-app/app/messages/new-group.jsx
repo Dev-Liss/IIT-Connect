@@ -138,7 +138,7 @@ export default function NewGroupScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#000" />
+            <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Select Members</Text>
           <View style={{ width: 50 }} />
@@ -160,7 +160,7 @@ export default function NewGroupScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#000" />
+            <Ionicons name="chevron-back" size={26} color="#1a1a1a" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>New {isGroup ? 'Group' : 'Community'}</Text>
           <TouchableOpacity
@@ -219,9 +219,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  backButton: {
-    padding: 5,
-  },
+  backButton: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
