@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import * as Linking from "expo-linking";
+import * as AuthSession from "expo-auth-session";
 import { useRouter } from "expo-router";
 import {
   useSignIn,
@@ -344,11 +344,13 @@ export default function LoginScreen({
       }
 
       console.log("🔵 [Google] Starting OAuth flow...");
-      const oauthResult = await startOAuthFlow({
-        redirectUrl: Linking.createURL("oauth-native-callback", {
-          scheme: "iitconnect",
-        }),
+      const redirectUrl = AuthSession.makeRedirectUri({
+        scheme: "iitconnect",
+        path: "oauth-native-callback",
       });
+      console.log("🔵 [Google] Redirect URL:", redirectUrl);
+
+      const oauthResult = await startOAuthFlow({ redirectUrl });
       const {
         createdSessionId,
         setActive: oauthSetActive,
@@ -436,7 +438,7 @@ export default function LoginScreen({
         );
         try {
           await signOut();
-        } catch (_) {}
+        } catch (_) { }
         Alert.alert(
           "Sign In Error",
           "Could not retrieve your Google account details. Please try again.",
@@ -473,7 +475,7 @@ export default function LoginScreen({
         // Backend found no MongoDB account and deleted the Clerk user
         try {
           await signOut();
-        } catch (_) {}
+        } catch (_) { }
         Alert.alert(
           "No Account Found",
           "There is no account linked to this Google email.\nPlease sign up first.",
@@ -481,7 +483,7 @@ export default function LoginScreen({
       } else {
         try {
           await signOut();
-        } catch (_) {}
+        } catch (_) { }
         Alert.alert(
           "Google Sign In Error",
           err.message || "Failed to sign in with Google. Please try again.",
