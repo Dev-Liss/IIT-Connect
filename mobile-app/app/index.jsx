@@ -55,6 +55,11 @@ export default function AuthEntry() {
 
   // Once Clerk confirms sign-in AND MongoDB profile is loaded, go to main app
   useEffect(() => {
+    if (!isSignedIn) {
+      hasRedirected.current = false;
+      return;
+    }
+
     if (currentScreen === "signupSuccess") return;
     if (hasRedirected.current) return;
 
@@ -278,7 +283,8 @@ export default function AuthEntry() {
       <LoginVerificationScreen
         email={userEmail}
         onVerified={() => {
-          // AuthContext detects the Clerk sign-in and redirects to (tabs)
+          hasRedirected.current = true;
+          router.replace("/(tabs)");
         }}
         onBack={() => setCurrentScreen("login")}
       />
@@ -293,7 +299,8 @@ export default function AuthEntry() {
         setCurrentScreen("roleSelection");
       }}
       onLoginSuccess={() => {
-        // AuthContext detects the Clerk sign-in and redirects to (tabs)
+        hasRedirected.current = true;
+        router.replace("/(tabs)");
       }}
       onForgotPassword={() => setCurrentScreen("forgotPassword")}
       onLoginOTP={(email) => {

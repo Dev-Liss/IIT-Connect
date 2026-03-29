@@ -13,7 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import * as Linking from "expo-linking";
+import * as AuthSession from "expo-auth-session";
+import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import {
   useSignIn,
@@ -344,11 +345,16 @@ export default function LoginScreen({
       }
 
       console.log("🔵 [Google] Starting OAuth flow...");
-      const oauthResult = await startOAuthFlow({
-        redirectUrl: Linking.createURL("oauth-native-callback", {
-          scheme: "iitconnect",
-        }),
+      // In Expo Go the custom scheme doesn't work — omit it so
+      // AuthSession falls back to the default exp:// scheme.
+      const isExpoGo = Constants.appOwnership === "expo";
+      const redirectUrl = AuthSession.makeRedirectUri({
+        ...(isExpoGo ? {} : { scheme: "iitconnect" }),
+        path: "oauth-native-callback",
       });
+      console.log("🔵 [Google] Redirect URL:", redirectUrl, "(Expo Go:", isExpoGo, ")");
+
+      const oauthResult = await startOAuthFlow({ redirectUrl });
       const {
         createdSessionId,
         setActive: oauthSetActive,
@@ -436,7 +442,7 @@ export default function LoginScreen({
         );
         try {
           await signOut();
-        } catch (_) {}
+        } catch (_) { }
         Alert.alert(
           "Sign In Error",
           "Could not retrieve your Google account details. Please try again.",
@@ -461,6 +467,8 @@ export default function LoginScreen({
       console.log("✅ [Google] MongoDB account confirmed. Navigating to home.");
       if (onLoginSuccess) {
         onLoginSuccess();
+      } else {
+        router.replace("/(tabs)");
       }
     } catch (err) {
       console.log(
@@ -473,7 +481,7 @@ export default function LoginScreen({
         // Backend found no MongoDB account and deleted the Clerk user
         try {
           await signOut();
-        } catch (_) {}
+        } catch (_) { }
         Alert.alert(
           "No Account Found",
           "There is no account linked to this Google email.\nPlease sign up first.",
@@ -481,7 +489,7 @@ export default function LoginScreen({
       } else {
         try {
           await signOut();
-        } catch (_) {}
+        } catch (_) { }
         Alert.alert(
           "Google Sign In Error",
           err.message || "Failed to sign in with Google. Please try again.",
@@ -496,19 +504,17 @@ export default function LoginScreen({
   const handleForgotPassword = () => {
     if (onForgotPassword) {
       onForgotPassword();
-      return;
+    } else {
+      router.push("/(auth)/forgot-password");
     }
-
-    router.push("/(auth)/forgot-password");
   };
 
   const handleSignUp = () => {
     if (onSignUp) {
       onSignUp();
-      return;
+    } else {
+      router.push("/(auth)/role-selection");
     }
-
-    router.push("/(auth)/role-selection");
   };
 
   return (
