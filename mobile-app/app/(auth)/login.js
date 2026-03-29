@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as AuthSession from "expo-auth-session";
+import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import {
   useSignIn,
@@ -344,11 +345,14 @@ export default function LoginScreen({
       }
 
       console.log("🔵 [Google] Starting OAuth flow...");
+      // In Expo Go the custom scheme doesn't work — omit it so
+      // AuthSession falls back to the default exp:// scheme.
+      const isExpoGo = Constants.appOwnership === "expo";
       const redirectUrl = AuthSession.makeRedirectUri({
-        scheme: "iitconnect",
+        ...(isExpoGo ? {} : { scheme: "iitconnect" }),
         path: "oauth-native-callback",
       });
-      console.log("🔵 [Google] Redirect URL:", redirectUrl);
+      console.log("🔵 [Google] Redirect URL:", redirectUrl, "(Expo Go:", isExpoGo, ")");
 
       const oauthResult = await startOAuthFlow({ redirectUrl });
       const {
