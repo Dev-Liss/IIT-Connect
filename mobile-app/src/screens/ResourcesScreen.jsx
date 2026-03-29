@@ -188,9 +188,9 @@ export default function ResourcesScreen({ autoOpenUpload, onModalOpened }) {
     setUploadModalVisible(true);
     backdropOpacity.value = withTiming(1, { duration: 300 });
     slideAnim.value = withSpring(0, {
-      damping: 20,
-      stiffness: 90,
-      mass: 1,
+      damping: 22,
+      stiffness: 160,
+      mass: 0.8,
     });
   };
 

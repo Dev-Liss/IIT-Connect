@@ -80,32 +80,34 @@ export default function AcademicScreen() {
         {/* Title Row */}
         <View style={styles.titleRow}>
           <Text style={styles.headerTitle}>Academic</Text>
-          {activeTab === "Timetable" ? (
-            <View style={styles.toggleContainer}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setView("weekly")}
-              >
-                <Ionicons
-                  name="grid-outline"
-                  size={22}
-                  color={view === "weekly" ? "#f9252b" : "#aaa"}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setView("today")}
-              >
-                <Ionicons
-                  name="list-outline"
-                  size={22}
-                  color={view === "today" ? "#f9252b" : "#aaa"}
-                />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={{ width: 76 }} />
-          )}
+          <View
+            style={[
+              styles.toggleContainer,
+              { opacity: activeTab === "Timetable" ? 1 : 0 },
+            ]}
+            pointerEvents={activeTab === "Timetable" ? "auto" : "none"}
+          >
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => setView("weekly")}
+            >
+              <Ionicons
+                name="grid-outline"
+                size={22}
+                color={view === "weekly" ? "#f9252b" : "#aaa"}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => setView("today")}
+            >
+              <Ionicons
+                name="list-outline"
+                size={22}
+                color={view === "today" ? "#f9252b" : "#aaa"}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Sub-tab Switcher */}
@@ -118,10 +120,10 @@ export default function AcademicScreen() {
           {activeTab === "Timetable" && (
             <MotiView
               key="Timetable"
-              from={{ opacity: 0, translateX: 20 }}
+              from={{ opacity: 0, translateX: 8 }}
               animate={{ opacity: 1, translateX: 0 }}
-              exit={{ opacity: 0, translateX: -20 }}
-              transition={{ type: "timing", duration: 250 }}
+              exit={{ opacity: 0, translateX: -8 }}
+              transition={{ type: "timing", duration: 130 }}
               style={{ flex: 1 }}
             >
               <TimetableScreen view={view} />
@@ -131,10 +133,10 @@ export default function AcademicScreen() {
           {activeTab === "Kuppi" && (
             <MotiView
               key="Kuppi"
-              from={{ opacity: 0, translateX: 20 }}
+              from={{ opacity: 0, translateX: 8 }}
               animate={{ opacity: 1, translateX: 0 }}
-              exit={{ opacity: 0, translateX: -20 }}
-              transition={{ type: "timing", duration: 250 }}
+              exit={{ opacity: 0, translateX: -8 }}
+              transition={{ type: "timing", duration: 130 }}
               style={{ flex: 1 }}
             >
               <KuppiScreen
@@ -147,10 +149,10 @@ export default function AcademicScreen() {
           {activeTab === "Resources" && (
             <MotiView
               key="Resources"
-              from={{ opacity: 0, translateX: 20 }}
+              from={{ opacity: 0, translateX: 8 }}
               animate={{ opacity: 1, translateX: 0 }}
-              exit={{ opacity: 0, translateX: -20 }}
-              transition={{ type: "timing", duration: 250 }}
+              exit={{ opacity: 0, translateX: -8 }}
+              transition={{ type: "timing", duration: 130 }}
               style={{ flex: 1 }}
             >
               <ResourcesScreen

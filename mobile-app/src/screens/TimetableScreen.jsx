@@ -641,10 +641,10 @@ export default function TimetableScreen({ view = "weekly" }) {
             <View style={styles.glassModalOverlay}>
               <TouchableWithoutFeedback>
                 <MotiView
-                  from={{ opacity: 0, scale: 0.8, translateY: 50 }}
+                  from={{ opacity: 0, scale: 0.9, translateY: 15 }}
                   animate={{ opacity: 1, scale: 1, translateY: 0 }}
-                  exit={{ opacity: 0, scale: 0.8, translateY: 50 }}
-                  transition={{ type: "spring", damping: 18, stiffness: 250 }}
+                  exit={{ opacity: 0, scale: 0.9, translateY: 15 }}
+                  transition={{ type: "spring", damping: 18, stiffness: 220 }}
                   style={styles.glassModalContent}
                 >
                   <View style={styles.glassModalHeader}>
