@@ -37,7 +37,11 @@ export default function SignupSuccessScreen({ onContinue, onBack }) {
             <TouchableOpacity
                 style={styles.exploreButton}
                 onPress={async () => {
-                    onContinue();
+                    if (onContinue) {
+                        onContinue();
+                    } else {
+                        router.replace("/(tabs)");
+                    }
                 }}
             >
                 <Text style={styles.exploreButtonText}>Lets Explore</Text>

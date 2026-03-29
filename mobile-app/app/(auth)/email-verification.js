@@ -119,6 +119,8 @@ export default function EmailVerificationScreen({ email, userData, onVerify, onB
         // Call the onVerify callback
         if (onVerify) {
           onVerify(code);
+        } else {
+          router.replace("/(auth)/signup-success");
         }
       } else {
         setIsLoading(false);

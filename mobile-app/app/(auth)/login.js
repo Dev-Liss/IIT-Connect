@@ -467,6 +467,8 @@ export default function LoginScreen({
       console.log("✅ [Google] MongoDB account confirmed. Navigating to home.");
       if (onLoginSuccess) {
         onLoginSuccess();
+      } else {
+        router.replace("/(tabs)");
       }
     } catch (err) {
       console.log(
@@ -502,12 +504,16 @@ export default function LoginScreen({
   const handleForgotPassword = () => {
     if (onForgotPassword) {
       onForgotPassword();
+    } else {
+      router.push("/(auth)/forgot-password");
     }
   };
 
   const handleSignUp = () => {
     if (onSignUp) {
       onSignUp();
+    } else {
+      router.push("/(auth)/role-selection");
     }
   };
 
