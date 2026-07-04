@@ -30,7 +30,6 @@ import {
   TouchableWithoutFeedback,
   DeviceEventEmitter,
 } from "react-native";
-import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import { useAuth } from "../../src/context/AuthContext";
 import Animated, {
   useSharedValue,
@@ -597,13 +596,11 @@ const styles = StyleSheet.create({
 // ─── Tab Layout ───────────────────────────────────────────────────────────────
 export default function TabLayout() {
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useClerkAuth();
   const { user, isLoading: profileLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoaded || profileLoading) return;
-
-    if (!isSignedIn || !user) {
+    if (profileLoading) return;
+    if (!user) {
       // #region agent log
       fetch(
         "http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815",
@@ -621,8 +618,6 @@ export default function TabLayout() {
             message:
               "Tabs layout auth-guard redirect (signed out or missing user)",
             data: {
-              isLoaded,
-              isSignedIn,
               profileLoading,
               hasUser: !!user,
               target: "/(auth)/login",
@@ -634,7 +629,7 @@ export default function TabLayout() {
       // #endregion
       router.replace("/(auth)/login");
     }
-  }, [isLoaded, isSignedIn, profileLoading, user, router]);
+  }, [profileLoading, user, router]);
 
   return (
     <Tabs

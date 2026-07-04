@@ -2,14 +2,13 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useSignIn, useAuth } from "@clerk/clerk-expo";
+// eslint-disable-next-line import/no-unresolved
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "../../firebaseConfig";
 
 export default function ForgotPasswordScreen({ onBack, onCodeSent }) {
     const [email, setEmail] = useState("");
     const [isSending, setIsSending] = useState(false);
-
-    const { signIn, setActive } = useSignIn();
-    const { signOut } = useAuth();
 
     const handleSendCode = async () => {
         const trimmedEmail = email.trim().toLowerCase();
@@ -29,141 +28,16 @@ export default function ForgotPasswordScreen({ onBack, onCodeSent }) {
         setIsSending(true);
 
         try {
-            console.log("🔐 Requesting password reset for:", trimmedEmail);
-            console.log("📋 signIn object available:", !!signIn);
-            console.log("📋 signIn.create available:", !!(signIn && signIn.create));
-
-            if (!signIn) {
-                throw new Error("Clerk signIn object is not available. Please refresh the app.");
-            }
-
-            // Step 1: Create sign-in to get the email address ID
-            const signInAttempt = await signIn.create({
-                identifier: trimmedEmail,
-            });
-
-            console.log("Sign-in created, checking reset factors...");
-
-            // Step 2: Find the email code reset factor
-            const emailCodeFactor = signInAttempt.supportedFirstFactors?.find(
-                (factor) => factor.strategy === "reset_password_email_code"
-            );
-
-            if (!emailCodeFactor) {
-                throw new Error("Password reset via email is not available for this account.");
-            }
-
-            // Step 3: Request password reset code with the email address ID
-            await signIn.prepareFirstFactor({
-                strategy: "reset_password_email_code",
-                emailAddressId: emailCodeFactor.emailAddressId,
-            });
-
-            console.log("✅ Password reset code sent to:", trimmedEmail);
+            await sendPasswordResetEmail(auth, trimmedEmail);
 
             setIsSending(false);
 
-            // Proceed to OTP screen
-            if (onCodeSent) {
-                onCodeSent(trimmedEmail);
-            }
+            Alert.alert("Email Sent", "Password reset link sent to your email.");
+            if (onBack) onBack();
 
         } catch (error) {
             setIsSending(false);
-            console.log("ℹ️ Password reset attempt finished:", error.message);
-
-            // Handle Clerk errors
-            if (error.errors && error.errors.length > 0) {
-                const clerkError = error.errors[0];
-                console.log("ℹ️ Clerk error code:", clerkError.code);
-
-                if (clerkError.code === "session_exists") {
-                    // Session exists - sign out and retry
-                    console.log("⚠️ Session exists, signing out and retrying password reset...");
-                    try {
-                        await signOut();
-                        console.log("🚪 Signed out, retrying password reset...");
-
-                        // Retry the password reset flow
-                        setIsSending(true);
-                        await new Promise(resolve => setTimeout(resolve, 500));
-
-                        const retrySignIn = await signIn.create({
-                            identifier: trimmedEmail,
-                        });
-
-                        const retryEmailCodeFactor = retrySignIn.supportedFirstFactors?.find(
-                            (factor) => factor.strategy === "reset_password_email_code"
-                        );
-
-                        if (!retryEmailCodeFactor) {
-                            throw new Error("Password reset via email is not available for this account.");
-                        }
-
-                        await signIn.prepareFirstFactor({
-                            strategy: "reset_password_email_code",
-                            emailAddressId: retryEmailCodeFactor.emailAddressId,
-                        });
-
-                        console.log("✅ Password reset code sent to:", trimmedEmail);
-                        setIsSending(false);
-
-                        if (onCodeSent) {
-                            onCodeSent(trimmedEmail);
-                        }
-                    } catch (retryError) {
-                        setIsSending(false);
-                        console.error("❌ Retry failed:", retryError);
-
-                        if (retryError.errors && retryError.errors.length > 0) {
-                            const retryClerkError = retryError.errors[0];
-                            if (retryClerkError.code === "form_identifier_not_found") {
-                                Alert.alert(
-                                    "Email Not Found",
-                                    "No account found with this email. Please check your email or sign up first."
-                                );
-                            } else {
-                                Alert.alert("Error", retryClerkError.message || "Failed to send reset code. Please try again.");
-                            }
-                        } else {
-                            Alert.alert("Error", retryError.message || "Failed to send reset code. Please try again.");
-                        }
-                    }
-                } else if (clerkError.code === "form_identifier_not_found") {
-                    Alert.alert(
-                        "Email Not Found",
-                        "No account found with this email. Please check your email or sign up first.",
-                        [
-                            {
-                                text: "Go to Login",
-                                onPress: () => {
-                                    if (onBack) {
-                                        onBack();
-                                    }
-                                }
-                            },
-                            {
-                                text: "OK",
-                                style: "cancel"
-                            }
-                        ]
-                    );
-                } else if (clerkError.code === "network_error") {
-                    Alert.alert(
-                        "Connection Error",
-                        "Unable to connect to the server. Please check your internet connection and try again."
-                    );
-                } else {
-                    Alert.alert("Error", clerkError.message || "Failed to send reset code. Please try again.");
-                }
-            } else if (error.message && error.message.includes("network")) {
-                Alert.alert(
-                    "Connection Error",
-                    "Unable to connect to the server. Please check your internet connection and try again."
-                );
-            } else {
-                Alert.alert("Error", error.message || "Failed to send reset code. Please try again.");
-            }
+            Alert.alert("Error", error.message || "Failed to send reset email.");
         }
     };
 
@@ -208,7 +82,7 @@ export default function ForgotPasswordScreen({ onBack, onCodeSent }) {
 
                     {/* Description */}
                     <Text style={styles.description}>
-                        Enter your email address below{'\n'}and we'll send you the OTP
+                        Enter your email address below{'\n'}and we&apos;ll send you the reset link
                     </Text>
 
                     {/* Email Input */}

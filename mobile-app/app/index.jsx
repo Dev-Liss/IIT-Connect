@@ -13,7 +13,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import { useAuth } from "../src/context/AuthContext";
 
 // Auth screens (now in app/(auth)/ for Expo Router)
@@ -29,20 +28,15 @@ import UserDetailsScreen from "./(auth)/user-details";
 import EmailVerificationScreen from "./(auth)/email-verification";
 import SignupSuccessScreen from "./(auth)/signup-success";
 import ForgotPasswordScreen from "./(auth)/forgot-password";
-import PasswordResetOTPScreen from "./(auth)/password-reset-otp";
-import NewPasswordScreen from "./(auth)/new-password";
-import LoginVerificationScreen from "./(auth)/login-verification";
 
 export default function AuthEntry() {
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useClerkAuth();
   const { user, isLoading: profileLoading } = useAuth();
 
   const [currentScreen, setCurrentScreen] = useState("splash");
   const [selectedRole, setSelectedRole] = useState(null);
   const [userEmail, setUserEmail] = useState("");
   const [studentId, setStudentId] = useState("");
-  const [resetEmail, setResetEmail] = useState("");
   const [userData, setUserData] = useState(null);
   const hasRedirected = useRef(false);
 
@@ -53,9 +47,8 @@ export default function AuthEntry() {
     setUserData(null);
   };
 
-  // Once Clerk confirms sign-in AND MongoDB profile is loaded, go to main app
   useEffect(() => {
-    if (!isSignedIn) {
+    if (!user) {
       hasRedirected.current = false;
       return;
     }
@@ -63,23 +56,20 @@ export default function AuthEntry() {
     if (currentScreen === "signupSuccess") return;
     if (hasRedirected.current) return;
 
-    if (isLoaded && isSignedIn && user && !profileLoading) {
+    if (user && !profileLoading) {
       // #region agent log
-      fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H2',location:'app/index.jsx:redirectToTabs',message:'AuthEntry redirecting to /(tabs)',data:{isLoaded,isSignedIn,hasUser:!!user,profileLoading,currentScreen},timestamp:Date.now()})}).catch(()=>{});
+              fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H2',location:'app/index.jsx:redirectToTabs',message:'AuthEntry redirecting to /(tabs)',data:{hasUser:!!user,profileLoading,currentScreen},timestamp:Date.now()})}).catch(()=>{});
       // #endregion
       hasRedirected.current = true;
       router.replace("/(tabs)");
     }
   }, [
-    isLoaded,
-    isSignedIn,
     user,
     profileLoading,
     currentScreen,
   ]);
 
-  // While Clerk is loading, show a spinner so we don't flash the auth screens
-  if (!isLoaded || profileLoading) {
+  if (profileLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E53935" />
@@ -88,7 +78,7 @@ export default function AuthEntry() {
   }
 
   // Already authenticated — redirecting above, render nothing meanwhile
-  if (isSignedIn && user && currentScreen !== "signupSuccess") {
+  if (user && currentScreen !== "signupSuccess") {
     return null;
   }
 
@@ -227,7 +217,7 @@ export default function AuthEntry() {
         email={userEmail}
         userData={userData}
         onVerify={async () => {
-          // Clerk verification and MongoDB sync already done inside the screen
+          // Firebase signup and MongoDB sync already done inside the screen
           setCurrentScreen("signupSuccess");
         }}
         onBack={() => setCurrentScreen("userDetails")}
@@ -250,43 +240,7 @@ export default function AuthEntry() {
     return (
       <ForgotPasswordScreen
         onBack={() => setCurrentScreen("login")}
-        onCodeSent={(email) => {
-          setResetEmail(email);
-          setCurrentScreen("passwordResetOTP");
-        }}
-      />
-    );
-  }
-
-  if (currentScreen === "passwordResetOTP") {
-    return (
-      <PasswordResetOTPScreen
-        email={resetEmail}
-        onBack={() => setCurrentScreen("forgotPassword")}
-        onVerify={() => setCurrentScreen("newPassword")}
-      />
-    );
-  }
-
-  if (currentScreen === "newPassword") {
-    return (
-      <NewPasswordScreen
-        email={resetEmail}
-        onBack={() => setCurrentScreen("passwordResetOTP")}
-        onPasswordSet={() => setCurrentScreen("login")}
-      />
-    );
-  }
-
-  if (currentScreen === "loginVerification") {
-    return (
-      <LoginVerificationScreen
-        email={userEmail}
-        onVerified={() => {
-          hasRedirected.current = true;
-          router.replace("/(tabs)");
-        }}
-        onBack={() => setCurrentScreen("login")}
+        onCodeSent={() => setCurrentScreen("login")}
       />
     );
   }
@@ -303,10 +257,6 @@ export default function AuthEntry() {
         router.replace("/(tabs)");
       }}
       onForgotPassword={() => setCurrentScreen("forgotPassword")}
-      onLoginOTP={(email) => {
-        setUserEmail(email);
-        setCurrentScreen("loginVerification");
-      }}
     />
   );
 }

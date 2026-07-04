@@ -1,10 +1,10 @@
 /**
  * AUTH ROUTES - /api/auth
- * Clerk Integration Routes
+ * Firebase Integration Routes
  *
  * Endpoints:
- * - POST /api/auth/sync-profile - Sync user profile to MongoDB after Clerk auth
- * - GET  /api/auth/profile/:clerkId - Get user profile
+ * - POST /api/auth/sync-profile - Sync user profile to MongoDB after Firebase auth
+ * - GET  /api/auth/profile/:uid - Get user profile
  * - POST /api/auth/check-email - Check if email exists (legacy compatibility)
  */
 
@@ -16,11 +16,10 @@ const {
     validateAlumniCredentials,
     syncGoogleUser
 } = require("../controllers/authController");
-const { requireAuth } = require("../middleware/clerkAuth");
 
 // SYNC PROFILE ROUTE (Primary endpoint)
 // POST /api/auth/sync-profile
-// Called after Clerk signup/login to save profile data to MongoDB
+// Called after Firebase signup/login to save profile data to MongoDB
 router.post("/sync-profile", syncUserProfile);
 
 // VALIDATE ALUMNI CREDENTIALS ROUTE
@@ -29,9 +28,9 @@ router.post("/sync-profile", syncUserProfile);
 router.post("/validate-alumni", validateAlumniCredentials);
 
 // GET USER PROFILE ROUTE
-// GET /api/auth/profile/:clerkId
+// GET /api/auth/profile/:uid
 // Fetch user profile from MongoDB
-router.get("/profile/:clerkId", getUserProfile);
+router.get("/profile/:uid", getUserProfile);
 
 // CHECK EMAIL EXISTS ROUTE (Legacy - for reference)
 // POST /api/auth/check-email

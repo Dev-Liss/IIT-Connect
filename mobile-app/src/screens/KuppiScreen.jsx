@@ -20,7 +20,6 @@ import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { KUPPI_ENDPOINTS } from "../config/api";
 import { useAuth } from "../context/AuthContext";
-import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -34,6 +33,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
+import { getAuthToken } from "../utils/getAuthToken";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -90,7 +90,6 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 
   const CURRENT_USER_ID = "69803c6732b6bf165d609ee0";
   const { user } = useAuth();
-  const { getToken } = useClerkAuth();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -212,7 +211,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
 
     try {
       setLoading(true);
-      const token = await getToken();
+      const token = await getAuthToken();
       const response = await axios.post(
         KUPPI_ENDPOINTS.CREATE,
         {
@@ -473,7 +472,7 @@ export default function KuppiScreen({ autoOpenCreate, onModalOpened }) {
         </Text>
         {mySessions.length === 0 ? (
           <Text style={styles.emptyText}>
-            You haven't joined or organized any sessions yet.
+            You haven&apos;t joined or organized any sessions yet.
           </Text>
         ) : (
           mySessions.map((s) => renderSessionCard(s, true))

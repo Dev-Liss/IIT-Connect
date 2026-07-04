@@ -1,9 +1,9 @@
 import { API_BASE_URL } from "../config/api";
 
 /**
- * Sync user profile to MongoDB after Clerk authentication
+ * Sync user profile to MongoDB after Firebase authentication
  * @param {Object} profileData - User profile data
- * @param {string} profileData.clerkId - Clerk user ID
+ * @param {string} profileData.uid - Firebase user ID
  * @param {string} profileData.email - Email address
  * @param {string} profileData.role - User role (student, lecture, alumni)
  * @param {string} profileData.username - Full name
@@ -40,10 +40,10 @@ export const syncUserProfile = async (profileData) => {
 
 /**
  * Register user (Legacy - kept for backwards compatibility)
- * @deprecated Use Clerk signup + syncUserProfile instead
+ * @deprecated Use Firebase signup + syncUserProfile instead
  */
 export const registerUser = async (userData) => {
-    console.warn("⚠️ registerUser is deprecated. Use Clerk signup + syncUserProfile");
+    console.warn("⚠️ registerUser is deprecated. Use Firebase signup + syncUserProfile");
     try {
         const response = await fetch(`${API_BASE_URL}/auth/register`, {
             method: "POST",
@@ -154,11 +154,11 @@ export const checkEmailExists = async (email) => {
  * Sync Google User to Backend
  * Link Google account to existing user or check if signup needed
  * @param {string} email - Google email
- * @param {string} clerkId - Clerk User ID
+ * @param {string} uid - Firebase User ID
  * @param {string} username - User name from Google
  * @returns {Promise<Object>} API response
  */
-export const syncGoogleUser = async (email, clerkId, username) => {
+export const syncGoogleUser = async (email, uid, username) => {
     try {
         console.log("📤 Syncing Google user:", email);
         const response = await fetch(`${API_BASE_URL}/auth/sync-google-user`, {
@@ -166,7 +166,7 @@ export const syncGoogleUser = async (email, clerkId, username) => {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ email, clerkId, username }),
+            body: JSON.stringify({ email, uid, username }),
         });
 
         const data = await response.json();

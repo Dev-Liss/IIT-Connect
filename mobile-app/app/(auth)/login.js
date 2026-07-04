@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,152 +10,32 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import * as AuthSession from "expo-auth-session";
-import Constants from "expo-constants";
 import { useRouter } from "expo-router";
-import {
-  useSignIn,
-  useAuth,
-  useOAuth,
-  useUser,
-  useClerk,
-} from "@clerk/clerk-expo";
-import { syncGoogleUser, checkEmailExists } from "../../src/services/api";
-import { useAuth as useContextAuth } from "../../src/context/AuthContext";
-import * as WebBrowser from "expo-web-browser";
-import { useWarmUpBrowser } from "../../src/hooks/useWarmUpBrowser";
+// eslint-disable-next-line import/no-unresolved
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential, signOut } from "firebase/auth";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { auth } from "../../firebaseConfig";
+import { syncGoogleUser } from "../../src/services/api";
 
-WebBrowser.maybeCompleteAuthSession();
+// Configure Google Sign-In once at module load
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+});
 
 export default function LoginScreen({
   onSignUp,
   onLoginSuccess,
   onForgotPassword,
-  onLoginOTP,
 }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Warm up the android browser to improve UX and prevent OAuth lockups
-  useWarmUpBrowser();
-
-  const { signIn } = useSignIn();
-  const { isSignedIn, signOut } = useAuth();
-  const { user: clerkUser } = useUser();
-  const clerk = useClerk();
-  const { login: setMongoUser } = useContextAuth();
-
-  // Always keep a ref to the latest clerkUser so async functions can read current value
-  const clerkUserRef = useRef(clerkUser);
-  React.useEffect(() => {
-    clerkUserRef.current = clerkUser;
-  }, [clerkUser]);
-
-  // Guard ref to prevent double-runs
-  const isSyncingRef = useRef(false);
-
-  /**
-   * Helper: Start a fresh sign-in with email_code OTP, then navigate to OTP screen.
-   * Called after password has been successfully verified.
-   */
-  const startOTPVerification = async (trimmedEmail) => {
-    console.log("📧 [Login] Starting OTP verification for:", trimmedEmail);
-
-    // Sign out any session created during password verification
-    try {
-      await signOut();
-    } catch (_) {
-      // Ignore — might not have an active session
-    }
-
-    // Small delay to ensure session is cleared
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Start a fresh sign-in using identifier only (no password)
-    const otpSignIn = await signIn.create({
-      identifier: trimmedEmail,
-    });
-
-    if (otpSignIn.status !== "needs_first_factor") {
-      console.log("⚠️ [Login] Unexpected OTP sign-in status:", otpSignIn.status);
-      Alert.alert(
-        "Login Issue",
-        "Unable to send verification code. Please try again.",
-      );
-      return;
-    }
-
-    // Find the email_code strategy from supported first factors
-    const emailCodeFactor = otpSignIn.supportedFirstFactors?.find(
-      (f) => f.strategy === "email_code",
-    );
-
-    if (!emailCodeFactor) {
-      console.log("⚠️ [Login] email_code strategy not available. Supported factors:",
-        otpSignIn.supportedFirstFactors?.map(f => f.strategy));
-      Alert.alert(
-        "Verification Unavailable",
-        "Email verification is not available for this account. Please contact support.",
-      );
-      return;
-    }
-
-    // Send the OTP email
-    await signIn.prepareFirstFactor({
-      strategy: "email_code",
-      emailAddressId: emailCodeFactor.emailAddressId,
-    });
-
-    console.log("✅ [Login] OTP sent! Navigating to verification screen.");
-
-    // Navigate to OTP screen
-    if (onLoginOTP) {
-      onLoginOTP(trimmedEmail);
-      return;
-    }
-
-    router.push({
-      pathname: "/(auth)/login-verification",
-      params: {
-        email: trimmedEmail,
-      },
-    });
-  };
-
-  /**
-   * Fallback for cases where Clerk doesn't complete "password verification" in the expected
-   * state (can happen on cross-device flows). If the email exists in MongoDB, we
-   * proceed with OTP email verification instead of showing a generic login error.
-   */
-  const sendOTPForRegisteredEmail = async (trimmedEmail) => {
-    try {
-      const emailCheck = await checkEmailExists(trimmedEmail);
-      if (emailCheck?.exists) {
-        console.log("📧 [Login] Email exists in MongoDB. Sending OTP...");
-        await startOTPVerification(trimmedEmail);
-        return true;
-      }
-
-      Alert.alert(
-        "No Account Found",
-        "No account exists for this email. Please sign up first.",
-      );
-      return false;
-    } catch (emailCheckErr) {
-      console.log(
-        "⚠️ [Login] Email check failed:",
-        emailCheckErr?.message || emailCheckErr,
-      );
-      Alert.alert("Login Issue", "Unable to verify credentials. Please try again.");
-      return false;
-    }
-  };
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim().toLowerCase();
@@ -169,335 +49,50 @@ export default function LoginScreen({
     setIsLoading(true);
 
     try {
-      console.log("🔐 [Login] Step 1: Verifying password for:", trimmedEmail);
+      const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, password);
 
-      // Step 1: Verify password by attempting sign-in with credentials
-      const signInAttempt = await signIn.create({
-        identifier: trimmedEmail,
-        password: password,
-      });
-
-      // Password verified! (sign-in succeeded — status is "complete" or handled below)
-      let passwordVerified = false;
-
-      if (signInAttempt.status === "complete") {
-        // Password is correct — Clerk completed the sign-in
-        passwordVerified = true;
-        console.log("✅ [Login] Password verified (complete)");
-      } else if (signInAttempt.status === "needs_first_factor") {
-        // Try verifying password as first factor
-        console.log("🔐 [Login] Attempting password as first factor...");
-        try {
-          const firstFactorResult = await signIn.attemptFirstFactor({
-            strategy: "password",
-            password: password,
-          });
-          if (firstFactorResult.status === "complete" || firstFactorResult.status === "needs_second_factor") {
-            passwordVerified = true;
-            console.log("✅ [Login] Password verified (first factor)");
-          }
-        } catch (ffErr) {
-          if (ffErr.errors?.[0]?.code === "form_password_incorrect") {
-            setIsLoading(false);
-            Alert.alert(
-              "Incorrect Password",
-              "The password you entered is incorrect. Please try again.",
-            );
-            return;
-          }
-          throw ffErr;
-        }
-      } else if (signInAttempt.status === "needs_second_factor") {
-        passwordVerified = true;
-        console.log("✅ [Login] Password verified (needs second factor)");
-      }
-
-      if (!passwordVerified) {
-        console.log("⚠️ [Login] Unexpected status:", signInAttempt.status);
-        await sendOTPForRegisteredEmail(trimmedEmail);
+      // Block login if email is not yet verified
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth);
         setIsLoading(false);
-        return;
-      }
-
-      // Step 2: Password is correct — now start OTP verification
-      console.log("🔐 [Login] Step 2: Sending OTP...");
-      await startOTPVerification(trimmedEmail);
-      setIsLoading(false);
-
-    } catch (error) {
-      setIsLoading(false);
-
-      // Handle Clerk errors
-      if (error.errors && error.errors.length > 0) {
-        const clerkError = error.errors[0];
-
-        if (clerkError.code === "form_identifier_not_found") {
-          console.log(
-            "ℹ️ Login attempt with unregistered email:",
-            trimmedEmail,
-          );
-          Alert.alert(
-            "No Account Found",
-            "No account exists for this email. Please sign up first.",
-          );
-        } else if (clerkError.code === "form_password_incorrect") {
-          console.log(
-            "ℹ️ Login attempt with incorrect password for:",
-            trimmedEmail,
-          );
-          Alert.alert(
-            "Incorrect Password",
-            "The password you entered is incorrect. Please try again.",
-          );
-        } else if (clerkError.code === "session_exists") {
-          // Already logged in — sign out and retry the entire flow
-          console.log("⚠️ Session exists, signing out and retrying...");
-          try {
-            await signOut();
-            await new Promise((resolve) => setTimeout(resolve, 500));
-
-            // Retry the entire login flow
-            setIsLoading(true);
-            const retrySignIn = await signIn.create({
-              identifier: trimmedEmail,
-              password: password,
-            });
-
-            let retryPasswordVerified = false;
-            if (retrySignIn.status === "complete") {
-              retryPasswordVerified = true;
-            } else if (retrySignIn.status === "needs_first_factor") {
-              try {
-                const retryFF = await signIn.attemptFirstFactor({
-                  strategy: "password",
-                  password: password,
-                });
-                if (retryFF.status === "complete" || retryFF.status === "needs_second_factor") {
-                  retryPasswordVerified = true;
+        Alert.alert(
+          "Email Not Verified",
+          "Please verify your email before logging in. Check your inbox for the verification link.",
+          [
+            { text: "Resend Email", onPress: async () => {
+                try {
+                  // Re-sign in temporarily just to get the user object for resending
+                  const tempCred = await signInWithEmailAndPassword(auth, trimmedEmail, password);
+                  const { sendEmailVerification } = await import("firebase/auth");
+                  await sendEmailVerification(tempCred.user);
+                  await signOut(auth);
+                  Alert.alert("Email Sent", "Verification email sent. Check your inbox.");
+                } catch (e) {
+                  Alert.alert("Error", e.message);
                 }
-              } catch (retryFFErr) {
-                if (retryFFErr.errors?.[0]?.code === "form_password_incorrect") {
-                  setIsLoading(false);
-                  Alert.alert("Incorrect Password", "The password you entered is incorrect.");
-                  return;
-                }
-                throw retryFFErr;
               }
-            }
-
-            if (retryPasswordVerified) {
-              await startOTPVerification(trimmedEmail);
-            } else {
-              await sendOTPForRegisteredEmail(trimmedEmail);
-            }
-            setIsLoading(false);
-          } catch (retryError) {
-            setIsLoading(false);
-            if (retryError.errors && retryError.errors.length > 0) {
-              const retryClerkError = retryError.errors[0];
-              if (retryClerkError.code === "form_identifier_not_found") {
-                Alert.alert("No Account Found", "No account exists for this email. Please sign up first.");
-              } else if (retryClerkError.code === "form_password_incorrect") {
-                Alert.alert("Incorrect Password", "The password you entered is incorrect. Please try again.");
-              } else {
-                Alert.alert("Login Failed", retryClerkError.message || "Invalid credentials. Please try again.");
-              }
-            } else {
-              Alert.alert("Login Failed", "Unable to login. Please try again.");
-            }
-          }
-        } else if (clerkError.code === "network_error") {
-          Alert.alert(
-            "Connection Error",
-            "Unable to connect to the server. Please check your internet connection and try again.",
-          );
-        } else {
-          // Cross-device fallback: if this email already exists in MongoDB, allow OTP-based login.
-          await sendOTPForRegisteredEmail(trimmedEmail);
-          return;
-        }
-      } else if (error.message && error.message.includes("network")) {
-        Alert.alert(
-          "Network Error",
-          "Could not connect to server. Please check your internet connection.",
-        );
-      } else {
-        Alert.alert(
-          "Login Failed",
-          error.message || "Invalid credentials. Please try again.",
-        );
-      }
-    }
-  };
-
-  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
-
-  const handleGoogleSignIn = async () => {
-    if (isSyncingRef.current) return;
-
-    try {
-      setIsLoading(true);
-      isSyncingRef.current = true;
-
-      // Sign out any existing session first
-      if (isSignedIn) {
-        await signOut();
-      }
-
-      console.log("🔵 [Google] Starting OAuth flow...");
-      // In Expo Go the custom scheme doesn't work — omit it so
-      // AuthSession falls back to the default exp:// scheme.
-      const isExpoGo = Constants.appOwnership === "expo";
-      const redirectUrl = AuthSession.makeRedirectUri({
-        ...(isExpoGo ? {} : { scheme: "iitconnect" }),
-        path: "oauth-native-callback",
-      });
-      console.log("🔵 [Google] Redirect URL:", redirectUrl, "(Expo Go:", isExpoGo, ")");
-
-      const oauthResult = await startOAuthFlow({ redirectUrl });
-      const {
-        createdSessionId,
-        setActive: oauthSetActive,
-        signIn: oauthSignIn,
-        signUp: oauthSignUp,
-      } = oauthResult;
-
-      // User cancelled the Google picker
-      if (!createdSessionId) {
-        console.log("ℹ️ Google OAuth cancelled.");
-        isSyncingRef.current = false;
-        setIsLoading(false);
-        return;
-      }
-
-      // --- Extract email & clerkId from the OAuth result BEFORE activating the session ---
-      // This is the most reliable source — doesn't depend on hook timing.
-      let googleEmail = null;
-      let googleClerkId = null;
-      let googleUsername = "User";
-
-      // Try from signIn object (returning user)
-      if (oauthSignIn) {
-        console.log(
-          "🔍 [Google] oauthSignIn data:",
-          JSON.stringify(oauthSignIn, null, 2),
-        );
-        const si = oauthSignIn;
-        googleEmail =
-          si.identifier ||
-          si.userData?.emailAddresses?.[0]?.emailAddress ||
-          null;
-        googleClerkId = si.userData?.id || null;
-        googleUsername = si.userData?.firstName || googleUsername;
-      }
-
-      // Try from signUp object (new Clerk user created via Google)
-      if (oauthSignUp && (!googleEmail || !googleClerkId)) {
-        console.log(
-          "🔍 [Google] oauthSignUp data:",
-          JSON.stringify(oauthSignUp, null, 2),
-        );
-        const su = oauthSignUp;
-        googleEmail = su.emailAddress || su.identifier || null;
-        googleClerkId = su.createdUserId || null;
-        googleUsername = su.firstName || googleUsername;
-      }
-
-      // Activate the Clerk session so we can use clerk as a last-resort fallback
-      await oauthSetActive({ session: createdSessionId });
-      console.log("✅ [Google] Session activated.");
-
-      // Last-resort: wait up to 3 seconds for clerk.user to populate via the hook
-      if (!googleEmail || !googleClerkId) {
-        console.log(
-          "⏳ [Google] Email/ClerkId not in OAuth result, polling clerk.user...",
-        );
-        let waited = 0;
-        while (waited < 3000) {
-          await new Promise((r) => setTimeout(r, 200));
-          waited += 200;
-          const u = clerk.user;
-          if (u && u.id) {
-            googleEmail =
-              u.primaryEmailAddress?.emailAddress ||
-              u.emailAddresses?.[0]?.emailAddress ||
-              null;
-            googleClerkId = u.id;
-            googleUsername = u.fullName || u.firstName || googleUsername;
-            if (googleEmail && googleClerkId) break;
-          }
-        }
-      }
-
-      console.log(
-        "📧 [Google] Final email:",
-        googleEmail,
-        " clerkId:",
-        googleClerkId,
-      );
-
-      if (!googleEmail || !googleClerkId) {
-        console.error(
-          "❌ [Google] Could not resolve email or clerkId. Signing out.",
-        );
-        try {
-          await signOut();
-        } catch (_) { }
-        Alert.alert(
-          "Sign In Error",
-          "Could not retrieve your Google account details. Please try again.",
+            },
+            { text: "OK", style: "cancel" },
+          ]
         );
         return;
       }
 
-      // --- Verify against MongoDB — this is the gatekeeper ---
-      console.log("📡 [Google] Checking MongoDB for:", googleEmail);
-      const syncResult = await syncGoogleUser(
-        googleEmail,
-        googleClerkId,
-        googleUsername,
-      );
-
-      if (syncResult && syncResult.user) {
-        // Manually push to AuthContext to prevent the app from getting stuck if AuthContext missed it
-        await setMongoUser(syncResult.user);
-      }
-
-      // Only reach here if account EXISTS in MongoDB
-      console.log("✅ [Google] MongoDB account confirmed. Navigating to home.");
+      setIsLoading(false);
       if (onLoginSuccess) {
         onLoginSuccess();
       } else {
         router.replace("/(tabs)");
       }
-    } catch (err) {
-      console.log(
-        "❌ [Google] Error:",
-        err.message,
-        " requiresSignup:",
-        err.requiresSignup,
-      );
-      if (err.requiresSignup) {
-        // Backend found no MongoDB account and deleted the Clerk user
-        try {
-          await signOut();
-        } catch (_) { }
-        Alert.alert(
-          "No Account Found",
-          "There is no account linked to this Google email.\nPlease sign up first.",
-        );
-      } else {
-        try {
-          await signOut();
-        } catch (_) { }
-        Alert.alert(
-          "Google Sign In Error",
-          err.message || "Failed to sign in with Google. Please try again.",
-        );
-      }
-    } finally {
-      isSyncingRef.current = false;
+    } catch (error) {
       setIsLoading(false);
+      if (error.code === "auth/user-not-found") {
+        Alert.alert("No Account Found", "No account exists for this email.");
+      } else if (error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
+        Alert.alert("Incorrect Password", "The password you entered is incorrect.");
+      } else {
+        Alert.alert("Login Failed", error.message || "Unable to login.");
+      }
     }
   };
 
@@ -514,6 +109,57 @@ export default function LoginScreen({
       onSignUp();
     } else {
       router.push("/(auth)/role-selection");
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      // Step 1: Check Google Play Services availability
+      await GoogleSignin.hasPlayServices();
+
+      // Step 2: Open the native Google account picker
+      const userInfo = await GoogleSignin.signIn();
+      const { idToken } = userInfo.data ?? userInfo;
+
+      if (!idToken) throw new Error("Google Sign-In failed: no ID token returned.");
+
+      // Step 3: Exchange the Google token for a Firebase credential
+      const googleCredential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, googleCredential);
+      const { user } = userCredential;
+
+      // Step 4: Sync Firebase UID with our MongoDB profile
+      await syncGoogleUser(
+        user.email,
+        user.uid,
+        user.displayName ?? "User"
+      );
+
+      // Step 5: Navigate — AuthContext will pick up the new Firebase session automatically
+      setIsLoading(false);
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        router.replace("/(tabs)");
+      }
+    } catch (error) {
+      setIsLoading(false);
+      if (error.requiresSignup) {
+        // No MongoDB profile found for this Google email — send to sign up
+        Alert.alert(
+          "No Account Found",
+          "No IIT Connect account exists for this Google email. Please sign up first.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Sign Up", onPress: () => router.push("/(auth)/role-selection") },
+          ]
+        );
+      } else if (error.code === "SIGN_IN_CANCELLED") {
+        // User dismissed the Google picker — do nothing
+      } else {
+        Alert.alert("Google Sign-In Failed", error.message || "Unable to sign in with Google.");
+      }
     }
   };
 
@@ -614,18 +260,31 @@ export default function LoginScreen({
             </Text>
           </TouchableOpacity>
 
-          {/* Divider Text */}
-          <Text style={styles.dividerText}>Or Sign In With</Text>
+          {/* Divider */}
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or continue with</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
-          {/* Google Sign In */}
+          {/* Google Sign-In Button */}
           <TouchableOpacity
-            style={styles.googleButton}
-            onPress={handleGoogleSignIn}
+            style={[styles.googleButton, isLoading && styles.signInButtonDisabled]}
+            onPress={handleGoogleLogin}
+            disabled={isLoading}
           >
-            <Image
-              source={{ uri: "https://www.google.com/favicon.ico" }}
-              style={styles.googleIcon}
-            />
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#666" />
+            ) : (
+              <View style={styles.googleButtonInner}>
+                <Image
+                  source={require("../../assets/images/google-icon.png")}
+                  style={styles.googleIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.googleButtonText}>Sign in with Google</Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* Sign Up Link */}
@@ -731,11 +390,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     elevation: 0,
   },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#E0E0E0",
+  },
   dividerText: {
     textAlign: "center",
     color: "#999",
     fontSize: 12,
-    marginBottom: 16,
+    marginHorizontal: 10,
   },
   googleButton: {
     backgroundColor: "#FFF",
@@ -746,10 +415,25 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 1,
     borderColor: "#E0E0E0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  googleButtonInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  googleButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
   },
   googleIcon: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
   },
   signUpContainer: {
     flexDirection: "row",

@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, ScrollView, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useSignUp, useAuth } from "@clerk/clerk-expo";
+// eslint-disable-next-line import/no-unresolved
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AuthBackButton from "../../src/components/AuthBackButton";
+import { auth } from "../../firebaseConfig";
+import { syncUserProfile } from "../../src/services/api";
 
 export default function UserDetailsScreen({ email, role, studentId, onContinue, onBack }) {
     const router = useRouter();
@@ -21,9 +24,6 @@ export default function UserDetailsScreen({ email, role, studentId, onContinue, 
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-
-    const { signUp } = useSignUp();
-    const { signOut } = useAuth();
 
     const validatePassword = (password) => {
         const minLength = 8;
@@ -74,104 +74,47 @@ export default function UserDetailsScreen({ email, role, studentId, onContinue, 
             return;
         }
 
-        // All validations passed - Create Clerk account and send OTP
+        // All validations passed - create Firebase account and sync MongoDB profile
         setIsLoading(true);
 
         try {
-            console.log("🔐 Creating Clerk account for:", resolvedEmail);
+            const credential = await createUserWithEmailAndPassword(
+                auth,
+                resolvedEmail,
+                password
+            );
 
-            // Sign out first if there's an active session
-            try {
-                await signOut();
-                console.log("🚪 Signed out from previous session");
-            } catch (signOutError) {
-                // Ignore sign-out errors (user might not be signed in)
-                console.log("ℹ️ No active session to sign out from");
+            const syncData = {
+                uid: credential.user.uid,
+                email: resolvedEmail,
+                username: `${firstName} ${lastName}`,
+                role: resolvedRole,
+            };
+
+            if (resolvedRole === "student" && resolvedStudentId) {
+                syncData.studentId = resolvedStudentId;
+            } else if (resolvedRole === "alumni") {
+                if (resolvedNationalId) syncData.nationalId = resolvedNationalId;
+                if (resolvedPastIitId) syncData.pastIitId = resolvedPastIitId;
             }
 
-            // Small delay to ensure session is cleared
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await syncUserProfile(syncData);
 
-            // Create Clerk account
-            await signUp.create({
-                emailAddress: resolvedEmail,
-                password: password,
-            });
-
-            // Trigger email verification (this sends the OTP)
-            await signUp.prepareEmailAddressVerification({
-                strategy: "email_code"
-            });
-
-            console.log("✅ Clerk account created! OTP email sent to:", resolvedEmail);
+            // Send email verification link immediately after account creation
+            await sendEmailVerification(credential.user);
 
             setIsLoading(false);
 
-            // Pass data to next screen (OTP verification)
             if (onContinue) {
-                onContinue({
-                    firstName,
-                    lastName,
-                    password,
-                    email: resolvedEmail,
-                    role: resolvedRole,
-                    studentId: resolvedStudentId,
-                    pastIitId: resolvedPastIitId,
-                    nationalId: resolvedNationalId,
-                });
+                onContinue({ firstName, lastName, email: resolvedEmail, role: resolvedRole });
             } else {
-                router.push({
-                    pathname: "/(auth)/email-verification",
-                    params: {
-                        email: resolvedEmail,
-                        firstName,
-                        lastName,
-                        role: resolvedRole,
-                        studentId: resolvedStudentId,
-                        pastIitId: resolvedPastIitId ?? "",
-                        nationalId: resolvedNationalId ?? "",
-                    },
-                });
+                router.replace("/(auth)/email-verification");
             }
 
         } catch (error) {
             setIsLoading(false);
-
-            // Handle Clerk errors
-            if (error.errors && error.errors.length > 0) {
-                const clerkError = error.errors[0];
-
-                if (clerkError.code === "form_identifier_exists") {
-                    console.log("ℹ️ Signup attempt with existing email");
-                    Alert.alert(
-                        "Account Already Exists",
-                        "This email is already registered in Clerk. If you deleted it recently, please wait a few minutes and try again, or use a different email."
-                    );
-                } else if (clerkError.code === "session_exists") {
-                    console.log("ℹ️ Signup attempt while session exists");
-                    Alert.alert(
-                        "Please Try Again",
-                        "You're already signed in. The app will now sign you out and try again. Please press Continue again."
-                    );
-                } else if (clerkError.code === "form_password_pwned") {
-                    console.log("ℹ️ Signup attempt with pwned password");
-                    Alert.alert(
-                        "Weak Password",
-                        "This password has been found in a data breach. Please choose a different password."
-                    );
-                } else if (clerkError.code === "network_error" || clerkError.code === "clerk_network_error") {
-                    Alert.alert(
-                        "Connection Error",
-                        "Unable to connect to authentication server. Please check your internet connection and try again."
-                    );
-                } else {
-                    Alert.alert("Signup Error", clerkError.message || clerkError.longMessage || "Failed to create account");
-                }
-            } else if (error.message && error.message.includes("network")) {
-                Alert.alert(
-                    "Connection Error",
-                    "Unable to connect to the server. Please check your internet connection and try again."
-                );
+            if (error.code === "auth/email-already-in-use") {
+                Alert.alert("Account Already Exists", "This email is already registered.");
             } else {
                 Alert.alert("Error", error.message || "Failed to create account. Please try again.");
             }

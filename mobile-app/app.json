@@ -28,10 +28,12 @@
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO"
       ],
-      "package": "com.iit.connect.app.v1"
+      "package": "com.iit.connect.app.v1",
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       "expo-router",
+      "@react-native-google-signin/google-signin",
       [
         "expo-media-library",
         {

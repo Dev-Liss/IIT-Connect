@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "679812283441",
+    "project_id": "iit-connect-c082e",
+    "storage_bucket": "iit-connect-c082e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:679812283441:android:bb9ab5dc597c96f231a910",
+        "android_client_info": {
+          "package_name": "com.iit.connect.app.v1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "679812283441-1okpj31bq59a8idpdhut9uethmj1c9lq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHDhQoIscxAHcjwJ0WRX_xJGq2EzJ1S3I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "679812283441-1okpj31bq59a8idpdhut9uethmj1c9lq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

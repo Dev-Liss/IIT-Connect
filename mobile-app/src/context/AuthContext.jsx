@@ -6,8 +6,8 @@
  *
  * How it works:
  *   1. Clerk manages session tokens (sign-in, sign-out, token refresh)
- *   2. When Clerk confirms isSignedIn, we fetch the MongoDB user profile
- *      using the user's Clerk ID → GET /api/auth/profile/:clerkId
+ *   2. When Firebase confirms a session, we fetch the MongoDB user profile
+ *      using the user's Firebase UID → GET /api/auth/profile/:uid
  *   3. We store the fresh Clerk session token as 'authToken' in AsyncStorage
  *      so all existing screens (messages, kuppi, upload, etc.) can read it
  *      without any changes.
@@ -20,16 +20,12 @@
  *   updateUser(updates) — patch user object in memory + storage
  */
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth as useClerkAuth, useUser } from "@clerk/clerk-expo";
+// eslint-disable-next-line import/no-unresolved
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { API_BASE_URL } from "../config/api";
+import { auth } from "../../firebaseConfig";
 
 // ====================================
 // CONTEXT CREATION
@@ -42,68 +38,32 @@ const USER_STORAGE_KEY = "@iit_connect_user";
 // AUTH PROVIDER
 // ====================================
 export function AuthProvider({ children }) {
-  const { isSignedIn, isLoaded, signOut, getToken } = useClerkAuth();
-  const { user: clerkUser } = useUser();
-
   const [user, setUser] = useState(null); // MongoDB user profile
   const [isLoading, setIsLoading] = useState(true);
 
-  // ====================================
-  // LOAD PROFILE WHEN CLERK SIGNS IN
-  // ====================================
-  useEffect(() => {
-    if (!isLoaded) return; // Wait until Clerk has resolved
-
-    if (isSignedIn && clerkUser) {
-      loadMongoProfile();
-    } else {
-      // #region agent log
-      fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H1',location:'src/context/AuthContext.jsx:useEffect(signedOut)',message:'AuthProvider observed signed-out state; clearing user',data:{isLoaded,isSignedIn,clerkUserId:clerkUser?.id,hadUser:!!user},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
-      // Signed out — clear everything
-      setUser(null);
-      setIsLoading(false);
-    }
-  }, [isLoaded, isSignedIn, clerkUser?.id]);
-
-  /**
-   * Fetch the MongoDB profile for the currently signed-in Clerk user.
-   * Also writes a fresh Clerk session token to AsyncStorage as 'authToken'
-   * so all protected API calls throughout the app continue to work.
-   */
-  const loadMongoProfile = useCallback(async () => {
+  const loadMongoProfile = useCallback(async (firebaseUser) => {
     setIsLoading(true);
     try {
-      // Get a fresh Clerk session token
-      const token = await getToken();
+      const token = await firebaseUser.getIdToken();
 
       if (token) {
-        // Store as 'authToken' — this is what messages, kuppi, upload screens read
         await AsyncStorage.setItem("authToken", token);
       }
 
-      // Fetch MongoDB profile by Clerk ID
-      const response = await fetch(
-        `${API_BASE_URL}/auth/profile/${clerkUser.id}`,
-      );
+      const response = await fetch(`${API_BASE_URL}/auth/profile/${firebaseUser.uid}`);
       const data = await response.json();
 
       if (data.success && data.user) {
         const mongoUser = {
           ...data.user,
-          token, // also keep token on the user object for convenience
+          token,
         };
         setUser(mongoUser);
         await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mongoUser));
-        console.log("User profile loaded:", mongoUser.username);
       } else {
-        // Profile not synced yet (e.g. mid-registration) — not a hard error
-        console.log("MongoDB profile not found for Clerk user:", clerkUser.id);
         setUser(null);
       }
     } catch (error) {
-      console.log("Profile load error:", error.message);
-      // Try restoring from cache as fallback
       try {
         const cached = await AsyncStorage.getItem(USER_STORAGE_KEY);
         if (cached) {
@@ -115,7 +75,19 @@ export function AuthProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, [clerkUser?.id, getToken]);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        await loadMongoProfile(firebaseUser);
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
+    });
+    return unsubscribe;
+  }, [loadMongoProfile]);
 
   // ====================================
   // LOGIN — backward-compatible manual injection
@@ -154,18 +126,11 @@ export function AuthProvider({ children }) {
   // ====================================
   const logout = async () => {
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H2',location:'src/context/AuthContext.jsx:logout(start)',message:'logout() called',data:{isLoaded,isSignedIn,clerkUserId:clerkUser?.id,hadUser:!!user},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
       await AsyncStorage.removeItem(USER_STORAGE_KEY);
       await AsyncStorage.removeItem("authToken");
       await AsyncStorage.removeItem("keepMeSignedIn");
       setUser(null);
-      // Sign out from Clerk — this clears the Clerk session and SecureStore cache
-      await signOut();
-      // #region agent log
-      fetch('http://127.0.0.1:7530/ingest/4d139bb6-1183-43a7-8e4c-e6e413a25815',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ad0f79'},body:JSON.stringify({sessionId:'ad0f79',runId:'pre-fix',hypothesisId:'H2',location:'src/context/AuthContext.jsx:logout(done)',message:'logout() finished (after signOut)',data:{isLoaded,isSignedIn,clerkUserId:clerkUser?.id},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+      await signOut(auth);
     } catch (error) {
       console.error("Logout error:", error);
       throw error;

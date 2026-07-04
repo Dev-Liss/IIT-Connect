@@ -1,31 +1,30 @@
 /**
  * ====================================
- * AUTH CONTROLLER - CLERK INTEGRATION
+ * AUTH CONTROLLER - FIREBASE INTEGRATION
  * ====================================
- * Handles user profile syncing after Clerk authentication
- * Clerk handles: authentication, password, email verification
+ * Handles user profile syncing after Firebase authentication
+ * Firebase handles: authentication, password, email verification
  * MongoDB stores: user profiles, role-specific data
  */
 
 const User = require("../models/user");
-const { clerkClient } = require("@clerk/clerk-sdk-node");
 
 /**
- * Sync user profile to MongoDB after Clerk signup/login
- * Called from mobile app after successful Clerk authentication
+ * Sync user profile to MongoDB after Firebase signup/login
+ * Called from mobile app after successful Firebase authentication
  */
 const syncUserProfile = async (req, res) => {
   console.log("🔵 ========== SYNC PROFILE REQUEST RECEIVED ==========");
   console.log("📥 Request body:", JSON.stringify(req.body, null, 2));
 
   try {
-    const { clerkId, email, role, studentId, nationalId, pastIitId, username } = req.body;
+    const { uid, email, role, studentId, nationalId, pastIitId, username } = req.body;
 
     // Validate required fields
-    if (!clerkId || !email || !role) {
+    if (!uid || !email || !role) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: clerkId, email, role",
+        message: "Missing required fields: uid, email, role",
       });
     }
 
@@ -67,7 +66,7 @@ const syncUserProfile = async (req, res) => {
 
     // Build user data object
     const userData = {
-      clerkId,
+      clerkId: uid,
       email: email.toLowerCase().trim(),
       username: username || "User",
       role,
@@ -88,11 +87,9 @@ const syncUserProfile = async (req, res) => {
     // Check if user exists by email (in case Clerk user was deleted and recreated)
     let user = await User.findOne({ email: email.toLowerCase().trim() });
 
-    if (user && user.clerkId !== clerkId) {
-      // User exists with same email but different clerkId
-      // This happens when Clerk user was deleted and a new one created
-      console.log(`🔄 Updating existing user ${user.email} with new clerkId`);
-      user.clerkId = clerkId;
+    if (user && user.clerkId !== uid) {
+      console.log(`🔄 Updating existing user ${user.email} with new Firebase uid`);
+      user.clerkId = uid;
     }
 
     if (!user) {
@@ -113,7 +110,7 @@ const syncUserProfile = async (req, res) => {
       message: "Profile synced successfully",
       user: {
         id: user._id,
-        clerkId: user.clerkId,
+        uid: user.clerkId,
         email: user.email,
         username: user.username,
         role: user.role,
@@ -122,7 +119,7 @@ const syncUserProfile = async (req, res) => {
   } catch (error) {
     console.error("❌ Profile sync error:", error);
 
-    // Handle duplicate clerkId or email
+    // Handle duplicate uid/email
     if (error.code === 11000) {
       return res.status(400).json({
         success: false,
@@ -139,14 +136,14 @@ const syncUserProfile = async (req, res) => {
 };
 
 /**
- * Get user profile by clerkId
- * Used to fetch additional profile data after Clerk authentication
+ * Get user profile by uid
+ * Used to fetch additional profile data after Firebase authentication
  */
 const getUserProfile = async (req, res) => {
   try {
-    const { clerkId } = req.params;
+    const { uid } = req.params;
 
-    const user = await User.findOne({ clerkId }).select("-__v");
+    const user = await User.findOne({ clerkId: uid }).select("-__v");
 
     if (!user) {
       return res.status(404).json({
@@ -235,19 +232,19 @@ const validateAlumniCredentials = async (req, res) => {
 /**
  * Sync Google User
  * Called after Google OAuth success on mobile
- * Ensures user exists in our DB and links the new Clerk ID if needed
+ * Ensures user exists in our DB and links the Firebase UID if needed
  */
 const syncGoogleUser = async (req, res) => {
   console.log("🔵 ========== SYNC GOOGLE USER REQUEST RECEIVED ==========");
   try {
-    const { email, clerkId, username } = req.body;
-    console.log(`📥 Request Data - Email: ${email}, ClerkId: ${clerkId}`);
+    const { email, uid, username } = req.body;
+    console.log(`📥 Request Data - Email: ${email}, uid: ${uid}`);
 
-    if (!email || !clerkId) {
+    if (!email || !uid) {
       console.log("❌ Missing required fields");
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: email, clerkId",
+        message: "Missing required fields: email, uid",
       });
     }
 
@@ -258,15 +255,7 @@ const syncGoogleUser = async (req, res) => {
     let user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
-      // User doesn't exist - WE DO NOT CREATE AUTOMATICALLY
-      // To prevent "orphan" Clerk accounts, delete the user from Clerk
-      console.log(`� User not found in MongoDB. Deleting Clerk user: ${clerkId}`);
-      try {
-        await clerkClient.users.deleteUser(clerkId);
-        console.log("✅ Clerk user deleted successfully");
-      } catch (clerkError) {
-        console.error("❌ Failed to delete Clerk user:", clerkError.message);
-      }
+      // User doesn't exist - we do not auto-create profile records here.
 
       console.log("📤 Sending 404 Requires Signup");
       return res.status(404).json({
@@ -276,11 +265,10 @@ const syncGoogleUser = async (req, res) => {
       });
     }
 
-    console.log(`✅ User found! Linking/Updating ClerkId for: ${user.email}`);
-    // If clerkId is different (e.g. they used email/pass before, now using Google), update it
-    if (user.clerkId !== clerkId) {
-      console.log(`🔄 Updating Clerk ID for ${normalizedEmail}`);
-      user.clerkId = clerkId;
+    console.log(`✅ User found! Linking/updating uid for: ${user.email}`);
+    if (user.clerkId !== uid) {
+      console.log(`🔄 Updating uid for ${normalizedEmail}`);
+      user.clerkId = uid;
       await user.save();
     }
 
@@ -290,7 +278,7 @@ const syncGoogleUser = async (req, res) => {
       message: "User synced successfully",
       user: {
         id: user._id,
-        clerkId: user.clerkId,
+        uid: user.clerkId,
         email: user.email,
         username: user.username,
         role: user.role,
