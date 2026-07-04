@@ -9,9 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-// eslint-disable-next-line import/no-unresolved
-import { sendEmailVerification, reload, signOut } from "firebase/auth";
-import { auth } from "../../firebaseConfig";
+import { sendEmailVerification, reload, signOut, auth } from "../../firebaseConfig";
 
 export default function EmailVerificationScreen({ onVerify, onBack }) {
   const router = useRouter();

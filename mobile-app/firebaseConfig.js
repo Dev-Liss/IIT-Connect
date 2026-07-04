@@ -4,6 +4,14 @@ import {
   getAuth,
   getReactNativePersistence,
   initializeAuth,
+  sendEmailVerification,
+  reload,
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithCredential,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -27,4 +35,18 @@ try {
   auth = getAuth(app);
 }
 
-export { app, auth };
+// Re-export all Firebase auth functions so app screens import from one
+// local file instead of directly from "firebase/auth" — this avoids
+// Metro module resolution issues on Windows with subpackage imports.
+export {
+  app,
+  auth,
+  sendEmailVerification,
+  reload,
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithCredential,
+  sendPasswordResetEmail,
+};
