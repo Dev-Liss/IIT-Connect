@@ -20,6 +20,8 @@ import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential, s
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { auth } from "../../firebaseConfig";
 import { syncGoogleUser } from "../../src/services/api";
+import { useAuth } from "../../src/context/AuthContext";
+import { useEffect } from "react";
 
 // Configure Google Sign-In once at module load
 GoogleSignin.configure({
@@ -36,6 +38,17 @@ export default function LoginScreen({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { user, isLoading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (user && !authLoading) {
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        router.replace("/(tabs)");
+      }
+    }
+  }, [user, authLoading, onLoginSuccess, router]);
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim().toLowerCase();
@@ -78,12 +91,7 @@ export default function LoginScreen({
         return;
       }
 
-      setIsLoading(false);
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      } else {
-        router.replace("/(tabs)");
-      }
+      // Success! Keep the spinner spinning, useEffect will handle navigation once AuthContext populates the user.
     } catch (error) {
       setIsLoading(false);
       if (error.code === "auth/user-not-found") {
@@ -136,13 +144,8 @@ export default function LoginScreen({
         user.displayName ?? "User"
       );
 
-      // Step 5: Navigate — AuthContext will pick up the new Firebase session automatically
-      setIsLoading(false);
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      } else {
-        router.replace("/(tabs)");
-      }
+      // Step 5: AuthContext will pick up the new Firebase session automatically
+      // We keep the spinner spinning; the useEffect above will trigger navigation once AuthContext populates the user.
     } catch (error) {
       setIsLoading(false);
       if (error.requiresSignup) {
